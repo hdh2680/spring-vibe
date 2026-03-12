@@ -30,7 +30,7 @@ git commit -m "[CHORE] init project skeleton"
 
 ### 3) 원격(origin) 연결 (처음 1회)
 ```bash
-git remote add origin https://github.com/<org-or-user>/<repo>.git
+git remote add origin https://github.com/hdh2680/basemarkdown.git
 git remote -v
 ```
 
