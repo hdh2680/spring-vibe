@@ -1,0 +1,74 @@
+﻿<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title th:text="${pageTitle} + ' | Basic IAM'">Basic IAM</title>
+    <link rel="stylesheet" th:href="@{/css/layout_app.css}" />
+</head>
+  <body>
+    <div class="layout">
+      <aside class="sidebar" aria-label="Sidebar">
+        <div class="side-top">
+          <div class="brand">
+            <div class="mark" aria-hidden="true"></div>
+            <div>
+              <h1>Basic IAM</h1>
+              <p>Admin console (sample UI)</p>
+            </div>
+          </div>
+          <div class="user">
+            <div class="name" th:text="${#authentication?.name}">user</div>
+            <div class="meta">Signed in</div>
+          </div>
+        </div>
+
+        <nav class="nav" aria-label="Menu">
+          <a th:href="@{/}" th:classappend="${activeMenu}=='dashboard' ? ' active' : ''">
+            <span class="dot" aria-hidden="true"></span>
+            Dashboard
+          </a>
+          <a th:href="@{/ui/tables}" th:classappend="${activeMenu}=='tables' ? ' active' : ''">
+            <span class="dot" aria-hidden="true"></span>
+            Tables
+          </a>
+          <a th:href="@{/ui/data-quality}" th:classappend="${activeMenu}=='data-quality' ? ' active' : ''">
+            <span class="dot" aria-hidden="true"></span>
+            Data Quality
+          </a>
+          <a th:href="@{/ui/reports}" th:classappend="${activeMenu}=='reports' ? ' active' : ''">
+            <span class="dot" aria-hidden="true"></span>
+            Reports
+          </a>
+          <a th:href="@{/ui/users}" th:classappend="${activeMenu}=='users' ? ' active' : ''">
+            <span class="dot" aria-hidden="true"></span>
+            Users & Roles
+          </a>
+        </nav>
+
+        <div class="side-bottom">
+          <form th:action="@{/logout}" method="post">
+            <button class="btn" type="submit">Logout</button>
+          </form>
+        </div>
+      </aside>
+
+      <main class="main" aria-label="Content">
+        <header class="topbar">
+          <div>
+            <h2 th:text="${pageTitle}">Dashboard</h2>
+            <p>Layout is shared, content changes by route.</p>
+          </div>
+          <div style="font-size: 12px; color: rgba(255, 255, 255, 0.76)">
+            Auth: <strong th:text="${#authentication?.name}">user</strong>
+          </div>
+        </header>
+
+        <section class="content" th:replace="${contentTemplate} :: content">
+          Content
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
+
