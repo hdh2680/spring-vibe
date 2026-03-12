@@ -327,11 +327,20 @@
           <span>데모 UI (처리 없음)</span>
         </div>
 
-        <div class="error" id="errorBox" role="alert" aria-live="polite">
+        <div class="error" id="errorBox" role="alert" aria-live="polite" th:if="${param.error}" style="display: block">
           <strong>안내:</strong> 이 화면은 UI만 제공하며, 로그인 처리/검증은 연결되어 있지 않아요.
         </div>
+        <div
+          class="error"
+          role="status"
+          aria-live="polite"
+          th:if="${param.logout}"
+          style="display: block; border-color: rgba(34, 197, 94, 0.35); background: rgba(34, 197, 94, 0.1)"
+        >
+          <strong>Logged out:</strong> You have been signed out.
+        </div>
 
-        <form id="loginForm" action="#" method="post" novalidate>
+        <form id="loginForm" th:action="@{/login}" method="post" novalidate>
           <label>
             <div class="label-row">
               <strong>아이디</strong>
@@ -394,22 +403,16 @@
     </main>
 
     <script>
-      const form = document.getElementById("loginForm");
-      const errorBox = document.getElementById("errorBox");
       const togglePw = document.getElementById("togglePw");
       const password = document.getElementById("password");
 
       togglePw.addEventListener("click", () => {
         const showing = password.type === "text";
         password.type = showing ? "password" : "text";
-        togglePw.textContent = showing ? "보기" : "숨기기";
+        togglePw.textContent = showing ? "Show" : "Hide";
         togglePw.setAttribute("aria-pressed", String(!showing));
       });
 
-      form.addEventListener("submit", (e) => {
-        e.preventDefault();
-        errorBox.style.display = "block";
-      });
     </script>
   </body>
 </html>
