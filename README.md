@@ -76,10 +76,18 @@ http://localhost:8080/swagger-ui.html
 http://localhost:8080/actuator/health
 
 ### 5.5 샘플 페이지
-http://localhost:8080/html/sample
+http://localhost:8080/login
+
+### 5.6 Main
+http://localhost:8080/
 
 ## 6. 참고 문서
 - 아키텍처 및 패키지 구조: `/docs/ARCHITECTURE.md`
 - 코딩 규칙: `/docs/CODING_CONVENTION.md`
 - Git 형상관리 규칙: `/docs/GIT_GUIDELINE.md`
 - 기능/사용자 안내: 추후 `/docs/FUNCTIONS.md`, `/docs/USER_GUIDE.md` 작성 예정
+
+
+## 7. AI Work Log Rule
+- Add a work note for every AI-assisted change: /docs/aiwork/WORK_yyyyMMdd_HHmmss.md
+- Include: goal, key changes, touched files, run/test commands, follow-ups
