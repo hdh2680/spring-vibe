@@ -1,0 +1,56 @@
+﻿server:
+  port: 8080
+
+spring:
+  application:
+    name: basemarkdown
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/iamdb?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Seoul
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+    open-in-view: false
+
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    cache: false
+
+# MyBatis
+mybatis:
+  mapper-locations: classpath:mapper/**/*.xml
+  type-aliases-package: basemarkdown.dev.domain
+  configuration:
+    map-underscore-to-camel-case: true
+
+# Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when_authorized
+
+# SpringDoc Swagger
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+
+
