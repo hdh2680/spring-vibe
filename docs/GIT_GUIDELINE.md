@@ -5,10 +5,7 @@
 - `/README.md` 기준 플레이스홀더 사용
 
 ## 브랜치 전략
-- main: 안정 배포용
-- develop: 다음 배포 개발용
-- feature/*: 기능 개발
-- hotfix/*: 긴급 버그 수정
+- master : 메인 배포용
 
 ## 커밋 메시지 규칙
 - [FEAT], [FIX], [DOC], [STYLE], [REFACTOR], [TEST], [CHORE]
