@@ -47,6 +47,15 @@
 
 ## 5. 실행 방법
 
+### 5.0 사전 준비
+- Java 17 설치
+- MySQL 8 실행 및 DB 생성(예시):
+```sql
+CREATE DATABASE basemarkdown CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+- DB 계정 정보 설정:
+  - `src/main/resources/application.yml`의 `spring.datasource.username/password` 수정
+
 ### 5.1 프로젝트 빌드
 ```bash
 mvn clean install
@@ -57,6 +66,7 @@ mvn clean install
 ```bash
 mvn spring-boot:run
 ```
+(Maven 미설치 시: `./mvnw spring-boot:run` — Windows는 `mvnw.cmd`)
 
 ### 5.3 Swagger UI 확인
 http://localhost:8080/swagger-ui.html  
@@ -64,6 +74,9 @@ http://localhost:8080/swagger-ui.html
 
 ### 5.4 Actuator 확인
 http://localhost:8080/actuator/health
+
+### 5.5 샘플 페이지
+http://localhost:8080/html/sample
 
 ## 6. 참고 문서
 - 아키텍처 및 패키지 구조: `/docs/ARCHITECTURE.md`

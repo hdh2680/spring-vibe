@@ -90,7 +90,7 @@ public class SampleEntity {
 package {{ROOT_PACKAGE}}.{{DEVELOP_PACKAGE}}.repository;
 
 import {{ROOT_PACKAGE}}.{{DEVELOP_PACKAGE}}.domain.SampleEntity;
-import org.springframework.{{DEVELOP_PACKAGE}}ta.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface SampleRepository extends JpaRepository<SampleEntity, Long> {}
 
