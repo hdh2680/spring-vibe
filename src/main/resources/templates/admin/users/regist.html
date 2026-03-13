@@ -1,0 +1,86 @@
+<section xmlns:th="http://www.thymeleaf.org" th:fragment="content">
+  <div class="toolbar">
+    <div>
+      <h3 th:text="${isEdit} ? '사용자 수정' : '사용자 등록'">사용자 등록</h3>
+      <p class="muted">status 수정 + 권한 부여(user_roles)</p>
+    </div>
+    <div style="display:flex; gap:8px">
+      <a class="btn-link" th:href="@{/admin/users/list}">목록</a>
+      <a class="btn-link" th:if="${isEdit}" th:href="@{/admin/users/view(id=${form.id})}">상세</a>
+    </div>
+  </div>
+
+  <form th:action="@{/admin/users/regist}" method="post" th:object="${form}" style="margin-top: 12px">
+    <input type="hidden" name="isEdit" th:value="${isEdit}" />
+    <input type="hidden" th:field="*{id}" />
+
+    <div class="form-grid-2">
+      <div class="panel">
+        <div class="panel-inner">
+          <h4>기본 정보</h4>
+
+          <label class="field">
+            <div class="label">Username</div>
+            <input class="input" th:field="*{username}" th:readonly="${isEdit}" />
+            <div class="err" th:if="${#fields.hasErrors('username')}" th:errors="*{username}">err</div>
+          </label>
+
+          <label class="field">
+            <div class="label">
+              Password <span class="muted" th:text="${isEdit} ? '(비워두면 변경 없음)' : '(필수)'">(필수)</span>
+            </div>
+            <input class="input" th:field="*{password}" type="password" />
+            <div class="err" th:if="${#fields.hasErrors('password')}" th:errors="*{password}">err</div>
+          </label>
+
+          <label class="field">
+            <div class="label">Name</div>
+            <input class="input" th:field="*{name}" />
+          </label>
+
+          <label class="field">
+            <div class="label">Email</div>
+            <input class="input" th:field="*{email}" />
+            <div class="err" th:if="${#fields.hasErrors('email')}" th:errors="*{email}">err</div>
+          </label>
+
+          <label class="field">
+            <div class="label">Phone</div>
+            <input class="input" th:field="*{phone}" />
+          </label>
+
+          <label class="field">
+            <div class="label">Status</div>
+            <select class="select" th:field="*{status}">
+              <option value="ACTIVE">ACTIVE</option>
+              <option value="LOCK">LOCK</option>
+              <option value="WITHDRAW">WITHDRAW</option>
+            </select>
+            <div class="err" th:if="${#fields.hasErrors('status')}" th:errors="*{status}">err</div>
+          </label>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-inner">
+          <h4>권한 부여</h4>
+          <div class="muted" th:if="${#lists.isEmpty(roles)}">권한 목록이 없습니다.</div>
+          <div th:unless="${#lists.isEmpty(roles)}" style="display:grid; gap:8px; font-size:12px">
+            <label th:each="r : ${roles}" style="display:flex; align-items:center; gap:10px; padding:10px 10px; border:1px solid rgba(17,24,39,0.10); border-radius:14px; background: rgba(17,24,39,0.02)">
+              <input type="checkbox" th:value="${r.id}" th:field="*{roleIds}" />
+              <div>
+                <div style="font-weight:800" th:text="${r.roleName}">ROLE_USER</div>
+                <div class="muted" th:text="${r.description}">desc</div>
+              </div>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top: 12px; display: flex; justify-content: flex-end">
+      <button type="submit" class="btn-link" th:text="${isEdit} ? '저장' : '등록'">등록</button>
+    </div>
+  </form>
+</section>
+

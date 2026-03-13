@@ -1,7 +1,7 @@
 package basemarkdown.system.security;
 
-import basemarkdown.dev.domain.UserAccount;
-import basemarkdown.dev.service.AuthService;
+import basemarkdown.dev.common.domain.UserAccount;
+import basemarkdown.dev.common.service.AuthService;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;

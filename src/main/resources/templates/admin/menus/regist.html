@@ -1,0 +1,77 @@
+<section xmlns:th="http://www.thymeleaf.org" th:fragment="content">
+  <div class="toolbar">
+    <div>
+      <h3 th:text="${isEdit} ? '메뉴 수정' : '메뉴 등록'">메뉴 등록</h3>
+      <p class="muted">menus 테이블 기준 등록/수정</p>
+    </div>
+    <div style="display:flex; gap:8px">
+      <a class="btn-link" th:href="@{/admin/menus/list}">목록</a>
+      <a class="btn-link" th:if="${isEdit}" th:href="@{/admin/menus/view(id=${form.id})}">상세</a>
+    </div>
+  </div>
+
+  <form th:action="@{/admin/menus/regist}" method="post" th:object="${form}" style="margin-top: 12px">
+    <input type="hidden" name="isEdit" th:value="${isEdit}" />
+    <input type="hidden" th:field="*{id}" />
+
+    <div class="grid-1">
+      <div class="panel">
+        <div class="panel-inner">
+          <h4>메뉴 정보</h4>
+
+          <label class="field">
+            <div class="label">Parent</div>
+            <select class="select" th:field="*{parentId}">
+              <option th:value="${null}">-- (root) --</option>
+              <option th:each="p : ${parents}" th:value="${p.id}" th:text="${p.menuName}">parent</option>
+            </select>
+          </label>
+
+          <div class="form-grid-2">
+            <label class="field">
+              <div class="label">menuKey</div>
+              <input class="input" th:field="*{menuKey}" />
+              <div class="err" th:if="${#fields.hasErrors('menuKey')}" th:errors="*{menuKey}">err</div>
+            </label>
+
+            <label class="field">
+              <div class="label">sortOrder</div>
+              <input class="input" th:field="*{sortOrder}" type="number" />
+              <div class="err" th:if="${#fields.hasErrors('sortOrder')}" th:errors="*{sortOrder}">err</div>
+            </label>
+          </div>
+
+          <label class="field">
+            <div class="label">menuName</div>
+            <input class="input" th:field="*{menuName}" />
+            <div class="err" th:if="${#fields.hasErrors('menuName')}" th:errors="*{menuName}">err</div>
+          </label>
+
+          <label class="field">
+            <div class="label">path</div>
+            <input class="input" th:field="*{path}" placeholder="/admin/users" />
+          </label>
+
+          <label class="field">
+            <div class="label">icon</div>
+            <input class="input" th:field="*{icon}" placeholder="users/menu/..." />
+          </label>
+
+          <label class="field">
+            <div class="label">enabled</div>
+            <select class="select" th:field="*{isEnabled}">
+              <option th:value="true">true</option>
+              <option th:value="false">false</option>
+            </select>
+            <div class="err" th:if="${#fields.hasErrors('isEnabled')}" th:errors="*{isEnabled}">err</div>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top: 12px; display: flex; justify-content: flex-end">
+      <button type="submit" class="btn-link" th:text="${isEdit} ? '저장' : '등록'">등록</button>
+    </div>
+  </form>
+</section>
+

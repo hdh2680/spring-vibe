@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="basemarkdown.dev.admin.roleMenus.mapper.RoleMenusMapper">
+
+    <select id="findAllRoles" resultType="basemarkdown.dev.admin.roleMenus.domain.Role">
+        SELECT
+            id,
+            role_name,
+            description
+        FROM roles
+        ORDER BY id ASC
+    </select>
+
+    <select id="findRoleById" resultType="basemarkdown.dev.admin.roleMenus.domain.Role">
+        SELECT
+            id,
+            role_name,
+            description
+        FROM roles
+        WHERE id = #{id}
+    </select>
+
+    <select id="findAllEnabledMenus" resultType="basemarkdown.dev.admin.roleMenus.domain.Menu">
+        SELECT
+            id,
+            parent_id,
+            menu_key,
+            menu_name,
+            path,
+            sort_order,
+            is_enabled
+        FROM menus
+        WHERE is_enabled = 1
+        ORDER BY COALESCE(parent_id, id), sort_order, id
+    </select>
+
+    <select id="findMenuIdsByRoleId" resultType="long">
+        SELECT menu_id
+        FROM role_menus
+        WHERE role_id = #{roleId}
+          AND can_access = 1
+        ORDER BY menu_id ASC
+    </select>
+
+    <delete id="deleteRoleMenus">
+        DELETE FROM role_menus
+        WHERE role_id = #{roleId}
+    </delete>
+
+    <insert id="insertRoleMenu">
+        INSERT INTO role_menus (role_id, menu_id, can_access, granted_at)
+        VALUES (#{roleId}, #{menuId}, 1, NOW(6))
+        ON DUPLICATE KEY UPDATE
+            can_access = 1
+    </insert>
+
+</mapper>
+

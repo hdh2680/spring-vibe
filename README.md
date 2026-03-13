@@ -23,10 +23,10 @@
 ---
 
 ## 3. Git 형상관리 정보
-- **Repository URL**: `https://github.com/hdh2680/basemarkdown.git`  
+- **Repository URL**: `https://github.com/hdh2680/basemarkdown.git`
 
-**Git 형상관리 규칙**은 `/docs/GIT_GUIDELINE.md` 참고  
-**코딩 규칙**은 `/docs/CODING_CONVENTION.md` 참고
+branch
+- master
 
 ---
 
@@ -82,12 +82,14 @@ http://localhost:8080/login
 http://localhost:8080/
 
 ## 6. 참고 문서
-- 아키텍처 및 패키지 구조: `/docs/ARCHITECTURE.md`
-- 코딩 규칙: `/docs/CODING_CONVENTION.md`
-- Git 형상관리 규칙: `/docs/GIT_GUIDELINE.md`
-- 기능/사용자 안내: 추후 `/docs/FUNCTIONS.md`, `/docs/USER_GUIDE.md` 작성 예정
-
+- `/docs/PRD.md` : 프로젝트의 목적, 사용자, 핵심 기능 등 **제품 요구사항을 정의한 문서**
+- `/docs/DATABASE_SCHEMA.md` : 시스템에서 사용하는 **데이터베이스 테이블 구조와 컬럼 정보를 정리한 문서**
+- `/docs/ARCHITECTURE.md` : 시스템의 **전체 아키텍처 구조와 패키지 설계 방식을 설명한 문서**
+- `/docs/CODING_RULE.md` : 코드 작성 시 지켜야 할 **코딩 스타일, 설계 원칙, 개발 규칙을 정리한 문서**
+- `/docs/FUNCTIONS.md` : 프로젝트에서 제공하는 **주요 기능 목록과 기능별 설명을 정리한 문서**
+- `/docs/TODOLIST.md` : 현재 진행해야 할 **개발 작업 목록과 진행 상태를 관리하는 문서**
 
 ## 7. AI Work Log Rule
-- Add a work note for every AI-assisted change: /docs/aiwork/WORK_yyyyMMdd_HHmmss.md
-- Include: goal, key changes, touched files, run/test commands, follow-ups
+- AI 도움으로 변경한 내용이 있으면, 변경 건마다 작업 노트를 1개 작성한다: `/docs/aiwork/WORK_yyyyMMdd_HHmmss.md`
+- 작업 노트에는 다음을 포함한다: 목표(goal), 핵심 변경사항(key changes), 수정/추가한 파일(touched files), 실행/테스트한 명령(run/test commands), 후속 할 일(follow-ups)
+- `/docs/aiwork/`에 적재하는 작업 노트 본문은 한국어로 작성한다 (명령어/코드/파일명은 원문 그대로 표기)
