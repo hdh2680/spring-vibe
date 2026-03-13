@@ -31,7 +31,7 @@ public class MenusController {
     @GetMapping("/list")
     public String list(Model model) {
         model.addAttribute("menus", menusService.findAll());
-        return render(model, "메뉴관리", "admin/menus/list");
+        return render(model, "메뉴관리", "html/admin/menus/list");
     }
 
     @GetMapping("/view")
@@ -42,7 +42,7 @@ public class MenusController {
         }
 
         model.addAttribute("menu", menu);
-        return render(model, "메뉴상세", "admin/menus/view");
+        return render(model, "메뉴상세", "html/admin/menus/view");
     }
 
     @GetMapping("/regist")
@@ -67,7 +67,7 @@ public class MenusController {
         model.addAttribute("form", form);
         model.addAttribute("isEdit", id != null);
         model.addAttribute("parents", menusService.findAllPossibleParents(id));
-        return render(model, (id == null ? "메뉴등록" : "메뉴수정"), "admin/menus/regist");
+        return render(model, (id == null ? "메뉴등록" : "메뉴수정"), "html/admin/menus/regist");
     }
 
     @PostMapping("/regist")
@@ -80,7 +80,7 @@ public class MenusController {
         if (bindingResult.hasErrors()) {
             model.addAttribute("isEdit", isEdit);
             model.addAttribute("parents", menusService.findAllPossibleParents(form.getId()));
-            return render(model, (isEdit ? "메뉴수정" : "메뉴등록"), "admin/menus/regist");
+            return render(model, (isEdit ? "메뉴수정" : "메뉴등록"), "html/admin/menus/regist");
         }
 
         if (isEdit) {
