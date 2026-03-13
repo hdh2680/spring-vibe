@@ -1,15 +1,17 @@
-﻿      :root {
-        --bg0: #0b1020;
-        --bg1: #0b1730;
-        --surface: rgba(255, 255, 255, 0.06);
-        --surface2: rgba(255, 255, 255, 0.085);
-        --border: rgba(255, 255, 255, 0.14);
-        --text: rgba(255, 255, 255, 0.92);
-        --muted: rgba(255, 255, 255, 0.68);
-        --muted2: rgba(255, 255, 255, 0.56);
-        --accent: #22c55e;
-        --accent2: #38bdf8;
-        --shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+/* Layout theme: Light */
+      :root {
+        --bg0: #f6f8fc;
+        --bg1: #eef2fb;
+        --surface: #ffffff;
+        --surface2: #f7f9fe;
+        --border: rgba(17, 24, 39, 0.12);
+        --text: rgba(17, 24, 39, 0.92);
+        --muted: rgba(17, 24, 39, 0.64);
+        --muted2: rgba(17, 24, 39, 0.52);
+        --accent: #16a34a;
+        --accent2: #2563eb;
+        --danger: #dc2626;
+        --shadow: 0 18px 60px rgba(16, 24, 40, 0.12);
         --radius: 16px;
         --radius2: 22px;
       }
@@ -37,9 +39,9 @@
           Arial,
           sans-serif;
         background:
-          radial-gradient(1000px 600px at 12% 10%, rgba(34, 197, 94, 0.28), transparent 58%),
-          radial-gradient(900px 540px at 88% 14%, rgba(56, 189, 248, 0.22), transparent 60%),
-          radial-gradient(900px 520px at 46% 92%, rgba(99, 102, 241, 0.14), transparent 60%),
+          radial-gradient(1100px 680px at 12% 12%, rgba(37, 99, 235, 0.10), transparent 60%),
+          radial-gradient(900px 540px at 88% 16%, rgba(22, 163, 74, 0.09), transparent 62%),
+          radial-gradient(900px 520px at 46% 92%, rgba(245, 158, 11, 0.10), transparent 60%),
           linear-gradient(180deg, var(--bg0), var(--bg1));
       }
 
@@ -53,7 +55,7 @@
 
       .sidebar {
         border: 1px solid var(--border);
-        background: linear-gradient(180deg, var(--surface), rgba(255, 255, 255, 0.03));
+        background: linear-gradient(180deg, var(--surface), var(--surface2));
         border-radius: var(--radius2);
         box-shadow: var(--shadow);
         overflow: hidden;
@@ -64,10 +66,10 @@
 
       .side-top {
         padding: 16px 16px 12px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        border-bottom: 1px solid rgba(17, 24, 39, 0.08);
         background:
-          radial-gradient(500px 180px at 0% 0%, rgba(34, 197, 94, 0.22), transparent 55%),
-          radial-gradient(420px 220px at 100% 0%, rgba(56, 189, 248, 0.16), transparent 62%);
+          radial-gradient(500px 180px at 0% 0%, rgba(22, 163, 74, 0.12), transparent 55%),
+          radial-gradient(420px 220px at 100% 0%, rgba(37, 99, 235, 0.10), transparent 62%);
       }
 
       .brand {
@@ -81,9 +83,9 @@
         height: 34px;
         border-radius: 12px;
         background:
-          radial-gradient(14px 14px at 30% 30%, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.05)),
-          linear-gradient(135deg, rgba(34, 197, 94, 0.85), rgba(56, 189, 248, 0.85));
-        border: 1px solid rgba(255, 255, 255, 0.18);
+          radial-gradient(14px 14px at 30% 30%, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.35)),
+          linear-gradient(135deg, rgba(22, 163, 74, 0.90), rgba(37, 99, 235, 0.85));
+        border: 1px solid rgba(17, 24, 39, 0.10);
       }
 
       .brand h1 {
@@ -103,9 +105,9 @@
       .user {
         margin-top: 12px;
         padding: 10px 12px;
-        border: 1px solid rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(17, 24, 39, 0.10);
         border-radius: var(--radius);
-        background: rgba(255, 255, 255, 0.045);
+        background: rgba(17, 24, 39, 0.02);
       }
 
       .user .name {
@@ -126,13 +128,21 @@
         gap: 6px;
       }
 
+      .nav-empty {
+        padding: 10px 10px;
+        border-radius: 14px;
+        border: 1px dashed rgba(17, 24, 39, 0.22);
+        color: rgba(17, 24, 39, 0.62);
+        font-size: 12px;
+      }
+
       .nav a {
         display: flex;
         align-items: center;
         gap: 10px;
         padding: 10px 10px;
         border-radius: 14px;
-        color: rgba(255, 255, 255, 0.88);
+        color: rgba(17, 24, 39, 0.86);
         text-decoration: none;
         border: 1px solid transparent;
         background: transparent;
@@ -141,40 +151,51 @@
         will-change: transform;
       }
 
+      .nav a.sub {
+        padding-left: 26px;
+        font-size: 12px;
+        color: rgba(17, 24, 39, 0.78);
+      }
+
+      .nav a.sub .dot {
+        width: 8px;
+        height: 8px;
+      }
+
       .nav a:hover {
-        background: rgba(255, 255, 255, 0.06);
-        border-color: rgba(255, 255, 255, 0.12);
+        background: rgba(37, 99, 235, 0.06);
+        border-color: rgba(17, 24, 39, 0.10);
         transform: translateY(-1px);
       }
 
       .nav a.active {
-        background: linear-gradient(135deg, rgba(34, 197, 94, 0.18), rgba(56, 189, 248, 0.12));
-        border-color: rgba(34, 197, 94, 0.25);
+        background: linear-gradient(135deg, rgba(22, 163, 74, 0.12), rgba(37, 99, 235, 0.08));
+        border-color: rgba(22, 163, 74, 0.22);
       }
 
       .dot {
         width: 10px;
         height: 10px;
         border-radius: 999px;
-        border: 1px solid rgba(255, 255, 255, 0.22);
-        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(17, 24, 39, 0.18);
+        background: rgba(17, 24, 39, 0.04);
       }
 
       .nav a.active .dot {
         background: var(--accent);
-        border-color: rgba(34, 197, 94, 0.6);
+        border-color: rgba(22, 163, 74, 0.55);
       }
 
       .side-bottom {
         padding: 12px 12px 14px;
-        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        border-top: 1px solid rgba(17, 24, 39, 0.08);
       }
 
       .btn {
         width: 100%;
-        border: 1px solid rgba(255, 255, 255, 0.16);
-        background: rgba(255, 255, 255, 0.06);
-        color: rgba(255, 255, 255, 0.92);
+        border: 1px solid rgba(17, 24, 39, 0.14);
+        background: rgba(255, 255, 255, 0.72);
+        color: rgba(17, 24, 39, 0.92);
         padding: 10px 12px;
         border-radius: 14px;
         cursor: pointer;
@@ -184,14 +205,14 @@
       }
 
       .btn:hover {
-        background: rgba(255, 255, 255, 0.09);
-        border-color: rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.92);
+        border-color: rgba(17, 24, 39, 0.18);
         transform: translateY(-1px);
       }
 
       .main {
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        background: rgba(0, 0, 0, 0.12);
+        border: 1px solid rgba(17, 24, 39, 0.10);
+        background: rgba(255, 255, 255, 0.72);
         border-radius: var(--radius2);
         box-shadow: var(--shadow);
         overflow: hidden;
@@ -203,10 +224,10 @@
         align-items: baseline;
         justify-content: space-between;
         gap: 12px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        border-bottom: 1px solid rgba(17, 24, 39, 0.08);
         background:
-          linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)),
-          radial-gradient(700px 260px at 30% 0%, rgba(56, 189, 248, 0.14), transparent 60%);
+          linear-gradient(180deg, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.55)),
+          radial-gradient(700px 260px at 30% 0%, rgba(37, 99, 235, 0.10), transparent 60%);
       }
 
       .topbar h2 {
@@ -234,3 +255,180 @@
           top: 0;
         }
       }
+
+      /* Shared light components for admin templates */
+      .panel {
+        border: 1px solid rgba(17, 24, 39, 0.12);
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.92);
+        box-shadow: 0 10px 30px rgba(16, 24, 40, 0.08);
+      }
+
+      .toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+      }
+
+      .toolbar h3 {
+        margin: 0 0 6px;
+        font-size: 14px;
+      }
+
+      .muted {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .btn-link {
+        display: inline-block;
+        padding: 8px 10px;
+        border-radius: 12px;
+        border: 1px solid rgba(17, 24, 39, 0.14);
+        text-decoration: none;
+        color: rgba(17, 24, 39, 0.92);
+        background: rgba(255, 255, 255, 0.96);
+        font-weight: 800;
+        font-size: 12px;
+      }
+
+      .btn-link:hover {
+        background: #ffffff;
+        border-color: rgba(17, 24, 39, 0.20);
+      }
+
+      .btn-danger {
+        padding: 8px 10px;
+        border-radius: 12px;
+        border: 1px solid rgba(220, 38, 38, 0.30);
+        background: rgba(220, 38, 38, 0.08);
+        color: rgba(17, 24, 39, 0.92);
+        font-weight: 800;
+        cursor: pointer;
+        font-size: 12px;
+      }
+
+      .btn-danger:hover {
+        background: rgba(220, 38, 38, 0.12);
+      }
+
+      .table-wrap {
+        margin-top: 12px;
+        overflow: hidden;
+      }
+
+      table.table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+      }
+
+      table.table thead {
+        background: rgba(17, 24, 39, 0.04);
+      }
+
+      table.table th,
+      table.table td {
+        text-align: left;
+        padding: 10px 12px;
+        border-top: 1px solid rgba(17, 24, 39, 0.08);
+        vertical-align: top;
+      }
+
+      table.table th {
+        border-top: 0;
+        color: rgba(17, 24, 39, 0.72);
+        font-weight: 800;
+      }
+
+      a.action {
+        color: rgba(37, 99, 235, 0.98);
+        text-decoration: none;
+        font-weight: 700;
+      }
+
+      a.action:hover {
+        text-decoration: underline;
+      }
+
+      .grid-2 {
+        margin-top: 12px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+
+      .grid-1 {
+        margin-top: 12px;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+
+      .panel-inner {
+        padding: 12px;
+      }
+
+      .panel-inner h4 {
+        margin: 0 0 10px;
+        font-size: 13px;
+      }
+
+      dl.kv {
+        margin: 0;
+        display: grid;
+        grid-template-columns: 120px 1fr;
+        gap: 8px;
+        font-size: 12px;
+      }
+
+      dl.kv dt {
+        color: var(--muted);
+      }
+
+      dl.kv dd {
+        margin: 0;
+      }
+
+      .form-grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+
+      .field {
+        display: block;
+        margin-bottom: 10px;
+      }
+
+      .field .label {
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 6px;
+      }
+
+      .input,
+      .select {
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid rgba(17, 24, 39, 0.14);
+        background: #ffffff;
+        color: rgba(17, 24, 39, 0.92);
+        outline: none;
+      }
+
+      .input:focus,
+      .select:focus {
+        border-color: rgba(37, 99, 235, 0.45);
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+      }
+
+      .err {
+        margin-top: 6px;
+        color: rgba(220, 38, 38, 0.95);
+        font-size: 12px;
+      }
+

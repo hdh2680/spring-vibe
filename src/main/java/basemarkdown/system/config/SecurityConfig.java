@@ -1,11 +1,14 @@
 package basemarkdown.system.config;
 
+import basemarkdown.dev.common.service.MenuService;
+import basemarkdown.system.security.MenuRedirectSuccessHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 
 /**
  * Spring Security 설정 - 인증/인가, 필터 규칙 정의.
@@ -15,7 +18,7 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, AuthenticationSuccessHandler loginSuccessHandler) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
@@ -29,7 +32,7 @@ public class SecurityConfig {
             .formLogin(form -> form
                 .loginPage("/login")
                 .loginProcessingUrl("/login")
-                .defaultSuccessUrl("/", true)
+                .successHandler(loginSuccessHandler)
                 .failureUrl("/login?error")
                 .permitAll()
             )
@@ -38,6 +41,11 @@ public class SecurityConfig {
                 .logoutSuccessUrl("/login?logout")
             );
         return http.build();
+    }
+
+    @Bean
+    public AuthenticationSuccessHandler loginSuccessHandler(MenuService menuService) {
+        return new MenuRedirectSuccessHandler(menuService);
     }
 
     @Bean

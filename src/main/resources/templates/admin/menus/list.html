@@ -1,0 +1,48 @@
+<section xmlns:th="http://www.thymeleaf.org" th:fragment="content">
+  <div class="toolbar">
+    <div>
+      <h3>메뉴 목록</h3>
+      <p class="muted">menus 테이블 기반</p>
+    </div>
+    <div>
+      <a class="btn-link" th:href="@{/admin/menus/regist}">+ 메뉴 등록</a>
+    </div>
+  </div>
+
+  <div class="panel table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Key</th>
+          <th>Name</th>
+          <th>Path</th>
+          <th>Parent</th>
+          <th>Sort</th>
+          <th>Enabled</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr th:if="${#lists.isEmpty(menus)}">
+          <td colspan="8" class="muted">데이터가 없습니다.</td>
+        </tr>
+        <tr th:each="m : ${menus}">
+          <td th:text="${m.id}">1</td>
+          <td th:text="${m.menuKey}">KEY</td>
+          <td th:text="${m.menuName}">NAME</td>
+          <td th:text="${m.path}">/path</td>
+          <td th:text="${m.parentName}">parent</td>
+          <td th:text="${m.sortOrder}">0</td>
+          <td th:text="${m.isEnabled}">true</td>
+          <td>
+            <a class="action" th:href="@{/admin/menus/view(id=${m.id})}">view</a>
+            <span style="opacity:.5">|</span>
+            <a class="action" th:href="@{/admin/menus/regist(id=${m.id})}">edit</a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+

@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="basemarkdown.dev.admin.menus.mapper.MenusMapper">
+
+    <select id="findAll" resultType="basemarkdown.dev.admin.menus.domain.Menu">
+        SELECT
+            m.id,
+            m.parent_id,
+            m.menu_key,
+            m.menu_name,
+            m.path,
+            m.icon,
+            m.sort_order,
+            m.is_enabled,
+            m.created_at,
+            m.updated_at,
+            p.menu_name AS parent_name
+        FROM menus m
+        LEFT JOIN menus p ON p.id = m.parent_id
+        ORDER BY COALESCE(m.parent_id, m.id), m.sort_order, m.id
+    </select>
+
+    <select id="findById" resultType="basemarkdown.dev.admin.menus.domain.Menu">
+        SELECT
+            m.id,
+            m.parent_id,
+            m.menu_key,
+            m.menu_name,
+            m.path,
+            m.icon,
+            m.sort_order,
+            m.is_enabled,
+            m.created_at,
+            m.updated_at,
+            p.menu_name AS parent_name
+        FROM menus m
+        LEFT JOIN menus p ON p.id = m.parent_id
+        WHERE m.id = #{id}
+    </select>
+
+    <select id="findByMenuKey" resultType="basemarkdown.dev.admin.menus.domain.Menu">
+        SELECT
+            id,
+            parent_id,
+            menu_key,
+            menu_name,
+            path,
+            icon,
+            sort_order,
+            is_enabled,
+            created_at,
+            updated_at
+        FROM menus
+        WHERE menu_key = #{menuKey}
+    </select>
+
+    <insert id="insert" parameterType="basemarkdown.dev.admin.menus.domain.Menu" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO menus (
+            parent_id,
+            menu_key,
+            menu_name,
+            path,
+            icon,
+            sort_order,
+            is_enabled,
+            created_at,
+            updated_at
+        ) VALUES (
+            #{parentId},
+            #{menuKey},
+            #{menuName},
+            #{path},
+            #{icon},
+            #{sortOrder},
+            #{isEnabled},
+            NOW(6),
+            NOW(6)
+        )
+    </insert>
+
+    <update id="update" parameterType="basemarkdown.dev.admin.menus.domain.Menu">
+        UPDATE menus
+        SET
+            parent_id = #{parentId},
+            menu_key = #{menuKey},
+            menu_name = #{menuName},
+            path = #{path},
+            icon = #{icon},
+            sort_order = #{sortOrder},
+            is_enabled = #{isEnabled},
+            updated_at = NOW(6)
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM menus WHERE id = #{id}
+    </delete>
+
+    <select id="findAllParents" resultType="basemarkdown.dev.admin.menus.domain.Menu">
+        SELECT
+            id,
+            parent_id,
+            menu_key,
+            menu_name,
+            path,
+            icon,
+            sort_order,
+            is_enabled
+        FROM menus
+        WHERE is_enabled = 1
+        ORDER BY COALESCE(parent_id, id), sort_order, id
+    </select>
+
+</mapper>

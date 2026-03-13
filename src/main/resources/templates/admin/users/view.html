@@ -1,0 +1,42 @@
+<section xmlns:th="http://www.thymeleaf.org" th:fragment="content">
+  <div class="toolbar">
+    <div>
+      <h3>사용자 상세</h3>
+      <p class="muted">권한(user_roles) 포함 조회</p>
+    </div>
+    <div style="display:flex; gap:8px">
+      <a class="btn-link" th:href="@{/admin/users/list}">목록</a>
+      <a class="btn-link" th:href="@{/admin/users/regist(id=${user.id})}">수정</a>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="panel">
+      <div class="panel-inner">
+        <h4>기본 정보</h4>
+        <dl class="kv">
+          <dt>ID</dt><dd th:text="${user.id}">1</dd>
+          <dt>Username</dt><dd th:text="${user.username}">u</dd>
+          <dt>Name</dt><dd th:text="${user.name}">n</dd>
+          <dt>Email</dt><dd th:text="${user.email}">e</dd>
+          <dt>Phone</dt><dd th:text="${user.phone}">p</dd>
+          <dt>Status</dt><dd th:text="${user.status}">ACTIVE</dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-inner">
+        <h4>권한</h4>
+        <div th:if="${#lists.isEmpty(roleIds)}" class="muted">부여된 권한이 없습니다.</div>
+        <ul th:unless="${#lists.isEmpty(roleIds)}" style="margin: 0; padding-left: 18px; font-size: 12px">
+          <li th:each="r : ${roles}" th:if="${roleIds.contains(r.id)}">
+            <span th:text="${r.roleName}">ROLE_USER</span>
+            <span th:if="${r.description != null}" class="muted" th:text="'(' + ${r.description} + ')'">(desc)</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+

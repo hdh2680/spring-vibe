@@ -24,26 +24,49 @@
         </div>
 
         <nav class="nav" aria-label="Menu">
-          <a th:href="@{/}" th:classappend="${activeMenu}=='dashboard' ? ' active' : ''">
-            <span class="dot" aria-hidden="true"></span>
-            Dashboard
-          </a>
-          <a th:href="@{/ui/tables}" th:classappend="${activeMenu}=='tables' ? ' active' : ''">
-            <span class="dot" aria-hidden="true"></span>
-            Tables
-          </a>
-          <a th:href="@{/ui/data-quality}" th:classappend="${activeMenu}=='data-quality' ? ' active' : ''">
-            <span class="dot" aria-hidden="true"></span>
-            Data Quality
-          </a>
-          <a th:href="@{/ui/reports}" th:classappend="${activeMenu}=='reports' ? ' active' : ''">
-            <span class="dot" aria-hidden="true"></span>
-            Reports
-          </a>
-          <a th:href="@{/ui/users}" th:classappend="${activeMenu}=='users' ? ' active' : ''">
-            <span class="dot" aria-hidden="true"></span>
-            Users & Roles
-          </a>
+          <div class="nav-empty" th:if="${#lists.isEmpty(leftMenus)}">
+            No menus assigned
+          </div>
+
+          <th:block th:each="m : ${leftMenus}">
+            <a
+              th:if="${m.path != null}"
+              th:href="${m.path}"
+              th:classappend="${currentPath != null and currentPath.startsWith(m.path)} ? ' active' : ''"
+            >
+              <span class="dot" aria-hidden="true"></span>
+              <span th:text="${m.menuName}">Menu</span>
+            </a>
+            <a
+              th:if="${m.path == null}"
+              href="#"
+              onclick="return false;"
+            >
+              <span class="dot" aria-hidden="true"></span>
+              <span th:text="${m.menuName}">Menu</span>
+            </a>
+
+            <th:block th:each="c : ${m.children}">
+              <a
+                class="sub"
+                th:if="${c.path != null}"
+                th:href="${c.path}"
+                th:classappend="${currentPath != null and currentPath.startsWith(c.path)} ? ' active' : ''"
+              >
+                <span class="dot" aria-hidden="true"></span>
+                <span th:text="${c.menuName}">Sub menu</span>
+              </a>
+              <a
+                class="sub"
+                th:if="${c.path == null}"
+                href="#"
+                onclick="return false;"
+              >
+                <span class="dot" aria-hidden="true"></span>
+                <span th:text="${c.menuName}">Sub menu</span>
+              </a>
+            </th:block>
+          </th:block>
         </nav>
 
         <div class="side-bottom">
@@ -59,7 +82,7 @@
             <h2 th:text="${pageTitle}">Dashboard</h2>
             <p>Layout is shared, content changes by route.</p>
           </div>
-          <div style="font-size: 12px; color: rgba(255, 255, 255, 0.76)">
+          <div class="muted">
             Auth: <strong th:text="${#authentication?.name}">user</strong>
           </div>
         </header>
@@ -71,4 +94,3 @@
     </div>
   </body>
 </html>
-

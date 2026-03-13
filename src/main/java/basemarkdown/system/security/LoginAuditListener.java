@@ -1,6 +1,6 @@
 package basemarkdown.system.security;
 
-import basemarkdown.dev.service.AuthService;
+import basemarkdown.dev.common.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.authentication.event.AbstractAuthenticationFailureEvent;
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent;

@@ -1,4 +1,4 @@
-#. 개요
+# 개요
 본 문서는 {{ROOT_PACKAGE}} 프로젝트의 시스템 아키텍처와 패키지 구조, 기술적 의사결정을 정의합니다. 
 
 ## 0. 변수 정의
@@ -6,14 +6,21 @@
 
 ---
 
-## 1. 프로젝트 백엔드 구성
-- **Spring Security**: 인증/인가
-- **Transaction 관리**
-- **Validation**
-- **Global Exception Handling**
-- **Actuator**: 모니터링
-- **OpenAPI**: Swagger UI
-- **Logging**: log4j-api-2.x.jar
+## 1. 백엔드 기술 구성
+`pom.xml` 기준으로 정리 (형식: 역할 : 명칭 : 버전)
+
+- 런타임 : Java : 17
+- 프레임워크 : Spring Boot : 3.2.5
+- Web/API : `spring-boot-starter-web`
+- 템플릿 : `spring-boot-starter-thymeleaf`
+- 보안 : `spring-boot-starter-security`
+- 검증 : `spring-boot-starter-validation`
+- 트랜잭션/ORM : `spring-boot-starter-data-jpa`
+- SQL Mapper : `mybatis-spring-boot-starter` : 3.0.3
+- DB 드라이버 : `mysql-connector-j`
+- 모니터링 : `spring-boot-starter-actuator`
+- API 문서 : `springdoc-openapi-starter-webmvc-ui` : 2.5.0
+- 로깅 : Logback(SLF4J)
 
 ---
 
