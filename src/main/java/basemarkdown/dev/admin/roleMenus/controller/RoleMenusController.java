@@ -59,7 +59,7 @@ public class RoleMenusController {
         model.addAttribute("menuTree", menuTree);
         model.addAttribute("form", form);
 
-        return render(model, "권한메뉴관리", "admin/roleMenus/roleMenus");
+        return render(model, "권한메뉴관리", "html/admin/roleMenus/roleMenus");
     }
 
     @PostMapping("/manage")
@@ -75,7 +75,7 @@ public class RoleMenusController {
             model.addAttribute("roles", roles);
             model.addAttribute("selectedRole", selected);
             model.addAttribute("menuTree", roleMenusService.findMenuTree());
-            return render(model, "권한메뉴관리", "admin/roleMenus/roleMenus");
+            return render(model, "권한메뉴관리", "html/admin/roleMenus/roleMenus");
         }
 
         roleMenusService.save(form);

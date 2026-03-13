@@ -34,7 +34,7 @@ public class UsersController {
     @GetMapping("/list")
     public String list(Model model) {
         model.addAttribute("users", usersService.findAll());
-        return render(model, "사용자관리", "admin/users/list");
+        return render(model, "사용자관리", "html/admin/users/list");
     }
 
     @GetMapping("/view")
@@ -50,7 +50,7 @@ public class UsersController {
         model.addAttribute("user", user);
         model.addAttribute("roles", roles);
         model.addAttribute("roleIds", roleIds);
-        return render(model, "사용자상세", "admin/users/view");
+        return render(model, "사용자상세", "html/admin/users/view");
     }
 
     @GetMapping("/regist")
@@ -73,7 +73,7 @@ public class UsersController {
         model.addAttribute("form", form);
         model.addAttribute("roles", usersService.findAllRoles());
         model.addAttribute("isEdit", id != null);
-        return render(model, (id == null ? "사용자등록" : "사용자수정"), "admin/users/regist");
+        return render(model, (id == null ? "사용자등록" : "사용자수정"), "html/admin/users/regist");
     }
 
     @PostMapping("/regist")
@@ -91,7 +91,7 @@ public class UsersController {
         if (bindingResult.hasErrors()) {
             model.addAttribute("roles", usersService.findAllRoles());
             model.addAttribute("isEdit", isEdit);
-            return render(model, (isEdit ? "사용자수정" : "사용자등록"), "admin/users/regist");
+            return render(model, (isEdit ? "사용자수정" : "사용자등록"), "html/admin/users/regist");
         }
 
         if (isEdit) {
@@ -109,4 +109,3 @@ public class UsersController {
         return "layout/app";
     }
 }
-

@@ -110,3 +110,6 @@ CODING_RULE.md > 1.2.1 Controller 네이밍(리소스 기준)
 
 ### PROJECT_CONTEXT.md 추가
 - 해당 문서가 있을 시 AI가 해당 규칙 순서대로 일을 진행한다고 한다.
+
+### view template 구조 수정 및 규칙 추가
+- templates/html/... 에 하위에 생성한다.
