@@ -58,6 +58,12 @@ logging:
     root: DEBUG
     springVibe: DEBUG
 
+# App storage (attachments, exports, etc.)
+# Can be overridden with env var: APP_STORAGE_ATTACHMENTS_DIR
+app:
+  storage:
+    attachments-dir: ${APP_STORAGE_ATTACHMENTS_DIR:C:/workspace/data/attachments}
+
 # External integrations (local-only hardcode allowed)
 # NOTE: Do not commit real secrets. Prefer env var: ${YOUTUBE_API_KEY:}
 integrations:
