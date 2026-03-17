@@ -15,7 +15,7 @@
     <artifactId>springVibe</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>springVibe</name>
-    <description>AI MD 프로젝트 - 데이터 품질 관리 및 DB 분석</description>
+    <description>Spring 기반 vibe코딩 프로젝트</description>
 
     <properties>
         <java.version>17</java.version>
