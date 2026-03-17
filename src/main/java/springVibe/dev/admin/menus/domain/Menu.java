@@ -14,6 +14,9 @@ public class Menu {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    // Tree list convenience (computed in query)
+    private Integer lev;
+
     // For list/view convenience
     private String parentName;
 
@@ -95,6 +98,14 @@ public class Menu {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Integer getLev() {
+        return lev;
+    }
+
+    public void setLev(Integer lev) {
+        this.lev = lev;
     }
 
     public String getParentName() {

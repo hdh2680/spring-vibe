@@ -6,7 +6,7 @@ spring:
     name: springVibe
 
   datasource:
-    url: jdbc:mysql://localhost:3306/iamdb?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Seoul
+    url: jdbc:mysql://localhost:3306/springVibe?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Seoul
     username: root
     password: root
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -57,4 +57,10 @@ logging:
   level:
     root: DEBUG
     springVibe: DEBUG
+
+# External integrations (local-only hardcode allowed)
+# NOTE: Do not commit real secrets. Prefer env var: ${YOUTUBE_API_KEY:}
+integrations:
+  youtube:
+    api-key: "AIzaSyCwdR2_arOumtX4J10yh92RE1xU5qJ7sf0" # TODO: put your API key here for local testing (do not commit)
 

@@ -1,4 +1,4 @@
-# AI MD 프로젝트 기초 생성
+# Spring 기반 Vibe Coding 프로젝트
 
 ## 0. 변수 정의
 이 문서에서 사용되는 플레이스홀더:
@@ -89,6 +89,7 @@ http://localhost:8080/
 - `/docs/CODING_RULE.md` : 코드 작성 시 지켜야 할 **코딩 스타일, 설계 원칙, 개발 규칙을 정리한 문서**
 - `/docs/FUNCTIONS.md` : 프로젝트에서 제공하는 **주요 기능 목록과 기능별 설명을 정리한 문서**
 - `/docs/TODOLIST.md` : 현재 진행해야 할 **개발 작업 목록과 진행 상태를 관리하는 문서**
+- `/docs/integrations/youtube-api.md` : YouTube Data API 사용을 위한 **인증/설정/쿼터/에러 처리 가이드**
 
 ## 7. AI Work Log Rule
 - AI 도움으로 변경한 내용이 있으면, 변경 건마다 작업 노트를 1개 작성한다: `/docs/aiwork/WORK_yyyyMMdd_HHmmss.md`

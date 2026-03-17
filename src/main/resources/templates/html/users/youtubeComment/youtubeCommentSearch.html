@@ -1,0 +1,82 @@
+<section xmlns:th="http://www.thymeleaf.org" th:fragment="content">
+  <div class="toolbar">
+    <div>
+      <h3>유튜브 댓글분석</h3>
+      <p class="muted">URL 입력 후 댓글 목록을 수집합니다 (MVP)</p>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-bottom: 1rem">
+    <form th:action="@{/users/youtubeComment/search}" method="post" th:object="${form}" style="display:flex; gap:.5rem; align-items:flex-start; flex-wrap:wrap">
+      <div style="flex: 1; min-width: 320px">
+        <label class="muted" for="url" style="display:block; margin-bottom:.25rem">유튜브 URL</label>
+        <input
+          id="url"
+          type="text"
+          th:field="*{url}"
+          placeholder="예) https://www.youtube.com/watch?v=VIDEO_ID"
+          style="width:100%; padding:.6rem .7rem; border:1px solid rgba(0,0,0,.12); border-radius:.6rem"
+        />
+        <div class="muted" th:if="${#fields.hasErrors('url')}" th:errors="*{url}" style="margin-top:.35rem"></div>
+      </div>
+
+      <input type="hidden" th:field="*{pageToken}" />
+
+      <div style="padding-top: 1.45rem">
+        <button class="btn" type="submit">데이터 가져오기</button>
+      </div>
+    </form>
+
+    <div th:if="${errorMessage != null}" style="margin-top:.75rem; padding:.65rem .8rem; border:1px solid rgba(200,0,0,.25); border-radius:.6rem; background: rgba(200,0,0,.05)">
+      <div style="font-weight:600">오류</div>
+      <div class="muted" th:text="${errorCode} + ' - ' + ${errorMessage}">ERR - message</div>
+    </div>
+  </div>
+
+  <div th:if="${page != null}">
+    <div class="toolbar" style="margin-bottom:.5rem">
+      <div>
+        <div class="muted">
+          videoId:
+          <strong th:text="${page.videoId}">videoId</strong>
+          <span th:if="${page.totalResults != null}">
+            | total:
+            <strong th:text="${page.totalResults}">0</strong>
+          </span>
+        </div>
+      </div>
+      <div th:if="${page.nextPageToken != null}">
+        <form th:action="@{/users/youtubeComment/search}" method="post" th:object="${form}">
+          <input type="hidden" th:field="*{url}" />
+          <input type="hidden" name="pageToken" th:value="${page.nextPageToken}" />
+          <button class="btn-link" type="submit">다음 페이지</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="panel table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th style="width: 180px">Author</th>
+            <th style="width: 170px">Published</th>
+            <th style="width: 80px">Likes</th>
+            <th>Comment</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr th:if="${#lists.isEmpty(page.comments)}">
+            <td colspan="4" class="muted">댓글이 없습니다.</td>
+          </tr>
+          <tr th:each="c : ${page.comments}">
+            <td th:text="${c.authorDisplayName}">author</td>
+            <td th:text="${c.publishedAt}">date</td>
+            <td th:text="${c.likeCount}">0</td>
+            <td style="white-space: pre-wrap" th:text="${c.text}">text</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
