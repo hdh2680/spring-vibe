@@ -80,6 +80,7 @@ Client -> (URL입력) -> `YoutubeCommentRestContoller` -> `YoutubeCommentService
   - `templates/html/users/youtubeComment/youtubeCommentSearch.html`에서 URL을 입력받는다.
   - 입력받은 URL로 youtube API를 사용해 댓글 데이터를 수집한다.
   - 댓글 내용을 목록으로 조회한다.
+  - 저장 버튼 클릭 시 `application.yml`의 `app.storage.attachments-dir/youtubeComment/yyyyMMdd_HHmmss` 형식으로 댓글 데이터를 JSON Lines (.jsonl) 파일을 저장한다.
   - (예정)댓글 전처리(특수문자/이모지/URL 제거, 공백 정리 등) 수행한다.
   - (예정)전처리 된 댓글 내용을 AI API(GPT)에 댓글 감정분석을 의뢰한다.
   - (예정)댓글 키워드 분석

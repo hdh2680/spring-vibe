@@ -14,3 +14,7 @@ Thumbs.db
 # Logs
 *.log
 
+# App data (uploads/attachments, local state)
+/data/
+/uploads/
+

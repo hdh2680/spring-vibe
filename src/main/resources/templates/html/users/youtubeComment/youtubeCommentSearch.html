@@ -1,4 +1,25 @@
 <section xmlns:th="http://www.thymeleaf.org" th:fragment="content">
+  <style>
+    /* Only for this page: keep the comment result area scrollable (overflow) */
+    .ytc-table-wrap {
+      max-height: 70vh;
+      overflow: auto;
+      overscroll-behavior: contain;
+    }
+
+    /* Sticky header while scrolling */
+    .ytc-table-wrap table.table thead th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: rgba(17, 24, 39, 0.04);
+    }
+
+    /* Prevent long comments from forcing horizontal overflow */
+    .ytc-table-wrap td:last-child {
+      word-break: break-word;
+    }
+  </style>
   <div class="toolbar">
     <div>
       <h3>유튜브 댓글분석</h3>
@@ -54,7 +75,7 @@
       </div>
     </div>
 
-    <div class="panel table-wrap">
+    <div class="panel table-wrap ytc-table-wrap">
       <table class="table">
         <thead>
           <tr>

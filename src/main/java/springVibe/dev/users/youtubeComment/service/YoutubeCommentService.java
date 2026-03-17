@@ -14,7 +14,7 @@ import java.util.List;
 
 @Service
 public class YoutubeCommentService {
-    private static final int DEFAULT_MAX_RESULTS = 50;
+    private static final int DEFAULT_MAX_RESULTS = 100;
 
     private final YoutubeDataApiClient youtubeDataApiClient;
 
