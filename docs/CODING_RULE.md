@@ -50,21 +50,21 @@
 
 ## 2. 기능별(모듈) 디렉토리 구조 가이드
 - Admin 계열 기능은 아래 구조를 기본으로 한다.
-  - `src/main/java/basemarkdown/dev/admin/{feature}/controller`
-  - `src/main/java/basemarkdown/dev/admin/{feature}/service`
-  - `src/main/java/basemarkdown/dev/admin/{feature}/mapper`
-  - `src/main/java/basemarkdown/dev/admin/{feature}/domain`
-  - `src/main/java/basemarkdown/dev/admin/{feature}/dto`
+  - `src/main/java/springVibe/dev/admin/{feature}/controller`
+  - `src/main/java/springVibe/dev/admin/{feature}/service`
+  - `src/main/java/springVibe/dev/admin/{feature}/mapper`
+  - `src/main/java/springVibe/dev/admin/{feature}/domain`
+  - `src/main/java/springVibe/dev/admin/{feature}/dto`
 - 일반 사용자(User) 계열 기능은 아래 구조를 기본으로 한다.
-  - `src/main/java/basemarkdown/dev/users/{feature}/controller`
-  - `src/main/java/basemarkdown/dev/users/{feature}/service`
-  - `src/main/java/basemarkdown/dev/users/{feature}/mapper`
-  - `src/main/java/basemarkdown/dev/users/{feature}/domain`
-  - `src/main/java/basemarkdown/dev/users/{feature}/dto`
+  - `src/main/java/springVibe/dev/users/{feature}/controller`
+  - `src/main/java/springVibe/dev/users/{feature}/service`
+  - `src/main/java/springVibe/dev/users/{feature}/mapper`
+  - `src/main/java/springVibe/dev/users/{feature}/domain`
+  - `src/main/java/springVibe/dev/users/{feature}/dto`
 - 예시:
-  - 사용자 관리: `src/main/java/basemarkdown/dev/admin/users/**`
-  - 메뉴 관리: `src/main/java/basemarkdown/dev/admin/menus/**`
-  - (일반 사용자) 프로필: `src/main/java/basemarkdown/dev/users/profile/**`
+  - 사용자 관리: `src/main/java/springVibe/dev/admin/users/**`
+  - 메뉴 관리: `src/main/java/springVibe/dev/admin/menus/**`
+  - (일반 사용자) 프로필: `src/main/java/springVibe/dev/users/profile/**`
 
 ---
 

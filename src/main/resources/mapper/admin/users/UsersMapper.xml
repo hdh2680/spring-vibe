@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="basemarkdown.dev.admin.users.mapper.UsersMapper">
+<mapper namespace="springVibe.dev.admin.users.mapper.UsersMapper">
 
-    <select id="findAll" resultType="basemarkdown.dev.admin.users.domain.AdminUser">
+    <select id="findAll" resultType="springVibe.dev.admin.users.domain.AdminUser">
         SELECT
             id,
             username,
@@ -19,7 +19,7 @@
         ORDER BY id DESC
     </select>
 
-    <select id="findById" resultType="basemarkdown.dev.admin.users.domain.AdminUser">
+    <select id="findById" resultType="springVibe.dev.admin.users.domain.AdminUser">
         SELECT
             id,
             username,
@@ -36,7 +36,7 @@
         WHERE id = #{id}
     </select>
 
-    <select id="findByUsername" resultType="basemarkdown.dev.admin.users.domain.AdminUser">
+    <select id="findByUsername" resultType="springVibe.dev.admin.users.domain.AdminUser">
         SELECT
             id,
             username,
@@ -53,7 +53,7 @@
         WHERE username = #{username}
     </select>
 
-    <insert id="insert" parameterType="basemarkdown.dev.admin.users.domain.AdminUser" useGeneratedKeys="true" keyProperty="id">
+    <insert id="insert" parameterType="springVibe.dev.admin.users.domain.AdminUser" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO users (
             username,
             password,
@@ -79,7 +79,7 @@
         )
     </insert>
 
-    <update id="update" parameterType="basemarkdown.dev.admin.users.domain.AdminUser">
+    <update id="update" parameterType="springVibe.dev.admin.users.domain.AdminUser">
         UPDATE users
         <set>
             name = #{name},
@@ -94,7 +94,7 @@
         WHERE id = #{id}
     </update>
 
-    <select id="findAllRoles" resultType="basemarkdown.dev.admin.users.domain.Role">
+    <select id="findAllRoles" resultType="springVibe.dev.admin.users.domain.Role">
         SELECT
             id,
             role_name,

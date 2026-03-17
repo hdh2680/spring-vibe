@@ -1,4 +1,4 @@
-# PRD (RE)
+# PRD
 
 본 문서는 프로젝트의 목적, 사용자, 핵심 기능 등 제품 요구사항을 정의합니다.
 
@@ -13,12 +13,12 @@
 
 ## 공통
 ### 로그인
-- 패키지: `src/main/java/basemarkdown/dev/common/`
+- 패키지: `src/main/java/springVibe/dev/common/`
 - 매핑: `/login`
 - 화면: `templates/html/login.html`
 
 ### 로그인 로그
-- 패키지: `src/main/java/basemarkdown/dev/common/`
+- 패키지: `src/main/java/springVibe/dev/common/`
 - 관련 테이블
   - `login_logs` : 사용자 로그인 이력
 
@@ -26,7 +26,7 @@
 > 화면(View) 템플릿의 기본 위치는 `src/main/resources/templates/html/**` 하위이며, Controller의 `contentTemplate` 지정 규칙은 `/docs/CODING_RULE.md`를 따른다.
 
 ### 1. 사용자 관리
-- 패키지: `src/main/java/basemarkdown/dev/admin/users/`
+- 패키지: `src/main/java/springVibe/dev/admin/users/`
 - 매핑: `/admin/users`
 - 화면: `templates/html/admin/users/`
 - 관련 테이블
@@ -42,7 +42,7 @@
     - 권한 부여/회수
 
 ### 2. 메뉴 관리
-- 패키지: `src/main/java/basemarkdown/dev/admin/menus/`
+- 패키지: `src/main/java/springVibe/dev/admin/menus/`
 - 매핑: `/admin/menus`
 - 화면: `templates/html/admin/menus/`
 - 관련 테이블
@@ -55,7 +55,7 @@
   - 메뉴 삭제
 
 ### 3. 권한-메뉴 관리
-- 패키지: `src/main/java/basemarkdown/dev/admin/roleMenus/`
+- 패키지: `src/main/java/springVibe/dev/admin/roleMenus/`
 - 매핑: `/admin/roleMenus`
 - 화면: `templates/html/admin/roleMenus/`
 - 관련 테이블

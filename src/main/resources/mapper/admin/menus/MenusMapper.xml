@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="basemarkdown.dev.admin.menus.mapper.MenusMapper">
+<mapper namespace="springVibe.dev.admin.menus.mapper.MenusMapper">
 
-    <select id="findAll" resultType="basemarkdown.dev.admin.menus.domain.Menu">
+    <select id="findAll" resultType="springVibe.dev.admin.menus.domain.Menu">
         SELECT
             m.id,
             m.parent_id,
@@ -20,7 +20,7 @@
         ORDER BY COALESCE(m.parent_id, m.id), m.sort_order, m.id
     </select>
 
-    <select id="findById" resultType="basemarkdown.dev.admin.menus.domain.Menu">
+    <select id="findById" resultType="springVibe.dev.admin.menus.domain.Menu">
         SELECT
             m.id,
             m.parent_id,
@@ -38,7 +38,7 @@
         WHERE m.id = #{id}
     </select>
 
-    <select id="findByMenuKey" resultType="basemarkdown.dev.admin.menus.domain.Menu">
+    <select id="findByMenuKey" resultType="springVibe.dev.admin.menus.domain.Menu">
         SELECT
             id,
             parent_id,
@@ -54,7 +54,7 @@
         WHERE menu_key = #{menuKey}
     </select>
 
-    <insert id="insert" parameterType="basemarkdown.dev.admin.menus.domain.Menu" useGeneratedKeys="true" keyProperty="id">
+    <insert id="insert" parameterType="springVibe.dev.admin.menus.domain.Menu" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO menus (
             parent_id,
             menu_key,
@@ -78,7 +78,7 @@
         )
     </insert>
 
-    <update id="update" parameterType="basemarkdown.dev.admin.menus.domain.Menu">
+    <update id="update" parameterType="springVibe.dev.admin.menus.domain.Menu">
         UPDATE menus
         SET
             parent_id = #{parentId},
@@ -96,7 +96,7 @@
         DELETE FROM menus WHERE id = #{id}
     </delete>
 
-    <select id="findAllParents" resultType="basemarkdown.dev.admin.menus.domain.Menu">
+    <select id="findAllParents" resultType="springVibe.dev.admin.menus.domain.Menu">
         SELECT
             id,
             parent_id,

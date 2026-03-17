@@ -2,13 +2,14 @@
 
 ## 0. 변수 정의
 이 문서에서 사용되는 플레이스홀더:
-- `{{ROOT_PACKAGE}}` = basemarkdown
+- `{{ROOT_PACKAGE}}` = springVibe
 - `{{DEVELOP_PACKAGE}}` = dev
 
 ---
 
 ## 1. 프로젝트 개요
-본 프로젝트는 MARKDOWN으로 AI를 활용하여 기본적인 프로젝트를 생성하는데 의미를 둠.
+spring-vibe는 단순한 코드 구현을 넘어 , 최신 AI 툴을 활용한 생산성 높은 개발 방식(Vibe Coding)을 지향합니다. 
+일상 속의 아이디어들을 빠르게 프로토타이핑하고, 실무적인 기술 스택을 결합하여 견고한 엔터프라이즈 구조로 발전시키는 것을 목적으로 합니다.
 
 ---
 
@@ -23,7 +24,7 @@
 ---
 
 ## 3. Git 형상관리 정보
-- **Repository URL**: `https://github.com/hdh2680/basemarkdown.git`
+- **Repository URL**: `https://github.com/hdh2680/spring-vibe.git`
 
 branch
 - master
@@ -51,7 +52,7 @@ branch
 - Java 17 설치
 - MySQL 8 실행 및 DB 생성(예시):
 ```sql
-CREATE DATABASE basemarkdown CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE springVibe CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 - DB 계정 정보 설정:
   - `src/main/resources/application.yml`의 `spring.datasource.username/password` 수정

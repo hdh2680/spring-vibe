@@ -11,10 +11,10 @@
         <relativePath/>
     </parent>
 
-    <groupId>basemarkdown</groupId>
-    <artifactId>basemarkdown</artifactId>
+    <groupId>springVibe</groupId>
+    <artifactId>springVibe</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>basemarkdown</name>
+    <name>springVibe</name>
     <description>AI MD 프로젝트 - 데이터 품질 관리 및 DB 분석</description>
 
     <properties>
