@@ -3,21 +3,57 @@
 <mapper namespace="springVibe.dev.admin.menus.mapper.MenusMapper">
 
     <select id="findAll" resultType="springVibe.dev.admin.menus.domain.Menu">
+        WITH RECURSIVE menu_tree AS (
+            SELECT
+                m.id,
+                m.parent_id,
+                m.menu_key,
+                m.menu_name,
+                m.path,
+                m.icon,
+                m.sort_order,
+                m.is_enabled,
+                m.created_at,
+                m.updated_at,
+                0 AS lev,
+                CAST(LPAD(COALESCE(m.sort_order, 0), 6, '0') AS CHAR(1024)) AS sort_path
+            FROM menus m
+            WHERE m.parent_id IS NULL
+
+            UNION ALL
+
+            SELECT
+                c.id,
+                c.parent_id,
+                c.menu_key,
+                c.menu_name,
+                c.path,
+                c.icon,
+                c.sort_order,
+                c.is_enabled,
+                c.created_at,
+                c.updated_at,
+                mt.lev + 1 AS lev,
+                CAST(CONCAT(mt.sort_path, '/', LPAD(COALESCE(c.sort_order, 0), 6, '0')) AS CHAR(1024)) AS sort_path
+            FROM menus c
+            JOIN menu_tree mt ON c.parent_id = mt.id
+        )
         SELECT
-            m.id,
-            m.parent_id,
-            m.menu_key,
-            m.menu_name,
-            m.path,
-            m.icon,
-            m.sort_order,
-            m.is_enabled,
-            m.created_at,
-            m.updated_at,
+            mt.id,
+            mt.parent_id,
+            mt.menu_key,
+            mt.menu_name,
+            mt.path,
+            mt.icon,
+            mt.sort_order,
+            mt.is_enabled,
+            mt.created_at,
+            mt.updated_at,
+            mt.lev,
             p.menu_name AS parent_name
-        FROM menus m
-        LEFT JOIN menus p ON p.id = m.parent_id
-        ORDER BY COALESCE(m.parent_id, m.id), m.sort_order, m.id
+        FROM menu_tree mt
+        LEFT JOIN menus p ON p.id = mt.parent_id
+        ORDER BY mt.sort_path, mt.id
     </select>
 
     <select id="findById" resultType="springVibe.dev.admin.menus.domain.Menu">

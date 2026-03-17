@@ -30,7 +30,12 @@
         <tr th:each="m : ${menus}">
           <td th:text="${m.id}">1</td>
           <td th:text="${m.menuKey}">KEY</td>
-          <td th:text="${m.menuName}">NAME</td>
+          <td>
+            <span
+              th:style="'display:inline-block; padding-left:' + (${m.lev} != null ? (${m.lev} * 18) : 0) + 'px'"
+              th:text="${m.menuName}"
+            >NAME</span>
+          </td>
           <td th:text="${m.path}">/path</td>
           <td th:text="${m.parentName}">parent</td>
           <td th:text="${m.sortOrder}">0</td>
