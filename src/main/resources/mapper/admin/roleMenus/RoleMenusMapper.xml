@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="basemarkdown.dev.admin.roleMenus.mapper.RoleMenusMapper">
+<mapper namespace="springVibe.dev.admin.roleMenus.mapper.RoleMenusMapper">
 
-    <select id="findAllRoles" resultType="basemarkdown.dev.admin.roleMenus.domain.Role">
+    <select id="findAllRoles" resultType="springVibe.dev.admin.roleMenus.domain.Role">
         SELECT
             id,
             role_name,
@@ -11,7 +11,7 @@
         ORDER BY id ASC
     </select>
 
-    <select id="findRoleById" resultType="basemarkdown.dev.admin.roleMenus.domain.Role">
+    <select id="findRoleById" resultType="springVibe.dev.admin.roleMenus.domain.Role">
         SELECT
             id,
             role_name,
@@ -20,7 +20,7 @@
         WHERE id = #{id}
     </select>
 
-    <select id="findAllEnabledMenus" resultType="basemarkdown.dev.admin.roleMenus.domain.Menu">
+    <select id="findAllEnabledMenus" resultType="springVibe.dev.admin.roleMenus.domain.Menu">
         SELECT
             id,
             parent_id,
