@@ -1,0 +1,51 @@
+<section xmlns:th="http://www.thymeleaf.org" th:fragment="content">
+  <div class="toolbar">
+    <div>
+      <h3>유튜브 댓글 분석</h3>
+      <p class="muted">저장 이력 목록을 조회하고, 전처리/상세 보기로 진행합니다.</p>
+    </div>
+    <div>
+      <a class="btn-link" th:href="@{/users/youtubeComment/search}">+ 댓글 수집</a>
+    </div>
+  </div>
+
+  <div th:if="${errorMessage != null}" style="margin-top:.75rem; padding:.65rem .8rem; border:1px solid rgba(200,0,0,.25); border-radius:.6rem; background: rgba(200,0,0,.05)">
+    <div style="font-weight:600">오류</div>
+    <div class="muted" th:text="${errorCode} + ' - ' + ${errorMessage}">ERR - message</div>
+  </div>
+  <script th:if="${successMessage != null}" th:inline="javascript">
+    alert([[${successMessage}]]);
+  </script>
+
+  <div class="panel table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th style="width: 80px">ID</th>
+          <th>Video URL</th>
+          <th style="width: 170px">Original Saved</th>
+          <th style="width: 170px">Preprocessed Saved</th>
+          <th style="width: 160px">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr th:if="${#lists.isEmpty(histories)}">
+          <td colspan="5" class="muted">저장 이력이 없습니다.</td>
+        </tr>
+        <tr th:each="h : ${histories}">
+          <td th:text="${h.id}">1</td>
+          <td style="word-break: break-word" th:text="${h.videoUrl}">url</td>
+          <td th:text="${h.originalSavedAt}">-</td>
+          <td th:text="${h.preprocessedSavedAt}">-</td>
+          <td>
+            <form th:if="${h.preprocessedSavedAt == null}" th:action="@{/users/youtubeComment/analysis/preprocess}" method="post" style="display:inline">
+              <input type="hidden" name="id" th:value="${h.id}" />
+              <button class="btn-link" type="submit" style="cursor:pointer">전처리</button>
+            </form>
+            <a th:if="${h.preprocessedSavedAt != null}" class="action" th:href="@{/users/youtubeComment/analysis/view(id=${h.id})}">view</a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>

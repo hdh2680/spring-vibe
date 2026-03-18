@@ -7,6 +7,8 @@ public class YoutubeCommentPage {
     private String videoId;
     private Integer totalResults;
     private String nextPageToken;
+    private Integer collectedCount;
+    private Integer requestedLimit;
     private List<YoutubeCommentItem> comments;
 
     public String getInputUrl() {
@@ -41,6 +43,22 @@ public class YoutubeCommentPage {
         this.nextPageToken = nextPageToken;
     }
 
+    public Integer getCollectedCount() {
+        return collectedCount;
+    }
+
+    public void setCollectedCount(Integer collectedCount) {
+        this.collectedCount = collectedCount;
+    }
+
+    public Integer getRequestedLimit() {
+        return requestedLimit;
+    }
+
+    public void setRequestedLimit(Integer requestedLimit) {
+        this.requestedLimit = requestedLimit;
+    }
+
     public List<YoutubeCommentItem> getComments() {
         return comments;
     }
@@ -49,4 +67,3 @@ public class YoutubeCommentPage {
         this.comments = comments;
     }
 }
-

@@ -70,21 +70,46 @@
 
 ### 4. 유튜브 댓글분석
 유튜브 URL을 입력받아 API를 통해 댓글 목록을 수집, 해당 데이터를 전처리, 분석 과정을 거쳐 시각화 자료를 제공한다.
-Client -> (URL입력) -> `YoutubeCommentRestContoller` -> `YoutubeCommentService` -> `Youtube Data API` -> (예정)데이터 분석 -> Response API
+Client -> (URL입력) -> `Contoller` -> `Service` -> `Youtube Data API` -> (예정)데이터 분석 -> Response API
 
 - 패키지 : `src/main/java/springVibe/dev/users/youtubeComment`
-- 매핑: `/users/youtubeComment`
+- 매핑
+  - 댓글 수집: `/users/youtubeComment/search`
+  - 분석/이력: `/users/youtubeComment/analysis`
 - 화면: `templates/html/users/youtubeComment/`
   상단에 유튜브 URL 입력하는 INPUT박스가 존재하고 데이터가져오기 버튼을 클릭하면 api호출하여 하단에 댓글목록을 제공한다.
+- 관련 테이블
+  - `youtube_comment_analysis_histories` : 저장 버튼 클릭 시 영상 처리/분석 이력
+
+#### 4.1 유튜브 댓글 조회
+- 컨트롤러 : `YoutubeCommentSearchController`
+- 화면 : `youtubeCommentSearch.html`
 - 기능
   - `templates/html/users/youtubeComment/youtubeCommentSearch.html`에서 URL을 입력받는다.
   - 입력받은 URL로 youtube API를 사용해 댓글 데이터를 수집한다.
   - 댓글 내용을 목록으로 조회한다.
-  - 저장 버튼 클릭 시 `application.yml`의 `app.storage.attachments-dir/youtubeComment/yyyyMMdd_HHmmss` 형식으로 댓글 데이터를 JSON Lines (.jsonl) 파일을 저장한다.
-  - (예정)댓글 전처리(특수문자/이모지/URL 제거, 공백 정리 등) 수행한다.
+  - 저장 버튼 클릭 시 `application.yml`의 `app.storage.attachments-dir/youtubeComment/{yyyyMMdd_HHmmss}.jsonl` 형식으로 댓글 데이터를 전부 수집하여 JSON Lines (.jsonl) 파일을 저장하고 저장한 정보를 `youtube_comment_analysis_histories` 테이블에 저장한다.
+    - `video_url` : 입력받은 URL
+    - `original_file_path` : 저장 버튼 클릭 시 저장된 파일경로
+    - `original_saved_at` : 저장 버튼 클릭 일시
+
+#### 4.2 유튜브 댓글
+- 컨트롤러 : `YoutubeCommentAnalysisController`
+- 화면 : `youtubeCommentAnalysis.html`
+- 기능 
+  - `youtube_comment_analysis_histories` 테이블 목록을 조회한다. 목록 actions은 `preprocessed_saved_at` 컬럼이 null이라면 전처리수행, 전처리 수행이 됐다면 view(상세)로 이동할 수 있다.
+  - 테이블 목록에서 전처리 클릭 시 원본 `original_file_path`의 파일을 읽어 댓글 전처리 수행 후 원본형태에 전처리 된 문구열을 추가하여 JSON Lines(.jsonl) 파일을 저장하고 `preprocessed_file_path`, `preprocessed_saved_at` 컬럼을 수정한다.
+  - 전처리 정규화(권장)
+    - 기본 정규화: 유니코드 정규화(NFKC), 개행/탭 -> 공백, 연속 공백 축약, trim
+    - 노이즈 제거: URL 제거, HTML 엔티티/태그 제거, 불필요한 특수문자 제거(단, `! ? ㅋㅋ ㅠㅠ` 등 감정 신호는 완전 삭제보다 축약/토큰화 권장)
+    - 반복 문자 축약: `ㅋㅋㅋㅋㅋㅋ` -> `ㅋㅋ`, `!!!!` -> `!` 등 과도한 반복을 의미 보존 형태로 축약
+    - 멘션/해시태그 처리: `@id`, `#tag`는 제거 또는 토큰화(@MENTION, #TAG) 중 택1
+    - 스팸/광고/중복 처리(옵션): 광고/유도 문구 룰 기반 필터, 완전 동일 댓글 중복 제거, 언어 감지로 대상 외 언어 분리
   - (예정)전처리 된 댓글 내용을 AI API(GPT)에 댓글 감정분석을 의뢰한다.
   - (예정)댓글 키워드 분석
   - (예정)댓글 목록, 총 댓글 갯수 대비 감정분석(긍정, 중립, 부정) 분포율, 키워드 분석 순위를 시각화하여 `templates/html/users/youtubeComment/youtubeCommentMain.html` 페이지 하단에 제공한다.
+  - (예정)시간흐름분석 초반에서 후반부로 갈수록 감정변화가 어떻게 변하는지
+  - (예정)댓글요약(AI활용) 많은댓글을 3줄로 요약
   
 
 ## 결정 사항(Decision Log)

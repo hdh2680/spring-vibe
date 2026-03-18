@@ -25,10 +25,13 @@
       <h3>유튜브 댓글분석</h3>
       <p class="muted">URL 입력 후 댓글 목록을 수집합니다 (MVP)</p>
     </div>
+    <div>
+      <a class="btn-link" th:href="@{/users/youtubeComment/analysis}">이력/분석</a>
+    </div>
   </div>
 
   <div class="panel" style="margin-bottom: 1rem">
-    <form th:action="@{/users/youtubeComment/search}" method="post" th:object="${form}" style="display:flex; gap:.5rem; align-items:flex-start; flex-wrap:wrap">
+    <form id="ytcForm" th:action="@{/users/youtubeComment/search}" method="post" th:object="${form}" style="display:flex; gap:.5rem; align-items:flex-start; flex-wrap:wrap">
       <div style="flex: 1; min-width: 320px">
         <label class="muted" for="url" style="display:block; margin-bottom:.25rem">유튜브 URL</label>
         <input
@@ -41,10 +44,25 @@
         <div class="muted" th:if="${#fields.hasErrors('url')}" th:errors="*{url}" style="margin-top:.35rem"></div>
       </div>
 
+      <div style="width: 180px">
+        <label class="muted" for="limit" style="display:block; margin-bottom:.25rem">가져올 개수</label>
+        <input
+          id="limit"
+          type="number"
+          min="1"
+          max="500"
+          step="1"
+          th:field="*{limit}"
+          style="width:100%; padding:.6rem .7rem; border:1px solid rgba(0,0,0,.12); border-radius:.6rem"
+        />
+        <div class="muted" th:if="${#fields.hasErrors('limit')}" th:errors="*{limit}" style="margin-top:.35rem"></div>
+      </div>
+
       <input type="hidden" th:field="*{pageToken}" />
 
       <div style="padding-top: 1.45rem">
         <button class="btn" type="submit">데이터 가져오기</button>
+        <button id="btnExportAsync" class="btn" type="submit" th:formaction="@{/users/youtubeComment/search/export}">저장(JSONL)</button>
       </div>
     </form>
 
@@ -52,7 +70,53 @@
       <div style="font-weight:600">오류</div>
       <div class="muted" th:text="${errorCode} + ' - ' + ${errorMessage}">ERR - message</div>
     </div>
+    <script th:if="${successMessage != null}" th:inline="javascript">
+      alert([[${successMessage}]]);
+    </script>
   </div>
+
+  <script th:inline="javascript">
+    (() => {
+      const form = document.getElementById('ytcForm');
+      const exportBtn = document.getElementById('btnExportAsync');
+      const exportUrl = /*[[@{/users/youtubeComment/search/exportAsync}]]*/ '/users/youtubeComment/search/exportAsync';
+      if (!form || !exportBtn || !window.fetch) return;
+
+      form.addEventListener('submit', async (e) => {
+        if (e.submitter !== exportBtn) return; // keep normal submit for search
+        e.preventDefault();
+
+        exportBtn.disabled = true;
+        const prevText = exportBtn.textContent;
+        exportBtn.textContent = '저장중...';
+
+        try {
+          const body = new URLSearchParams(new FormData(form));
+          const res = await fetch(exportUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+            body
+          });
+          const json = await res.json().catch(() => null);
+          if (!res.ok) {
+            const msg = json && json.message ? json.message : `요청 실패 (${res.status})`;
+            const code = json && json.errorCode ? json.errorCode : 'ERR';
+            alert(`${code} - ${msg}`);
+            return;
+          }
+
+          const msg = json && json.message ? json.message : '저장되었습니다.';
+          const filePath = json && json.filePath ? json.filePath : null;
+          alert(filePath ? `${msg}\n\n${filePath}` : msg);
+        } catch (err) {
+          alert(err && err.message ? err.message : '저장 중 오류가 발생했습니다.');
+        } finally {
+          exportBtn.disabled = false;
+          exportBtn.textContent = prevText;
+        }
+      });
+    })();
+  </script>
 
   <div th:if="${page != null}">
     <div class="toolbar" style="margin-bottom:.5rem">
@@ -60,6 +124,14 @@
         <div class="muted">
           videoId:
           <strong th:text="${page.videoId}">videoId</strong>
+          <span th:if="${page.collectedCount != null}">
+            | collected:
+            <strong th:text="${page.collectedCount}">0</strong>
+          </span>
+          <span th:if="${page.requestedLimit != null}">
+            /
+            <strong th:text="${page.requestedLimit}">0</strong>
+          </span>
           <span th:if="${page.totalResults != null}">
             | total:
             <strong th:text="${page.totalResults}">0</strong>
@@ -69,6 +141,7 @@
       <div th:if="${page.nextPageToken != null}">
         <form th:action="@{/users/youtubeComment/search}" method="post" th:object="${form}">
           <input type="hidden" th:field="*{url}" />
+          <input type="hidden" th:field="*{limit}" />
           <input type="hidden" name="pageToken" th:value="${page.nextPageToken}" />
           <button class="btn-link" type="submit">다음 페이지</button>
         </form>
@@ -100,4 +173,3 @@
     </div>
   </div>
 </section>
-
