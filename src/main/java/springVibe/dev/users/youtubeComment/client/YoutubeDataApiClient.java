@@ -14,6 +14,8 @@ import org.springframework.web.client.RestClientResponseException;
 @Component
 public class YoutubeDataApiClient {
     private static final String YOUTUBE_API_BASE_URL = "https://www.googleapis.com";
+    private static final int MIN_MAX_RESULTS = 1;
+    private static final int MAX_MAX_RESULTS = 100;
 
     private final YoutubeIntegrationProperties properties;
     private final RestClient restClient;
@@ -30,6 +32,12 @@ public class YoutubeDataApiClient {
         }
         if (videoId == null || videoId.isBlank()) {
             throw new BaseException("YOUTUBE_VIDEO_ID_REQUIRED", "videoId는 필수입니다.");
+        }
+        if (maxResults < MIN_MAX_RESULTS || maxResults > MAX_MAX_RESULTS) {
+            throw new BaseException(
+                "YOUTUBE_MAX_RESULTS_INVALID",
+                "maxResults는 " + MIN_MAX_RESULTS + "~" + MAX_MAX_RESULTS + " 범위여야 합니다."
+            );
         }
 
         try {
@@ -60,4 +68,3 @@ public class YoutubeDataApiClient {
         }
     }
 }
-

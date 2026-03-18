@@ -13,6 +13,7 @@
 - `roles`
 - `user_roles`
 - `users`
+- `youtube_comment_analysis_histories`
 
 ## `login_logs`
 
@@ -114,5 +115,50 @@ CREATE TABLE `users` (
   UNIQUE KEY `username` (`username`),
   UNIQUE KEY `email` (`email`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='회원 기본 정보 테이블'
+```
+
+## `youtube_comment_analysis_histories`
+
+```sql
+CREATE TABLE `youtube_comment_analysis_histories` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '이력 ID',
+
+  `user_id` bigint DEFAULT NULL COMMENT '회원 ID',
+  `video_url` varchar(2048) NOT NULL COMMENT '영상 URL',
+
+  `original_file_path` varchar(1024) NOT NULL COMMENT '원본파일 저장 경로',
+  `original_saved_at` datetime(6) NOT NULL COMMENT '원본파일 저장 일시',
+
+  `preprocessed_file_path` varchar(1024) DEFAULT NULL COMMENT '전처리파일 저장 경로',
+  `preprocessed_saved_at` datetime(6) DEFAULT NULL COMMENT '전처리 일시',
+
+  `analysis1_type` varchar(50) DEFAULT NULL COMMENT '분석유형1',
+  `analysis1_file_path` varchar(1024) DEFAULT NULL COMMENT '분석파일1 저장 경로',
+  `analysis1_saved_at` datetime(6) DEFAULT NULL COMMENT '분석1 일시',
+
+  `analysis2_type` varchar(50) DEFAULT NULL COMMENT '분석유형2',
+  `analysis2_file_path` varchar(1024) DEFAULT NULL COMMENT '분석파일2 저장 경로',
+  `analysis2_saved_at` datetime(6) DEFAULT NULL COMMENT '분석2 일시',
+
+  `analysis3_type` varchar(50) DEFAULT NULL COMMENT '분석유형3',
+  `analysis3_file_path` varchar(1024) DEFAULT NULL COMMENT '분석파일3 저장 경로',
+  `analysis3_saved_at` datetime(6) DEFAULT NULL COMMENT '분석3 일시',
+
+  `analysis4_type` varchar(50) DEFAULT NULL COMMENT '분석유형4',
+  `analysis4_file_path` varchar(1024) DEFAULT NULL COMMENT '분석파일4 저장 경로',
+  `analysis4_saved_at` datetime(6) DEFAULT NULL COMMENT '분석4 일시',
+
+  `analysis5_type` varchar(50) DEFAULT NULL COMMENT '분석유형5',
+  `analysis5_file_path` varchar(1024) DEFAULT NULL COMMENT '분석파일5 저장 경로',
+  `analysis5_saved_at` datetime(6) DEFAULT NULL COMMENT '분석5 일시',
+
+  `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '생성일',
+  `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '수정일',
+
+  PRIMARY KEY (`id`),
+  KEY `ix_ycah_user_created` (`user_id`, `created_at`),
+  CONSTRAINT `fk_ycah_user`
+    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='유튜브 댓글 저장/분석 이력';
 ```
 

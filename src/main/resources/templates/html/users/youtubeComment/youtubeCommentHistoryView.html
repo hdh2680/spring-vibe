@@ -1,0 +1,61 @@
+<section xmlns:th="http://www.thymeleaf.org" th:fragment="content">
+  <div class="toolbar">
+    <div>
+      <h3>유튜브 댓글 분석 상세</h3>
+      <p class="muted">전처리 파일이 존재할 때만 미리보기가 표시됩니다.</p>
+    </div>
+    <div>
+      <a class="btn-link" th:href="@{/users/youtubeComment/analysis}">목록</a>
+    </div>
+  </div>
+
+  <div th:if="${errorMessage != null}" style="margin-top:.75rem; padding:.65rem .8rem; border:1px solid rgba(200,0,0,.25); border-radius:.6rem; background: rgba(200,0,0,.05)">
+    <div style="font-weight:600">오류</div>
+    <div class="muted" th:text="${errorCode} + ' - ' + ${errorMessage}">ERR - message</div>
+  </div>
+
+  <div th:if="${history != null}" class="panel" style="margin-top: 12px">
+    <div class="panel-inner">
+      <h4>이력 정보</h4>
+      <dl class="kv">
+        <dt>ID</dt>
+        <dd th:text="${history.id}">1</dd>
+        <dt>Video URL</dt>
+        <dd style="word-break: break-word" th:text="${history.videoUrl}">url</dd>
+        <dt>Original</dt>
+        <dd th:text="${history.originalFilePath}">path</dd>
+        <dt>Original Saved</dt>
+        <dd th:text="${history.originalSavedAt}">-</dd>
+        <dt>Preprocessed</dt>
+        <dd th:text="${history.preprocessedFilePath}">path</dd>
+        <dt>Preprocessed Saved</dt>
+        <dd th:text="${history.preprocessedSavedAt}">-</dd>
+      </dl>
+    </div>
+  </div>
+
+  <div class="panel table-wrap" th:if="${history != null}" style="margin-top: 12px">
+    <table class="table">
+      <thead>
+        <tr>
+          <th style="width: 180px">Author</th>
+          <th style="width: 170px">Published</th>
+          <th style="width: 80px">Likes</th>
+          <th>Preprocessed Text (preview)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr th:if="${#lists.isEmpty(previewRows)}">
+          <td colspan="4" class="muted">전처리 결과가 없습니다. (전처리를 먼저 수행하세요)</td>
+        </tr>
+        <tr th:each="r : ${previewRows}">
+          <td th:text="${r.authorDisplayName}">author</td>
+          <td th:text="${r.publishedAt}">date</td>
+          <td th:text="${r.likeCount}">0</td>
+          <td style="white-space: pre-wrap" th:text="${r.text}">text</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
