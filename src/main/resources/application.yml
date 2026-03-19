@@ -55,9 +55,8 @@ springdoc:
 # Logging
 logging:
   level:
-    root: DEBUG
-    springVibe: DEBUG
-
+    root: INFO
+    springVibe: INFO
 # App storage (attachments, exports, etc.)
 # Can be overridden with env var: APP_STORAGE_ATTACHMENTS_DIR
 app:

@@ -7,6 +7,16 @@
 - 기능 요구사항: `/docs/PRD.md`
 - 아키텍처/패키지 구조: `/docs/ARCHITECTURE.md`
 
+
+## 인코딩 규칙(중요)
+- **소스/설정/템플릿 파일은 UTF-8 (no BOM)로 통일한다.**
+  - BOM(\ufeff)이 섞이면 Java 컴파일 에러(`illegal character: \ufeff`)나 런타임 파싱 문제로 이어질 수 있다.
+- PowerShell의 `Set-Content -Encoding utf8`는 환경에 따라 BOM이 포함될 수 있으므로 주의한다.
+  - 권장: IntelliJ에서 파일 인코딩을 UTF-8로 저장하고, BOM은 사용하지 않는다.
+- 레포에는 UTF-8 BOM 체크 스크립트를 둔다.
+  - 실행: `powershell -NoProfile -ExecutionPolicy Bypass -File docs/scripts/check_utf8_bom.ps1 -Root .`
+  - Git hook(옵션): `.git/hooks/pre-commit`에서 staged 파일에 BOM이 있으면 커밋을 막는다.
+
 ## 0. 변수 정의
 - `/README.md` 기준 플레이스홀더 사용
 

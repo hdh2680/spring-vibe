@@ -1,9 +1,9 @@
 ﻿# DATABASE_SCHEMA
 
 - DBMS: MySQL
-- Database: iamdb
-- Generated at: 2026-03-13 11:16:27 +09:00
-- Source: SHOW CREATE TABLE
+- Database: springVibe
+- Generated at: 2026-03-19 15:32:35 +09:00
+- Source: SHOW CREATE TABLE (and manual migration draft for new/changed tables)
 
 ## Tables
 
@@ -14,6 +14,8 @@
 - `user_roles`
 - `users`
 - `youtube_comment_analysis_histories`
+- `youtube_comment_analysis_top_keywords`
+- `youtube_comment_analysis_topic_groups`
 
 ## `login_logs`
 
@@ -132,25 +134,7 @@ CREATE TABLE `youtube_comment_analysis_histories` (
   `preprocessed_file_path` varchar(1024) DEFAULT NULL COMMENT '전처리파일 저장 경로',
   `preprocessed_saved_at` datetime(6) DEFAULT NULL COMMENT '전처리 일시',
 
-  `analysis1_type` varchar(50) DEFAULT NULL COMMENT '분석유형1',
-  `analysis1_file_path` varchar(1024) DEFAULT NULL COMMENT '분석파일1 저장 경로',
-  `analysis1_saved_at` datetime(6) DEFAULT NULL COMMENT '분석1 일시',
-
-  `analysis2_type` varchar(50) DEFAULT NULL COMMENT '분석유형2',
-  `analysis2_file_path` varchar(1024) DEFAULT NULL COMMENT '분석파일2 저장 경로',
-  `analysis2_saved_at` datetime(6) DEFAULT NULL COMMENT '분석2 일시',
-
-  `analysis3_type` varchar(50) DEFAULT NULL COMMENT '분석유형3',
-  `analysis3_file_path` varchar(1024) DEFAULT NULL COMMENT '분석파일3 저장 경로',
-  `analysis3_saved_at` datetime(6) DEFAULT NULL COMMENT '분석3 일시',
-
-  `analysis4_type` varchar(50) DEFAULT NULL COMMENT '분석유형4',
-  `analysis4_file_path` varchar(1024) DEFAULT NULL COMMENT '분석파일4 저장 경로',
-  `analysis4_saved_at` datetime(6) DEFAULT NULL COMMENT '분석4 일시',
-
-  `analysis5_type` varchar(50) DEFAULT NULL COMMENT '분석유형5',
-  `analysis5_file_path` varchar(1024) DEFAULT NULL COMMENT '분석파일5 저장 경로',
-  `analysis5_saved_at` datetime(6) DEFAULT NULL COMMENT '분석5 일시',
+  `analysis_requested_at` datetime(6) DEFAULT NULL COMMENT '분석요청일시',
 
   `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '생성일',
   `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '수정일',
@@ -162,3 +146,54 @@ CREATE TABLE `youtube_comment_analysis_histories` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='유튜브 댓글 저장/분석 이력';
 ```
 
+## `youtube_comment_analysis_top_keywords`
+
+```sql
+CREATE TABLE `youtube_comment_analysis_top_keywords` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '키워드 분석 결과 ID',
+
+  `history_id` bigint NOT NULL COMMENT '이력 ID (youtube_comment_analysis_histories.id)',
+  `user_id` bigint DEFAULT NULL COMMENT '회원 ID',
+
+  `requested_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '분석 요청 일시',
+  `params_json` json DEFAULT NULL COMMENT '분석 파라미터(JSON)',
+  `result_json` json NOT NULL COMMENT 'Top N 키워드 결과(JSON)',
+
+  `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '생성일',
+  `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '수정일',
+
+  PRIMARY KEY (`id`),
+  KEY `ix_ycatk_history_created` (`history_id`, `created_at`),
+  KEY `ix_ycatk_user_created` (`user_id`, `created_at`),
+  CONSTRAINT `fk_ycatk_history`
+    FOREIGN KEY (`history_id`) REFERENCES `youtube_comment_analysis_histories` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_ycatk_user`
+    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='유튜브 댓글 키워드(Top N) 분석 결과';
+```
+
+## `youtube_comment_analysis_topic_groups`
+
+```sql
+CREATE TABLE `youtube_comment_analysis_topic_groups` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '주제별 묶음 분석 결과 ID',
+
+  `history_id` bigint NOT NULL COMMENT '이력 ID (youtube_comment_analysis_histories.id)',
+  `user_id` bigint DEFAULT NULL COMMENT '회원 ID',
+
+  `requested_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '분석 요청 일시',
+  `params_json` json DEFAULT NULL COMMENT '분석 파라미터(JSON)',
+  `result_json` json NOT NULL COMMENT '주제별 묶음 결과(JSON)',
+
+  `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '생성일',
+  `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '수정일',
+
+  PRIMARY KEY (`id`),
+  KEY `ix_ycatg_history_created` (`history_id`, `created_at`),
+  KEY `ix_ycatg_user_created` (`user_id`, `created_at`),
+  CONSTRAINT `fk_ycatg_history`
+    FOREIGN KEY (`history_id`) REFERENCES `youtube_comment_analysis_histories` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_ycatg_user`
+    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='유튜브 댓글 주제별 묶음 분석 결과';
+```

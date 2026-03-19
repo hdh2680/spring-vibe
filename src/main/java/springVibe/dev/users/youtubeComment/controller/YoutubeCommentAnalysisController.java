@@ -8,6 +8,9 @@ import springVibe.system.exception.BaseException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -63,13 +66,12 @@ public class YoutubeCommentAnalysisController {
         return list(model);
     }
 
-    @GetMapping("/view")
-    public String view(@RequestParam("id") Long id, Model model) {
+    @PostMapping("/analyze")
+    public String analyze(@RequestParam("id") Long id, Model model) {
         try {
             Long userId = resolveCurrentUserIdOrNull();
-            YoutubeCommentAnalysisHistory history = youtubeCommentService.findHistoryOrThrow(id, userId);
-            model.addAttribute("history", history);
-            model.addAttribute("previewRows", youtubeCommentService.loadPreprocessedPreview(id, userId, 200));
+            youtubeCommentService.analyzeAndPersist(id, userId);
+            model.addAttribute("successMessage", "분석이 완료되었습니다.");
         } catch (BaseException e) {
             model.addAttribute("errorCode", e.getCode());
             model.addAttribute("errorMessage", e.getMessage());
@@ -78,9 +80,66 @@ public class YoutubeCommentAnalysisController {
             model.addAttribute("errorMessage", e.getMessage());
         }
 
-        return render(model, "유튜브 댓글 분석", "html/users/youtubeComment/youtubeCommentHistoryView");
+        return view(id, model);
     }
 
+
+    @GetMapping(value = "/result.json", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> resultJson(@RequestParam("id") Long id) {
+        try {
+            Long userId = resolveCurrentUserIdOrNull();
+            String json = youtubeCommentService.loadLatestAnalysisResultJson(id, userId);
+            return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(json);
+        } catch (BaseException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(jsonError(e.getCode(), e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(jsonError("ERR001", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/result/view")
+    public String resultView(@RequestParam("id") Long id, Model model) {
+        return "redirect:/users/youtubeComment/analysis/view?id=" + id;
+    }
+
+    @GetMapping("/view")
+    public String view(@RequestParam("id") Long id, Model model) {
+        try {
+            Long userId = resolveCurrentUserIdOrNull();
+            YoutubeCommentAnalysisHistory history = youtubeCommentService.findHistoryOrThrow(id, userId);
+            model.addAttribute("history", history);
+            model.addAttribute("previewRows", youtubeCommentService.loadPreprocessedPreview(id, userId, 200));
+            model.addAttribute("preprocessedTotalCount", youtubeCommentService.countPreprocessedComments(id, userId));
+        } catch (BaseException e) {
+            model.addAttribute("errorCode", e.getCode());
+            model.addAttribute("errorMessage", e.getMessage());
+        } catch (Exception e) {
+            model.addAttribute("errorCode", "ERR001");
+            model.addAttribute("errorMessage", e.getMessage());
+        }
+
+        return render(model, "유튜브 댓글 분석", "html/users/youtubeComment/youtubeCommentAnalysisView");
+    }
+
+
+    private static String jsonError(String code, String message) {
+        return "{\"errorCode\":\"" + jsonEscape(code) + "\",\"errorMessage\":\"" + jsonEscape(message) + "\"}";
+    }
+
+    private static String jsonEscape(String s) {
+        if (s == null) {
+            return "";
+        }
+        return s
+            .replace("\\", "\\\\")
+            .replace("\"", "\\\"")
+            .replace("\r", "")
+            .replace("\n", "\\n");
+    }
     private Long resolveCurrentUserIdOrNull() {
         try {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -100,4 +159,3 @@ public class YoutubeCommentAnalysisController {
         return "layout/app";
     }
 }
-
