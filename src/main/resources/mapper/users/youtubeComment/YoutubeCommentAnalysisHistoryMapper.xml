@@ -30,6 +30,7 @@
             original_saved_at,
             preprocessed_file_path,
             preprocessed_saved_at,
+            analysis_requested_at,
             created_at,
             updated_at
         FROM youtube_comment_analysis_histories
@@ -47,6 +48,7 @@
             original_saved_at,
             preprocessed_file_path,
             preprocessed_saved_at,
+            analysis_requested_at,
             created_at,
             updated_at
         FROM youtube_comment_analysis_histories
@@ -60,6 +62,14 @@
         SET
             preprocessed_file_path = #{preprocessedFilePath},
             preprocessed_saved_at = #{preprocessedSavedAt}
+        WHERE id = #{id}
+          AND (#{userId} IS NULL OR user_id = #{userId})
+    </update>
+
+    <update id="updateAnalysisRequestedAt">
+        UPDATE youtube_comment_analysis_histories
+        SET
+            analysis_requested_at = #{analysisRequestedAt}
         WHERE id = #{id}
           AND (#{userId} IS NULL OR user_id = #{userId})
     </update>

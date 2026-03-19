@@ -21,4 +21,10 @@ public interface YoutubeCommentAnalysisHistoryMapper {
         @Param("preprocessedFilePath") String preprocessedFilePath,
         @Param("preprocessedSavedAt") LocalDateTime preprocessedSavedAt
     );
+
+    int updateAnalysisRequestedAt(
+        @Param("id") Long id,
+        @Param("userId") Long userId,
+        @Param("analysisRequestedAt") LocalDateTime analysisRequestedAt
+    );
 }

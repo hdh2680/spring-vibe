@@ -14,6 +14,7 @@ public class YoutubeCommentAnalysisHistory {
     private LocalDateTime originalSavedAt;
     private String preprocessedFilePath;
     private LocalDateTime preprocessedSavedAt;
+    private LocalDateTime analysisRequestedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -71,6 +72,14 @@ public class YoutubeCommentAnalysisHistory {
 
     public void setPreprocessedSavedAt(LocalDateTime preprocessedSavedAt) {
         this.preprocessedSavedAt = preprocessedSavedAt;
+    }
+
+    public LocalDateTime getAnalysisRequestedAt() {
+        return analysisRequestedAt;
+    }
+
+    public void setAnalysisRequestedAt(LocalDateTime analysisRequestedAt) {
+        this.analysisRequestedAt = analysisRequestedAt;
     }
 
     public LocalDateTime getCreatedAt() {

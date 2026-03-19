@@ -7,6 +7,7 @@ import springVibe.dev.users.youtubeComment.dto.YoutubeCommentItem;
 import springVibe.dev.users.youtubeComment.dto.YoutubeCommentPage;
 import springVibe.dev.users.youtubeComment.dto.youtube.CommentThreadsResponse;
 import springVibe.dev.users.youtubeComment.mapper.YoutubeCommentAnalysisHistoryMapper;
+import springVibe.dev.users.youtubeComment.mapper.YoutubeCommentAnalysisResultMapper;
 import springVibe.dev.users.youtubeComment.util.YoutubeUrlParser;
 import springVibe.system.storage.StorageProperties;
 import springVibe.system.exception.BaseException;
@@ -22,11 +23,17 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.text.Normalizer;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -40,6 +47,7 @@ public class YoutubeCommentService {
     private static final int MAX_LIMIT = 500;
     private static final ZoneId DEFAULT_ZONE_ID = ZoneId.of("Asia/Seoul");
     private static final DateTimeFormatter EXPORT_DIR_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
+    private static final DateTimeFormatter PUBLISHED_AT_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final Pattern URL_PATTERN = Pattern.compile("https?://\\S+", Pattern.CASE_INSENSITIVE);
     private static final Pattern HTML_TAG_PATTERN = Pattern.compile("<[^>]*>");
     private static final Pattern MENTION_PATTERN = Pattern.compile("@[\\p{L}\\p{N}_.]{1,50}");
@@ -47,22 +55,40 @@ public class YoutubeCommentService {
     private static final Pattern EMOJI_SURROGATE_PATTERN = Pattern.compile("[\\uD800-\\uDBFF][\\uDC00-\\uDFFF]");
     private static final Pattern REPEAT_LAUGH_PATTERN = Pattern.compile("([ㅋㅎ])\\1{2,}");
     private static final Pattern REPEAT_CRY_PATTERN = Pattern.compile("([ㅠㅜ])\\1{2,}");
+    // After normalization, Hangul jamo can appear as compatibility jamo (ㄱ..ㅎ, ㅏ..ㅣ).
+    // Compress "over-repeats" to 2 chars for meaning-preserving output: ㄷㄷㄷ -> ㄷㄷ, ㅋㅋㅋㅋ -> ㅋㅋ, ㅠㅠㅠ -> ㅠㅠ.
+    private static final Pattern REPEAT_KOREAN_JAMO_PATTERN = Pattern.compile("([\\u3131-\\u3163])\\1{2,}");
+    private static final Pattern KOREAN_JAMO_ONLY_PATTERN = Pattern.compile("^[\\u3131-\\u3163]+$");
+    private static final Pattern NUMBER_ONLY_PATTERN = Pattern.compile("^\\d+$");
+    private static final Pattern EDGE_PUNCT_PATTERN = Pattern.compile("^[\\.,!\\?\"'\\:;\\(\\)\\-\\[\\]\\{\\}/@#%&\\+_=]+|[\\.,!\\?\"'\\:;\\(\\)\\-\\[\\]\\{\\}/@#%&\\+_=]+$");
+
+    private static final Set<String> DEFAULT_STOPWORDS = Set.copyOf(new HashSet<>(List.of(
+        "이", "그", "저", "것", "수", "등", "좀", "정말", "진짜", "너무", "완전", "계속", "항상",
+        "그리고", "근데", "하지만", "그래서", "그런데", "또", "또는",
+        "은", "는", "이", "가", "을", "를", "에", "에서", "에게", "한테", "로", "으로", "와", "과", "도", "만", "까지", "부터", "보다",
+        "하다", "되다", "있다", "없다", "이다", "아니다", "같다",
+        "영상", "유튜브",
+        "@mention", "#tag", "emoji"
+    )));
 
     private final YoutubeDataApiClient youtubeDataApiClient;
     private final StorageProperties storageProperties;
     private final ObjectMapper objectMapper;
     private final YoutubeCommentAnalysisHistoryMapper youtubeCommentAnalysisHistoryMapper;
+    private final YoutubeCommentAnalysisResultMapper youtubeCommentAnalysisResultMapper;
 
     public YoutubeCommentService(
         YoutubeDataApiClient youtubeDataApiClient,
         StorageProperties storageProperties,
         ObjectMapper objectMapper,
-        YoutubeCommentAnalysisHistoryMapper youtubeCommentAnalysisHistoryMapper
+        YoutubeCommentAnalysisHistoryMapper youtubeCommentAnalysisHistoryMapper,
+        YoutubeCommentAnalysisResultMapper youtubeCommentAnalysisResultMapper
     ) {
         this.youtubeDataApiClient = youtubeDataApiClient;
         this.storageProperties = storageProperties;
         this.objectMapper = objectMapper;
         this.youtubeCommentAnalysisHistoryMapper = youtubeCommentAnalysisHistoryMapper;
+        this.youtubeCommentAnalysisResultMapper = youtubeCommentAnalysisResultMapper;
     }
 
     public YoutubeCommentPage collectCommentsByUrl(String inputUrl, String pageToken) {
@@ -394,16 +420,26 @@ public class YoutubeCommentService {
 
                 YoutubeCommentPreviewRow row = new YoutubeCommentPreviewRow();
                 row.setAuthorDisplayName(node.path("authorDisplayName").asText(null));
-                row.setPublishedAt(node.path("publishedAt").asText(null));
+                row.setPublishedAt(formatPublishedAtForView(node.path("publishedAt").asText(null)));
                 row.setLikeCount(node.path("likeCount").isNumber() ? node.path("likeCount").asLong() : null);
+                String original = node.path("textOriginal").asText(null);
+                if (original == null || original.isBlank()) {
+                    original = node.path("text_original").asText(null);
+                }
+                if (original == null || original.isBlank()) {
+                    original = node.path("text").asText(null);
+                }
+                row.setOriginalText(original);
+
                 String clean = node.path("textClean").asText(null);
                 if (clean == null || clean.isBlank()) {
                     clean = node.path("text_clean").asText(null);
                 }
                 if (clean == null || clean.isBlank()) {
-                    clean = node.path("text").asText(null);
+                    // Fallback for older JSONL rows that might not have clean fields.
+                    clean = original;
                 }
-                row.setText(clean);
+                row.setPreprocessedText(clean);
                 rows.add(row);
             }
         } catch (Exception e) {
@@ -411,6 +447,412 @@ public class YoutubeCommentService {
         }
 
         return rows;
+    }
+
+    private static String formatPublishedAtForView(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return raw;
+        }
+
+        String s = raw.trim();
+        try {
+            // e.g. 2026-03-16T21:00:10Z
+            ZonedDateTime zdt = OffsetDateTime.parse(s).atZoneSameInstant(DEFAULT_ZONE_ID);
+            return zdt.format(PUBLISHED_AT_FORMATTER);
+        } catch (DateTimeParseException ignored) {
+            // Fall through
+        } catch (Exception ignored) {
+            // Fall through
+        }
+
+        // Best-effort normalization for unexpected formats.
+        if (s.length() >= 19 && s.charAt(10) == 'T') {
+            s = s.replace('T', ' ');
+        }
+        if (s.endsWith("Z")) {
+            s = s.substring(0, s.length() - 1);
+        }
+        return s;
+    }
+
+    public long countPreprocessedComments(Long historyId, Long userId) {
+        YoutubeCommentAnalysisHistory history = findHistoryOrThrow(historyId, userId);
+        if (history.getPreprocessedFilePath() == null || history.getPreprocessedSavedAt() == null) {
+            return 0;
+        }
+
+        Path preprocessed = validateUnderAttachments(history.getPreprocessedFilePath(), "전처리 파일 경로가 올바르지 않습니다.");
+        try (java.util.stream.Stream<String> stream = Files.lines(preprocessed, StandardCharsets.UTF_8)) {
+            return stream.filter(line -> line != null && !line.isBlank()).count();
+        } catch (Exception e) {
+            throw new BaseException("YOUTUBE_PREPROCESS_COUNT_FAILED", "전처리 댓글 수 조회에 실패했습니다.", e);
+        }
+    }
+
+    public void analyzeAndPersist(Long historyId, Long userId) {
+        analyzeAndPersist(historyId, userId, 30, 5, true);
+    }
+
+    public void analyzeAndPersist(Long historyId, Long userId, int topN, int clusterK, boolean useBigrams) {
+        int safeTopN = Math.max(1, Math.min(topN, 200));
+        int safeK = Math.max(1, Math.min(clusterK, 20));
+
+        YoutubeCommentAnalysisHistory history = findHistoryOrThrow(historyId, userId);
+        if (history.getAnalysisRequestedAt() != null) {
+            throw new BaseException("YOUTUBE_ANALYSIS_ALREADY_DONE", "이미 분석이 수행되었습니다(analysis_requested_at가 존재).");
+        }
+        if (history.getPreprocessedFilePath() == null || history.getPreprocessedSavedAt() == null) {
+            throw new BaseException("YOUTUBE_ANALYSIS_PREPROCESS_REQUIRED", "분석을 수행하려면 전처리를 먼저 수행해야 합니다.");
+        }
+
+        Path preprocessed = validateUnderAttachments(history.getPreprocessedFilePath(), "전처리 파일 경로가 올바르지 않습니다.");
+
+        // Read comments first (file I/O). Only commit DB state after results are ready.
+        List<PreprocessedComment> comments = loadCommentsForAnalysis(preprocessed, 20000);
+        if (comments.isEmpty()) {
+            throw new BaseException("YOUTUBE_ANALYSIS_EMPTY", "분석 대상 댓글이 비어있습니다(전처리 파일 확인 필요).");
+        }
+
+        LocalDateTime now = LocalDateTime.now(DEFAULT_ZONE_ID);
+
+        ObjectNode params = objectMapper.createObjectNode();
+        params.put("topN", safeTopN);
+        params.put("clusterK", safeK);
+        params.put("useBigrams", useBigrams);
+        params.put("minTokenLen", 2);
+        params.put("maxComments", 20000);
+        params.put("stopwordsVersion", "default-v1");
+        params.put("topicAlgorithm", "seed-keyword-overlap-v1");
+
+        String paramsJson;
+        try {
+            paramsJson = objectMapper.writeValueAsString(params);
+        } catch (Exception e) {
+            throw new BaseException("YOUTUBE_ANALYSIS_PARAMS_JSON_FAILED", "분석 파라미터 JSON 생성에 실패했습니다.", e);
+        }
+
+        String topJson = buildTopKeywordsResultJson(historyId, comments, safeTopN, useBigrams);
+        String topicJson = buildTopicGroupsResultJson(historyId, comments, safeTopN, safeK);
+
+        int insertedTop;
+        int insertedTopic;
+        try {
+            insertedTop = youtubeCommentAnalysisResultMapper.insertTopKeywords(historyId, history.getUserId(), now, paramsJson, topJson);
+            insertedTopic = youtubeCommentAnalysisResultMapper.insertTopicGroups(historyId, history.getUserId(), now, paramsJson, topicJson);
+        } catch (Exception e) {
+            throw new BaseException("YOUTUBE_ANALYSIS_DB_INSERT_FAILED", "분석 결과를 DB에 저장하지 못했습니다.", e);
+        }
+
+        if (insertedTop <= 0 || insertedTopic <= 0) {
+            throw new BaseException("YOUTUBE_ANALYSIS_DB_INSERT_FAILED", "분석 결과를 DB에 저장하지 못했습니다.");
+        }
+
+        int updated;
+        try {
+            updated = youtubeCommentAnalysisHistoryMapper.updateAnalysisRequestedAt(historyId, userId, now);
+        } catch (Exception e) {
+            throw new BaseException("YOUTUBE_ANALYSIS_HISTORY_UPDATE_FAILED", "분석 요청 일시를 이력에 반영하지 못했습니다.", e);
+        }
+        if (updated <= 0) {
+            throw new BaseException("YOUTUBE_ANALYSIS_HISTORY_UPDATE_FAILED", "분석 요청 일시를 이력에 반영하지 못했습니다.");
+        }
+    }
+    public String loadLatestAnalysisResultJson(Long historyId, Long userId) {
+        YoutubeCommentAnalysisHistory history = findHistoryOrThrow(historyId, userId);
+        if (history.getAnalysisRequestedAt() == null) {
+            throw new BaseException("YOUTUBE_ANALYSIS_NOT_FOUND", "분석 결과가 없습니다(analysis_requested_at가 null).\n분석을 먼저 수행하세요.");
+        }
+
+        String top = youtubeCommentAnalysisResultMapper.selectLatestTopKeywordsResultJson(historyId, userId);
+        String topic = youtubeCommentAnalysisResultMapper.selectLatestTopicGroupsResultJson(historyId, userId);
+
+        ObjectNode root = objectMapper.createObjectNode();
+        root.put("historyId", historyId);
+        root.put("analysisRequestedAt", history.getAnalysisRequestedAt().toString());
+
+        try {
+            if (top != null && !top.isBlank()) {
+                root.set("topKeywords", objectMapper.readTree(top));
+            } else {
+                root.putNull("topKeywords");
+            }
+            if (topic != null && !topic.isBlank()) {
+                root.set("topicGroups", objectMapper.readTree(topic));
+            } else {
+                root.putNull("topicGroups");
+            }
+            return objectMapper.writeValueAsString(root);
+        } catch (Exception e) {
+            throw new BaseException("YOUTUBE_ANALYSIS_RESULT_JSON_FAILED", "분석 결과 JSON 조합에 실패했습니다.", e);
+        }
+    }
+
+    private List<PreprocessedComment> loadCommentsForAnalysis(Path preprocessedJsonl, int maxComments) {
+        int cap = Math.max(1, Math.min(maxComments, 100_000));
+        List<PreprocessedComment> out = new ArrayList<>(Math.min(cap, 2000));
+        try (BufferedReader r = Files.newBufferedReader(preprocessedJsonl, StandardCharsets.UTF_8)) {
+            String line;
+            while (out.size() < cap && (line = r.readLine()) != null) {
+                if (line.isBlank()) {
+                    continue;
+                }
+                JsonNode node;
+                try {
+                    node = objectMapper.readTree(line);
+                } catch (Exception ignored) {
+                    continue;
+                }
+                String clean = node.path("textClean").asText(null);
+                if (clean == null || clean.isBlank()) {
+                    clean = node.path("text_clean").asText(null);
+                }
+                if (clean == null || clean.isBlank()) {
+                    clean = node.path("text").asText(null);
+                }
+                if (clean == null || clean.isBlank()) {
+                    continue;
+                }
+                String commentId = node.path("commentId").asText(null);
+                if (commentId == null || commentId.isBlank()) {
+                    commentId = node.path("comment_id").asText(null);
+                }
+                out.add(new PreprocessedComment(commentId, clean));
+            }
+        } catch (Exception e) {
+            throw new BaseException("YOUTUBE_ANALYSIS_READ_FAILED", "전처리 파일 읽기에 실패했습니다.", e);
+        }
+        return out;
+    }
+
+    private String buildTopKeywordsResultJson(Long historyId, List<PreprocessedComment> comments, int topN, boolean useBigrams) {
+        Map<String, Long> counts = new HashMap<>(4096);
+        for (PreprocessedComment c : comments) {
+            List<String> toks = tokenizeForKeywords(c.cleanText);
+            for (String t : toks) {
+                counts.merge(t, 1L, Long::sum);
+            }
+            if (useBigrams && toks.size() >= 2) {
+                for (int i = 0; i < toks.size() - 1; i++) {
+                    String bg = toks.get(i) + " " + toks.get(i + 1);
+                    counts.merge(bg, 1L, Long::sum);
+                }
+            }
+        }
+
+        List<Map.Entry<String, Long>> top = counts.entrySet()
+            .stream()
+            .sorted(Comparator.<Map.Entry<String, Long>>comparingLong(Map.Entry::getValue).reversed()
+                .thenComparing(Map.Entry::getKey))
+            .limit(topN)
+            .collect(Collectors.toList());
+
+        ObjectNode root = objectMapper.createObjectNode();
+        root.put("historyId", historyId);
+        root.put("algorithm", "frequency-v1");
+        root.put("topN", topN);
+
+        var arr = root.putArray("keywords");
+        for (int i = 0; i < top.size(); i++) {
+            Map.Entry<String, Long> e = top.get(i);
+            ObjectNode kw = objectMapper.createObjectNode();
+            kw.put("rank", i + 1);
+            kw.put("term", e.getKey());
+            kw.put("count", e.getValue());
+            arr.add(kw);
+        }
+
+        try {
+            return objectMapper.writeValueAsString(root);
+        } catch (Exception e) {
+            throw new BaseException("YOUTUBE_ANALYSIS_RESULT_JSON_FAILED", "키워드 분석 결과 JSON 생성에 실패했습니다.", e);
+        }
+    }
+
+    private String buildTopicGroupsResultJson(Long historyId, List<PreprocessedComment> comments, int seedTopN, int clusterK) {
+        // Seed terms from top unigrams only (no bigrams) to keep grouping simple.
+        Map<String, Long> counts = new HashMap<>(4096);
+        for (PreprocessedComment c : comments) {
+            for (String t : tokenizeForKeywords(c.cleanText)) {
+                counts.merge(t, 1L, Long::sum);
+            }
+        }
+        List<String> seeds = counts.entrySet()
+            .stream()
+            .sorted(Comparator.<Map.Entry<String, Long>>comparingLong(Map.Entry::getValue).reversed()
+                .thenComparing(Map.Entry::getKey))
+            .limit(Math.max(seedTopN, clusterK * 3L))
+            .map(Map.Entry::getKey)
+            .filter(t -> !DEFAULT_STOPWORDS.contains(t))
+            .limit(clusterK)
+            .collect(Collectors.toList());
+
+        int k = Math.max(1, Math.min(clusterK, Math.max(1, seeds.size())));
+
+        Map<Integer, List<PreprocessedComment>> clusters = new HashMap<>();
+        for (int i = 0; i < k; i++) {
+            clusters.put(i, new ArrayList<>());
+        }
+        clusters.put(-1, new ArrayList<>()); // other
+
+        for (PreprocessedComment c : comments) {
+            List<String> toks = tokenizeForKeywords(c.cleanText);
+            if (toks.isEmpty()) {
+                clusters.get(-1).add(c);
+                continue;
+            }
+            int best = -1;
+            int bestScore = 0;
+            for (int i = 0; i < k; i++) {
+                String seed = seeds.get(i);
+                int score = 0;
+                for (String t : toks) {
+                    if (t.equals(seed)) {
+                        score++;
+                    }
+                }
+                if (score > bestScore) {
+                    bestScore = score;
+                    best = i;
+                }
+            }
+            if (best < 0) {
+                clusters.get(-1).add(c);
+            } else {
+                clusters.get(best).add(c);
+            }
+        }
+
+        ObjectNode root = objectMapper.createObjectNode();
+        root.put("historyId", historyId);
+        root.put("algorithm", "seed-keyword-overlap-v1");
+        root.put("clusterK", k);
+
+        var seedArr = root.putArray("seeds");
+        for (int i = 0; i < k; i++) {
+            seedArr.add(seeds.get(i));
+        }
+
+        var cArr = root.putArray("clusters");
+        for (int i = -1; i < k; i++) {
+            List<PreprocessedComment> bucket = clusters.get(i);
+            if (bucket == null || bucket.isEmpty()) {
+                continue;
+            }
+            ObjectNode cNode = objectMapper.createObjectNode();
+            cNode.put("clusterId", i);
+            if (i >= 0) {
+                cNode.put("seed", seeds.get(i));
+            } else {
+                cNode.put("seed", "other");
+            }
+            cNode.put("size", bucket.size());
+
+            Map<String, Long> localCounts = new HashMap<>(2048);
+            for (PreprocessedComment c : bucket) {
+                for (String t : tokenizeForKeywords(c.cleanText)) {
+                    localCounts.merge(t, 1L, Long::sum);
+                }
+            }
+            List<Map.Entry<String, Long>> top = localCounts.entrySet()
+                .stream()
+                .sorted(Comparator.<Map.Entry<String, Long>>comparingLong(Map.Entry::getValue).reversed()
+                    .thenComparing(Map.Entry::getKey))
+                .limit(12)
+                .collect(Collectors.toList());
+
+            var kwArr = cNode.putArray("topKeywords");
+            for (int r = 0; r < top.size(); r++) {
+                Map.Entry<String, Long> e = top.get(r);
+                ObjectNode kw = objectMapper.createObjectNode();
+                kw.put("rank", r + 1);
+                kw.put("term", e.getKey());
+                kw.put("count", e.getValue());
+                kwArr.add(kw);
+            }
+
+            var sampleArr = cNode.putArray("sampleCommentIds");
+            int s = 0;
+            for (PreprocessedComment c : bucket) {
+                if (c.commentId != null && !c.commentId.isBlank()) {
+                    sampleArr.add(c.commentId);
+                    if (++s >= 5) {
+                        break;
+                    }
+                }
+            }
+
+            cArr.add(cNode);
+        }
+
+        try {
+            return objectMapper.writeValueAsString(root);
+        } catch (Exception e) {
+            throw new BaseException("YOUTUBE_ANALYSIS_RESULT_JSON_FAILED", "주제별 묶음 결과 JSON 생성에 실패했습니다.", e);
+        }
+    }
+
+    private List<String> tokenizeForKeywords(String clean) {
+        if (clean == null || clean.isBlank()) {
+            return List.of();
+        }
+        // Preprocess output already has URL/HTML stripped; keep tokenization simple and deterministic.
+        String[] raw = clean.split("\\s+");
+        if (raw.length == 0) {
+            return List.of();
+        }
+
+        List<String> out = new ArrayList<>(Math.min(16, raw.length));
+        for (String r : raw) {
+            String t = normalizeToken(r);
+            if (t == null) {
+                continue;
+            }
+            String lower = t.toLowerCase(Locale.ROOT);
+            if (DEFAULT_STOPWORDS.contains(lower) || DEFAULT_STOPWORDS.contains(t)) {
+                continue;
+            }
+            if (NUMBER_ONLY_PATTERN.matcher(t).matches()) {
+                continue;
+            }
+            if (t.length() < 2) {
+                continue;
+            }
+            if (KOREAN_JAMO_ONLY_PATTERN.matcher(t).matches()) {
+                continue;
+            }
+            out.add(lower);
+        }
+        return out;
+    }
+
+    private String normalizeToken(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        String t = raw.trim();
+        if (t.isEmpty()) {
+            return null;
+        }
+        // strip punctuation at the edges
+        t = EDGE_PUNCT_PATTERN.matcher(t).replaceAll("");
+        t = t.trim();
+        if (t.isEmpty()) {
+            return null;
+        }
+        if (t.equalsIgnoreCase("@MENTION") || t.equalsIgnoreCase("#TAG") || t.equalsIgnoreCase("EMOJI")) {
+            return null;
+        }
+        return t;
+    }
+
+    private static final class PreprocessedComment {
+        private final String commentId;
+        private final String cleanText;
+
+        private PreprocessedComment(String commentId, String cleanText) {
+            this.commentId = commentId;
+            this.cleanText = cleanText;
+        }
     }
 
     private Path resolvePreprocessedPathFromOriginal(Path originalJsonl) {
@@ -455,6 +897,9 @@ public class YoutubeCommentService {
 
         // 1) Basic normalization
         String t = Normalizer.normalize(text, Normalizer.Form.NFKC);
+        // NFKC can normalize Hangul compatibility jamo (ㄱ..ㅎ, ㅏ..ㅣ) into Hangul jamo blocks (ᄀ.., ᅡ.., ᆨ..).
+        // Convert them back so output stays human-readable and repeat-compression rules work consistently.
+        t = mapHangulJamoToCompatibility(t);
         t = t.replaceAll("[\\r\\n\\t]+", " ");
 
         // 2) HTML entity/tag cleanup (minimal, for common cases)
@@ -475,6 +920,7 @@ public class YoutubeCommentService {
         t = t.replaceAll("[^\\p{L}\\p{N}\\s\\.,!\\?\"'\\:;\\(\\)\\-\\[\\]\\{\\}/@#%&\\+_=]+", " ");
 
         // 5) Repeat compression (meaning-preserving)
+        t = REPEAT_KOREAN_JAMO_PATTERN.matcher(t).replaceAll("$1$1");
         t = REPEAT_LAUGH_PATTERN.matcher(t).replaceAll("$1$1");
         t = REPEAT_CRY_PATTERN.matcher(t).replaceAll("$1$1");
         t = t.replaceAll("!{2,}", "!");
@@ -484,6 +930,111 @@ public class YoutubeCommentService {
         // 6) Whitespace compaction
         t = t.replaceAll("\\s+", " ").trim();
         return t;
+    }
+
+    private static String mapHangulJamoToCompatibility(String s) {
+        if (s == null || s.isEmpty()) {
+            return s;
+        }
+        StringBuilder out = null;
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            String mapped = mapHangulJamoCharToCompatibilityStringOrNull(c);
+            if (mapped == null) {
+                if (out != null) {
+                    out.append(c);
+                }
+                continue;
+            }
+            if (out == null) {
+                out = new StringBuilder(s.length() + 8);
+                out.append(s, 0, i);
+            }
+            out.append(mapped);
+        }
+        return out == null ? s : out.toString();
+    }
+
+    private static String mapHangulJamoCharToCompatibilityStringOrNull(char c) {
+        // Leading consonants (Choseong) ᄀ..ᄒ
+        switch (c) {
+            case '\u1100': return "\u3131"; // ᄀ -> ㄱ
+            case '\u1101': return "\u3132"; // ᄁ -> ㄲ
+            case '\u1102': return "\u3134"; // ᄂ -> ㄴ
+            case '\u1103': return "\u3137"; // ᄃ -> ㄷ
+            case '\u1104': return "\u3138"; // ᄄ -> ㄸ
+            case '\u1105': return "\u3139"; // ᄅ -> ㄹ
+            case '\u1106': return "\u3141"; // ᄆ -> ㅁ
+            case '\u1107': return "\u3142"; // ᄇ -> ㅂ
+            case '\u1108': return "\u3143"; // ᄈ -> ㅃ
+            case '\u1109': return "\u3145"; // ᄉ -> ㅅ
+            case '\u110A': return "\u3146"; // ᄊ -> ㅆ
+            case '\u110B': return "\u3147"; // ᄋ -> ㅇ
+            case '\u110C': return "\u3148"; // ᄌ -> ㅈ
+            case '\u110D': return "\u3149"; // ᄍ -> ㅉ
+            case '\u110E': return "\u314A"; // ᄎ -> ㅊ
+            case '\u110F': return "\u314B"; // ᄏ -> ㅋ
+            case '\u1110': return "\u314C"; // ᄐ -> ㅌ
+            case '\u1111': return "\u314D"; // ᄑ -> ㅍ
+            case '\u1112': return "\u314E"; // ᄒ -> ㅎ
+        }
+
+        // Vowels (Jungseong) ᅡ..ᅵ
+        switch (c) {
+            case '\u1161': return "\u314F"; // ᅡ -> ㅏ
+            case '\u1162': return "\u3150"; // ᅢ -> ㅐ
+            case '\u1163': return "\u3151"; // ᅣ -> ㅑ
+            case '\u1164': return "\u3152"; // ᅤ -> ㅒ
+            case '\u1165': return "\u3153"; // ᅥ -> ㅓ
+            case '\u1166': return "\u3154"; // ᅦ -> ㅔ
+            case '\u1167': return "\u3155"; // ᅧ -> ㅕ
+            case '\u1168': return "\u3156"; // ᅨ -> ㅖ
+            case '\u1169': return "\u3157"; // ᅩ -> ㅗ
+            case '\u116A': return "\u3158"; // ᅪ -> ㅘ
+            case '\u116B': return "\u3159"; // ᅫ -> ㅙ
+            case '\u116C': return "\u315A"; // ᅬ -> ㅚ
+            case '\u116D': return "\u315B"; // ᅭ -> ㅛ
+            case '\u116E': return "\u315C"; // ᅮ -> ㅜ
+            case '\u116F': return "\u315D"; // ᅯ -> ㅝ
+            case '\u1170': return "\u315E"; // ᅰ -> ㅞ
+            case '\u1171': return "\u315F"; // ᅱ -> ㅟ
+            case '\u1172': return "\u3160"; // ᅲ -> ㅠ
+            case '\u1173': return "\u3161"; // ᅳ -> ㅡ
+            case '\u1174': return "\u3162"; // ᅴ -> ㅢ
+            case '\u1175': return "\u3163"; // ᅵ -> ㅣ
+        }
+
+        // Trailing consonants (Jongseong) ᆨ..ᇂ
+        switch (c) {
+            case '\u11A8': return "\u3131"; // ᆨ -> ㄱ
+            case '\u11A9': return "\u3132"; // ᆩ -> ㄲ
+            case '\u11AA': return "\u3131\u3145"; // ᆪ -> ㄳ
+            case '\u11AB': return "\u3134"; // ᆫ -> ㄴ
+            case '\u11AC': return "\u3134\u3148"; // ᆬ -> ㄵ
+            case '\u11AD': return "\u3134\u314E"; // ᆭ -> ㄶ
+            case '\u11AE': return "\u3137"; // ᆮ -> ㄷ
+            case '\u11AF': return "\u3139"; // ᆯ -> ㄹ
+            case '\u11B0': return "\u3139\u3131"; // ᆰ -> ㄺ
+            case '\u11B1': return "\u3139\u3141"; // ᆱ -> ㄻ
+            case '\u11B2': return "\u3139\u3142"; // ᆲ -> ㄼ
+            case '\u11B3': return "\u3139\u3145"; // ᆳ -> ㄽ
+            case '\u11B4': return "\u3139\u314C"; // ᆴ -> ㄾ
+            case '\u11B5': return "\u3139\u314D"; // ᆵ -> ㄿ
+            case '\u11B6': return "\u3139\u314E"; // ᆶ -> ㅀ
+            case '\u11B7': return "\u3141"; // ᆷ -> ㅁ
+            case '\u11B8': return "\u3142"; // ᆸ -> ㅂ
+            case '\u11B9': return "\u3142\u3145"; // ᆹ -> ㅄ
+            case '\u11BA': return "\u3145"; // ᆺ -> ㅅ
+            case '\u11BB': return "\u3146"; // ᆻ -> ㅆ
+            case '\u11BC': return "\u3147"; // ᆼ -> ㅇ
+            case '\u11BD': return "\u3148"; // ᆽ -> ㅈ
+            case '\u11BE': return "\u314A"; // ᆾ -> ㅊ
+            case '\u11BF': return "\u314B"; // ᆿ -> ㅋ
+            case '\u11C0': return "\u314C"; // ᇀ -> ㅌ
+            case '\u11C1': return "\u314D"; // ᇁ -> ㅍ
+            case '\u11C2': return "\u314E"; // ᇂ -> ㅎ
+        }
+        return null;
     }
 
     private static String decodeBasicHtmlEntities(String s) {
@@ -627,7 +1178,8 @@ public class YoutubeCommentService {
         private String authorDisplayName;
         private String publishedAt;
         private Long likeCount;
-        private String text;
+        private String originalText;
+        private String preprocessedText;
 
         public String getAuthorDisplayName() {
             return authorDisplayName;
@@ -653,12 +1205,29 @@ public class YoutubeCommentService {
             this.likeCount = likeCount;
         }
 
+        public String getOriginalText() {
+            return originalText;
+        }
+
+        public void setOriginalText(String originalText) {
+            this.originalText = originalText;
+        }
+
+        public String getPreprocessedText() {
+            return preprocessedText;
+        }
+
+        public void setPreprocessedText(String preprocessedText) {
+            this.preprocessedText = preprocessedText;
+        }
+
+        // Backwards compatibility: older templates/clients referenced "text" for preview.
         public String getText() {
-            return text;
+            return preprocessedText;
         }
 
         public void setText(String text) {
-            this.text = text;
+            this.preprocessedText = text;
         }
     }
 }

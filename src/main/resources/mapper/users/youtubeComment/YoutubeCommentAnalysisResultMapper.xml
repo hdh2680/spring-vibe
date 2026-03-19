@@ -1,0 +1,55 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="springVibe.dev.users.youtubeComment.mapper.YoutubeCommentAnalysisResultMapper">
+
+    <insert id="insertTopKeywords">
+        INSERT INTO youtube_comment_analysis_top_keywords (
+            history_id,
+            user_id,
+            requested_at,
+            params_json,
+            result_json
+        )
+        VALUES (
+            #{historyId},
+            #{userId},
+            #{requestedAt},
+            #{paramsJson},
+            #{resultJson}
+        )
+    </insert>
+
+    <insert id="insertTopicGroups">
+        INSERT INTO youtube_comment_analysis_topic_groups (
+            history_id,
+            user_id,
+            requested_at,
+            params_json,
+            result_json
+        )
+        VALUES (
+            #{historyId},
+            #{userId},
+            #{requestedAt},
+            #{paramsJson},
+            #{resultJson}
+        )
+    </insert>
+    <select id="selectLatestTopKeywordsResultJson" resultType="string">
+        SELECT result_json
+        FROM youtube_comment_analysis_top_keywords
+        WHERE history_id = #{historyId}
+          AND (#{userId} IS NULL OR user_id = #{userId})
+        ORDER BY requested_at DESC, id DESC
+        LIMIT 1
+    </select>
+
+    <select id="selectLatestTopicGroupsResultJson" resultType="string">
+        SELECT result_json
+        FROM youtube_comment_analysis_topic_groups
+        WHERE history_id = #{historyId}
+          AND (#{userId} IS NULL OR user_id = #{userId})
+        ORDER BY requested_at DESC, id DESC
+        LIMIT 1
+    </select>
+</mapper>
