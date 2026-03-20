@@ -35,6 +35,65 @@
             #{resultJson}
         )
     </insert>
+
+    <insert id="insertSentiments">
+        INSERT INTO youtube_comment_analysis_sentiments (
+            history_id,
+            user_id,
+            requested_at,
+            params_json,
+            result_json
+        )
+        VALUES (
+            #{historyId},
+            #{userId},
+            #{requestedAt},
+            #{paramsJson},
+            #{resultJson}
+        )
+    </insert>
+
+    <insert id="insertWordNetworks">
+        INSERT INTO youtube_comment_analysis_word_networks (
+            history_id,
+            user_id,
+            requested_at,
+            params_json,
+            result_json
+        )
+        VALUES (
+            #{historyId},
+            #{userId},
+            #{requestedAt},
+            #{paramsJson},
+            #{resultJson}
+        )
+    </insert>
+
+    <delete id="deleteTopKeywordsByHistoryId">
+        DELETE FROM youtube_comment_analysis_top_keywords
+        WHERE history_id = #{historyId}
+          AND (#{userId} IS NULL OR user_id = #{userId})
+    </delete>
+
+    <delete id="deleteTopicGroupsByHistoryId">
+        DELETE FROM youtube_comment_analysis_topic_groups
+        WHERE history_id = #{historyId}
+          AND (#{userId} IS NULL OR user_id = #{userId})
+    </delete>
+
+    <delete id="deleteSentimentsByHistoryId">
+        DELETE FROM youtube_comment_analysis_sentiments
+        WHERE history_id = #{historyId}
+          AND (#{userId} IS NULL OR user_id = #{userId})
+    </delete>
+
+    <delete id="deleteWordNetworksByHistoryId">
+        DELETE FROM youtube_comment_analysis_word_networks
+        WHERE history_id = #{historyId}
+          AND (#{userId} IS NULL OR user_id = #{userId})
+    </delete>
+
     <select id="selectLatestTopKeywordsResultJson" resultType="string">
         SELECT result_json
         FROM youtube_comment_analysis_top_keywords
@@ -47,6 +106,24 @@
     <select id="selectLatestTopicGroupsResultJson" resultType="string">
         SELECT result_json
         FROM youtube_comment_analysis_topic_groups
+        WHERE history_id = #{historyId}
+          AND (#{userId} IS NULL OR user_id = #{userId})
+        ORDER BY requested_at DESC, id DESC
+        LIMIT 1
+    </select>
+
+    <select id="selectLatestSentimentsResultJson" resultType="string">
+        SELECT result_json
+        FROM youtube_comment_analysis_sentiments
+        WHERE history_id = #{historyId}
+          AND (#{userId} IS NULL OR user_id = #{userId})
+        ORDER BY requested_at DESC, id DESC
+        LIMIT 1
+    </select>
+
+    <select id="selectLatestWordNetworksResultJson" resultType="string">
+        SELECT result_json
+        FROM youtube_comment_analysis_word_networks
         WHERE history_id = #{historyId}
           AND (#{userId} IS NULL OR user_id = #{userId})
         ORDER BY requested_at DESC, id DESC

@@ -162,6 +162,17 @@ if (condition) {
 
 ---
 
+## 9. 날짜/시간 표기 규칙
+- **화면(UI)에서 표시하는 날짜/시간 문자열 포맷은 `yyyy-MM-dd HH:mm:ss`로 통일한다.** (24시간제)
+- 기본 타임존은 `Asia/Seoul`을 사용한다(별도 요구사항이 있으면 명시).
+- Thymeleaf에서 `LocalDateTime/OffsetDateTime/ZonedDateTime` 출력 시:
+  - 예시: `#temporals.format(x, 'yyyy-MM-dd HH:mm:ss')`
+- Java에서 문자열로 변환해야 하는 경우:
+  - 예시: `DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")`
+  - 외부 API의 `...Z`(UTC) 시간은 화면 표시 전에 KST로 변환 후 포맷한다.
+
+---
+
 ## 9. View Template (Thymeleaf)
 - 화면(View) 템플릿은 `src/main/resources/templates/html/**` 하위에 생성한다.
 - `layout/app.html` 구조에서 Controller는 `contentTemplate`에 `html/...` prefix를 포함해서 지정한다.

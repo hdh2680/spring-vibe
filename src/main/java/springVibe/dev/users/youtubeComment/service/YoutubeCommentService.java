@@ -8,10 +8,12 @@ import springVibe.dev.users.youtubeComment.dto.YoutubeCommentPage;
 import springVibe.dev.users.youtubeComment.dto.youtube.CommentThreadsResponse;
 import springVibe.dev.users.youtubeComment.mapper.YoutubeCommentAnalysisHistoryMapper;
 import springVibe.dev.users.youtubeComment.mapper.YoutubeCommentAnalysisResultMapper;
+import springVibe.dev.users.youtubeComment.sentiment.SentimentAnalyzer;
 import springVibe.dev.users.youtubeComment.util.YoutubeUrlParser;
 import springVibe.system.storage.StorageProperties;
 import springVibe.system.exception.BaseException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -24,6 +26,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -67,28 +70,40 @@ public class YoutubeCommentService {
         "그리고", "근데", "하지만", "그래서", "그런데", "또", "또는",
         "은", "는", "이", "가", "을", "를", "에", "에서", "에게", "한테", "로", "으로", "와", "과", "도", "만", "까지", "부터", "보다",
         "하다", "되다", "있다", "없다", "이다", "아니다", "같다",
+        // common filler/function words (helps network/keyword quality)
+        "하고", "때문에", "있는", "이게", "우리", "우리가", "우리도", "우리는", "한다", "라고", "아니라", "무슨", "저런", "모든", "이제", "역시", "많이", "빨리",
         "영상", "유튜브",
         "@mention", "#tag", "emoji"
     )));
+
+    private static final String[] KOR_JOSA_SUFFIXES = new String[]{
+        // longer first
+        "으로", "에서", "에게", "한테", "까지", "부터",
+        "하고", "랑", "과", "와",
+        "의", "은", "는", "이", "가", "을", "를", "도", "만", "에", "로"
+    };
 
     private final YoutubeDataApiClient youtubeDataApiClient;
     private final StorageProperties storageProperties;
     private final ObjectMapper objectMapper;
     private final YoutubeCommentAnalysisHistoryMapper youtubeCommentAnalysisHistoryMapper;
     private final YoutubeCommentAnalysisResultMapper youtubeCommentAnalysisResultMapper;
+    private final SentimentAnalyzer sentimentAnalyzer;
 
     public YoutubeCommentService(
         YoutubeDataApiClient youtubeDataApiClient,
         StorageProperties storageProperties,
         ObjectMapper objectMapper,
         YoutubeCommentAnalysisHistoryMapper youtubeCommentAnalysisHistoryMapper,
-        YoutubeCommentAnalysisResultMapper youtubeCommentAnalysisResultMapper
+        YoutubeCommentAnalysisResultMapper youtubeCommentAnalysisResultMapper,
+        SentimentAnalyzer sentimentAnalyzer
     ) {
         this.youtubeDataApiClient = youtubeDataApiClient;
         this.storageProperties = storageProperties;
         this.objectMapper = objectMapper;
         this.youtubeCommentAnalysisHistoryMapper = youtubeCommentAnalysisHistoryMapper;
         this.youtubeCommentAnalysisResultMapper = youtubeCommentAnalysisResultMapper;
+        this.sentimentAnalyzer = sentimentAnalyzer;
     }
 
     public YoutubeCommentPage collectCommentsByUrl(String inputUrl, String pageToken) {
@@ -180,6 +195,7 @@ public class YoutubeCommentService {
         item.setText(s.getTextOriginal());
         item.setLikeCount(s.getLikeCount());
 
+        item.setPublishedAtView(formatPublishedAtForView(s.getPublishedAt()));
         if (s.getPublishedAt() != null && !s.getPublishedAt().isBlank()) {
             try {
                 item.setPublishedAt(OffsetDateTime.parse(s.getPublishedAt()));
@@ -489,16 +505,19 @@ public class YoutubeCommentService {
         }
     }
 
+    @Transactional
     public void analyzeAndPersist(Long historyId, Long userId) {
         analyzeAndPersist(historyId, userId, 30, 5, true);
     }
 
+    @Transactional
     public void analyzeAndPersist(Long historyId, Long userId, int topN, int clusterK, boolean useBigrams) {
         int safeTopN = Math.max(1, Math.min(topN, 200));
         int safeK = Math.max(1, Math.min(clusterK, 20));
 
         YoutubeCommentAnalysisHistory history = findHistoryOrThrow(historyId, userId);
-        if (history.getAnalysisRequestedAt() != null) {
+        // allow re-run: overwrite analysis result rows for this history_id
+        if (false && history.getAnalysisRequestedAt() != null) {
             throw new BaseException("YOUTUBE_ANALYSIS_ALREADY_DONE", "이미 분석이 수행되었습니다(analysis_requested_at가 존재).");
         }
         if (history.getPreprocessedFilePath() == null || history.getPreprocessedSavedAt() == null) {
@@ -522,7 +541,10 @@ public class YoutubeCommentService {
         params.put("minTokenLen", 2);
         params.put("maxComments", 20000);
         params.put("stopwordsVersion", "default-v1");
-        params.put("topicAlgorithm", "seed-keyword-overlap-v1");
+        params.put("topicAlgorithm", "seed-keyword-cooccurrence-em-v1");
+        params.put("seedSize", 6);
+        params.put("minCooccur", 2);
+        params.put("emIterations", 3);
 
         String paramsJson;
         try {
@@ -533,17 +555,28 @@ public class YoutubeCommentService {
 
         String topJson = buildTopKeywordsResultJson(historyId, comments, safeTopN, useBigrams);
         String topicJson = buildTopicGroupsResultJson(historyId, comments, safeTopN, safeK);
+        String sentimentJson = buildSentimentResultJson(historyId, comments);
+        String networkJson = buildWordNetworkResultJson(historyId, comments);
 
         int insertedTop;
         int insertedTopic;
+        int insertedSentiment;
+        int insertedNetwork;
         try {
+            youtubeCommentAnalysisResultMapper.deleteTopKeywordsByHistoryId(historyId, history.getUserId());
+            youtubeCommentAnalysisResultMapper.deleteTopicGroupsByHistoryId(historyId, history.getUserId());
+            youtubeCommentAnalysisResultMapper.deleteSentimentsByHistoryId(historyId, history.getUserId());
+            youtubeCommentAnalysisResultMapper.deleteWordNetworksByHistoryId(historyId, history.getUserId());
+
             insertedTop = youtubeCommentAnalysisResultMapper.insertTopKeywords(historyId, history.getUserId(), now, paramsJson, topJson);
             insertedTopic = youtubeCommentAnalysisResultMapper.insertTopicGroups(historyId, history.getUserId(), now, paramsJson, topicJson);
+            insertedSentiment = youtubeCommentAnalysisResultMapper.insertSentiments(historyId, history.getUserId(), now, paramsJson, sentimentJson);
+            insertedNetwork = youtubeCommentAnalysisResultMapper.insertWordNetworks(historyId, history.getUserId(), now, paramsJson, networkJson);
         } catch (Exception e) {
             throw new BaseException("YOUTUBE_ANALYSIS_DB_INSERT_FAILED", "분석 결과를 DB에 저장하지 못했습니다.", e);
         }
 
-        if (insertedTop <= 0 || insertedTopic <= 0) {
+        if (insertedTop <= 0 || insertedTopic <= 0 || insertedSentiment <= 0 || insertedNetwork <= 0) {
             throw new BaseException("YOUTUBE_ANALYSIS_DB_INSERT_FAILED", "분석 결과를 DB에 저장하지 못했습니다.");
         }
 
@@ -565,6 +598,8 @@ public class YoutubeCommentService {
 
         String top = youtubeCommentAnalysisResultMapper.selectLatestTopKeywordsResultJson(historyId, userId);
         String topic = youtubeCommentAnalysisResultMapper.selectLatestTopicGroupsResultJson(historyId, userId);
+        String sentiment = youtubeCommentAnalysisResultMapper.selectLatestSentimentsResultJson(historyId, userId);
+        String network = youtubeCommentAnalysisResultMapper.selectLatestWordNetworksResultJson(historyId, userId);
 
         ObjectNode root = objectMapper.createObjectNode();
         root.put("historyId", historyId);
@@ -580,6 +615,16 @@ public class YoutubeCommentService {
                 root.set("topicGroups", objectMapper.readTree(topic));
             } else {
                 root.putNull("topicGroups");
+            }
+            if (sentiment != null && !sentiment.isBlank()) {
+                root.set("sentiments", objectMapper.readTree(sentiment));
+            } else {
+                root.putNull("sentiments");
+            }
+            if (network != null && !network.isBlank()) {
+                root.set("wordNetwork", objectMapper.readTree(network));
+            } else {
+                root.putNull("wordNetwork");
             }
             return objectMapper.writeValueAsString(root);
         } catch (Exception e) {
@@ -616,7 +661,13 @@ public class YoutubeCommentService {
                 if (commentId == null || commentId.isBlank()) {
                     commentId = node.path("comment_id").asText(null);
                 }
-                out.add(new PreprocessedComment(commentId, clean));
+
+                String publishedAt = node.path("publishedAt").asText(null);
+                if (publishedAt == null || publishedAt.isBlank()) {
+                    publishedAt = node.path("published_at").asText(null);
+                }
+
+                out.add(new PreprocessedComment(commentId, clean, publishedAt));
             }
         } catch (Exception e) {
             throw new BaseException("YOUTUBE_ANALYSIS_READ_FAILED", "전처리 파일 읽기에 실패했습니다.", e);
@@ -668,87 +719,585 @@ public class YoutubeCommentService {
         }
     }
 
-    private String buildTopicGroupsResultJson(Long historyId, List<PreprocessedComment> comments, int seedTopN, int clusterK) {
-        // Seed terms from top unigrams only (no bigrams) to keep grouping simple.
-        Map<String, Long> counts = new HashMap<>(4096);
-        for (PreprocessedComment c : comments) {
-            for (String t : tokenizeForKeywords(c.cleanText)) {
-                counts.merge(t, 1L, Long::sum);
-            }
-        }
-        List<String> seeds = counts.entrySet()
-            .stream()
-            .sorted(Comparator.<Map.Entry<String, Long>>comparingLong(Map.Entry::getValue).reversed()
-                .thenComparing(Map.Entry::getKey))
-            .limit(Math.max(seedTopN, clusterK * 3L))
-            .map(Map.Entry::getKey)
-            .filter(t -> !DEFAULT_STOPWORDS.contains(t))
-            .limit(clusterK)
-            .collect(Collectors.toList());
+    private String buildWordNetworkResultJson(Long historyId, List<PreprocessedComment> comments) {
+        // Word co-occurrence network (comment-level). Nodes are terms, edges connect terms that co-occur in the same comment.
+        final int nodeLimit = 60;
+        final int edgeLimit = 220;
+        final int minDocFreq = 3;
+        final int minEdgeWeight = 2;
+        final int maxUniqueTokensPerComment = 200;
 
-        int k = Math.max(1, Math.min(clusterK, Math.max(1, seeds.size())));
-
-        Map<Integer, List<PreprocessedComment>> clusters = new HashMap<>();
-        for (int i = 0; i < k; i++) {
-            clusters.put(i, new ArrayList<>());
-        }
-        clusters.put(-1, new ArrayList<>()); // other
-
+        // 1) Doc frequency (unique terms per comment)
+        Map<String, Integer> docFreq = new HashMap<>(4096);
+        List<Set<String>> tokenSets = new ArrayList<>(comments.size());
         for (PreprocessedComment c : comments) {
             List<String> toks = tokenizeForKeywords(c.cleanText);
             if (toks.isEmpty()) {
-                clusters.get(-1).add(c);
+                tokenSets.add(Set.of());
                 continue;
             }
-            int best = -1;
-            int bestScore = 0;
-            for (int i = 0; i < k; i++) {
-                String seed = seeds.get(i);
-                int score = 0;
-                for (String t : toks) {
-                    if (t.equals(seed)) {
-                        score++;
+            // Use unique set to avoid order bias (do not just take "first N tokens").
+            // Still cap unique terms to keep memory/CPU stable on noisy comments.
+            Set<String> set = new HashSet<>(Math.min(maxUniqueTokensPerComment, toks.size()) * 2);
+            for (String t : toks) {
+                if (set.size() >= maxUniqueTokensPerComment) {
+                    break;
+                }
+                if (t == null || t.isBlank() || DEFAULT_STOPWORDS.contains(t)) {
+                    continue;
+                }
+                set.add(t);
+            }
+            tokenSets.add(set);
+            for (String t : set) {
+                docFreq.merge(t, 1, Integer::sum);
+            }
+        }
+
+        // 2) Pick nodes
+        List<String> nodes = docFreq.entrySet()
+            .stream()
+            .filter(e -> e.getKey() != null && !e.getKey().isBlank() && e.getValue() != null && e.getValue() >= minDocFreq)
+            .sorted(Comparator.<Map.Entry<String, Integer>>comparingInt(Map.Entry::getValue).reversed()
+                .thenComparing(Map.Entry::getKey))
+            .limit(nodeLimit)
+            .map(Map.Entry::getKey)
+            .collect(Collectors.toList());
+
+        Set<String> nodeSet = new HashSet<>(nodes);
+
+        // 3) Build edges among selected nodes
+        Map<String, Integer> edgeWeights = new HashMap<>(8192);
+        for (Set<String> set : tokenSets) {
+            if (set == null || set.size() < 2) {
+                continue;
+            }
+            List<String> terms = set.stream()
+                .filter(nodeSet::contains)
+                .sorted()
+                .collect(Collectors.toList());
+            if (terms.size() < 2) {
+                continue;
+            }
+            for (int i = 0; i < terms.size() - 1; i++) {
+                String a = terms.get(i);
+                for (int j = i + 1; j < terms.size(); j++) {
+                    String b = terms.get(j);
+                    // stable key: a|b where a < b
+                    String key = a + "|" + b;
+                    edgeWeights.merge(key, 1, Integer::sum);
+                }
+            }
+        }
+
+        // 4) Filter & sort edges
+        List<Map.Entry<String, Integer>> edges = edgeWeights.entrySet()
+            .stream()
+            .filter(e -> e.getValue() != null && e.getValue() >= minEdgeWeight)
+            .sorted(Comparator.<Map.Entry<String, Integer>>comparingInt(Map.Entry::getValue).reversed()
+                .thenComparing(Map.Entry::getKey))
+            .limit(edgeLimit)
+            .collect(Collectors.toList());
+
+        ObjectNode root = objectMapper.createObjectNode();
+        root.put("historyId", historyId);
+        root.put("algorithm", "cooccurrence-network-v1");
+        root.put("nodeLimit", nodeLimit);
+        root.put("edgeLimit", edgeLimit);
+        root.put("minDocFreq", minDocFreq);
+        root.put("minEdgeWeight", minEdgeWeight);
+        root.put("maxUniqueTokensPerComment", maxUniqueTokensPerComment);
+        root.put("totalComments", comments.size());
+        root.put("nodeCount", nodes.size());
+        root.put("edgeCount", edges.size());
+
+        var arrNodes = root.putArray("nodes");
+        for (String term : nodes) {
+            ObjectNode n = objectMapper.createObjectNode();
+            n.put("id", term);
+            n.put("term", term);
+            n.put("docFreq", docFreq.getOrDefault(term, 0));
+            arrNodes.add(n);
+        }
+
+        var arrEdges = root.putArray("edges");
+        for (Map.Entry<String, Integer> e : edges) {
+            String key = e.getKey();
+            int p = key.indexOf('|');
+            if (p <= 0 || p >= key.length() - 1) {
+                continue;
+            }
+            String a = key.substring(0, p);
+            String b = key.substring(p + 1);
+            ObjectNode row = objectMapper.createObjectNode();
+            row.put("source", a);
+            row.put("target", b);
+            row.put("weight", e.getValue());
+            arrEdges.add(row);
+        }
+
+        try {
+            return objectMapper.writeValueAsString(root);
+        } catch (Exception e) {
+            throw new BaseException("YOUTUBE_ANALYSIS_RESULT_JSON_FAILED", "네트워크 분석 결과 JSON 생성에 실패했습니다.", e);
+        }
+    }
+
+    private String buildSentimentResultJson(Long historyId, List<PreprocessedComment> comments) {
+        // Lexicon-based sentiment (max n-gram match) + time series aggregation (3h bucket, %).
+        int pos = 0;
+        int neu = 0;
+        int neg = 0;
+        int unk = 0;
+        final int maxExamplesPerLabel = 50;
+
+        class Bucket {
+            int pos;
+            int neu;
+            int neg;
+            int unk;
+            int total() { return pos + neu + neg + unk; }
+            int classifiedTotal() { return pos + neu + neg; }
+        }
+
+        Map<ZonedDateTime, Bucket> byHour = new HashMap<>();
+
+        // Store a few example comments per label for UI debug/inspection.
+        List<ObjectNode> posExamples = new ArrayList<>(maxExamplesPerLabel);
+        List<ObjectNode> neuExamples = new ArrayList<>(maxExamplesPerLabel);
+        List<ObjectNode> negExamples = new ArrayList<>(maxExamplesPerLabel);
+        List<ObjectNode> unkExamples = new ArrayList<>(maxExamplesPerLabel);
+
+        for (PreprocessedComment c : comments) {
+            SentimentAnalyzer.Result r = sentimentAnalyzer.analyze(c.cleanText);
+            SentimentAnalyzer.Label label = r.label();
+
+            boolean unknown = r.matched() <= 0;
+            if (unknown) {
+                unk++;
+            } else if (label == SentimentAnalyzer.Label.POSITIVE) {
+                pos++;
+            } else if (label == SentimentAnalyzer.Label.NEGATIVE) {
+                neg++;
+            } else {
+                neu++;
+            }
+
+            // Collect examples (max N per label).
+            List<ObjectNode> bucket = unknown
+                ? unkExamples
+                : (label == SentimentAnalyzer.Label.POSITIVE ? posExamples
+                : (label == SentimentAnalyzer.Label.NEGATIVE ? negExamples : neuExamples));
+            if (bucket.size() < maxExamplesPerLabel) {
+                ObjectNode ex = objectMapper.createObjectNode();
+                ex.put("commentId", c.commentId);
+                ex.put("publishedAt", formatPublishedAtForView(c.publishedAt));
+                ex.put("text", c.cleanText);
+                ex.put("score", r.score());
+                ex.put("matched", r.matched());
+                ex.put("label", unknown ? "UNKNOWN" : label.name());
+                bucket.add(ex);
+            }
+
+            ZonedDateTime hour = parseToHourBucketOrNull(c.publishedAt);
+            if (hour != null) {
+                Bucket b = byHour.computeIfAbsent(hour, k -> new Bucket());
+                if (unknown) {
+                    b.unk++;
+                } else if (label == SentimentAnalyzer.Label.POSITIVE) b.pos++;
+                else if (label == SentimentAnalyzer.Label.NEGATIVE) b.neg++;
+                else b.neu++;
+            }
+        }
+
+        int classifiedTotal = pos + neu + neg;
+        int total = classifiedTotal + unk;
+
+        ObjectNode root = objectMapper.createObjectNode();
+        root.put("historyId", historyId);
+        root.put("algorithm", "lexicon-max-ngram-v1");
+        root.put("bucket", "3h");
+        root.put("timezone", DEFAULT_ZONE_ID.getId());
+        root.put("total", total);
+        root.put("classifiedTotal", classifiedTotal);
+        root.put("maxExamplesPerLabel", maxExamplesPerLabel);
+
+        ObjectNode overall = root.putObject("overall");
+        overall.put("positiveCount", pos);
+        overall.put("neutralCount", neu);
+        overall.put("negativeCount", neg);
+        overall.put("unknownCount", unk);
+        overall.put("positivePct", pct(pos, total));
+        overall.put("neutralPct", pct(neu, total));
+        overall.put("negativePct", pct(neg, total));
+        overall.put("unknownPct", pct(unk, total));
+        overall.put("classifiedPct", pct(classifiedTotal, total));
+        overall.put("positivePctClassified", pct(pos, classifiedTotal));
+        overall.put("neutralPctClassified", pct(neu, classifiedTotal));
+        overall.put("negativePctClassified", pct(neg, classifiedTotal));
+
+        ObjectNode examples = root.putObject("examples");
+        var pArr = examples.putArray("positive");
+        for (ObjectNode ex : posExamples) pArr.add(ex);
+        var nArr = examples.putArray("neutral");
+        for (ObjectNode ex : neuExamples) nArr.add(ex);
+        var gArr = examples.putArray("negative");
+        for (ObjectNode ex : negExamples) gArr.add(ex);
+        var uArr = examples.putArray("unknown");
+        for (ObjectNode ex : unkExamples) uArr.add(ex);
+
+        var arr = root.putArray("byHour");
+        byHour.keySet()
+            .stream()
+            .sorted()
+            .forEach((hour) -> {
+                Bucket b = byHour.get(hour);
+                int t = b == null ? 0 : b.total();
+                int ct = b == null ? 0 : b.classifiedTotal();
+                ObjectNode row = objectMapper.createObjectNode();
+                row.put("hour", hour.format(PUBLISHED_AT_FORMATTER));
+                row.put("total", t);
+                row.put("classifiedTotal", ct);
+                row.put("positiveCount", b == null ? 0 : b.pos);
+                row.put("neutralCount", b == null ? 0 : b.neu);
+                row.put("negativeCount", b == null ? 0 : b.neg);
+                row.put("unknownCount", b == null ? 0 : b.unk);
+                row.put("positivePct", pct(b == null ? 0 : b.pos, t));
+                row.put("neutralPct", pct(b == null ? 0 : b.neu, t));
+                row.put("negativePct", pct(b == null ? 0 : b.neg, t));
+                row.put("unknownPct", pct(b == null ? 0 : b.unk, t));
+                row.put("positivePctClassified", pct(b == null ? 0 : b.pos, ct));
+                row.put("neutralPctClassified", pct(b == null ? 0 : b.neu, ct));
+                row.put("negativePctClassified", pct(b == null ? 0 : b.neg, ct));
+                arr.add(row);
+            });
+
+        try {
+            return objectMapper.writeValueAsString(root);
+        } catch (Exception e) {
+            throw new BaseException("YOUTUBE_ANALYSIS_RESULT_JSON_FAILED", "감정분석 결과 JSON 생성에 실패했습니다.", e);
+        }
+    }
+
+    private ZonedDateTime parseToHourBucketOrNull(String publishedAt) {
+        if (publishedAt == null || publishedAt.isBlank()) {
+            return null;
+        }
+        try {
+            // Most JSONL uses ISO-8601 with offset (e.g. 2026-03-19T07:54:21Z).
+            OffsetDateTime odt = OffsetDateTime.parse(publishedAt.trim());
+            ZonedDateTime hour = odt.atZoneSameInstant(DEFAULT_ZONE_ID).truncatedTo(ChronoUnit.HOURS);
+            int h = hour.getHour();
+            int bucketStart = (h / 3) * 3;
+            return hour.withHour(bucketStart);
+        } catch (Exception ignored) {
+            // fallback below
+        }
+        try {
+            // Support already-formatted local time (rare).
+            LocalDateTime ldt = LocalDateTime.parse(publishedAt.trim(), PUBLISHED_AT_FORMATTER);
+            ZonedDateTime hour = ldt.atZone(DEFAULT_ZONE_ID).truncatedTo(ChronoUnit.HOURS);
+            int h = hour.getHour();
+            int bucketStart = (h / 3) * 3;
+            return hour.withHour(bucketStart);
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private static double pct(int n, int total) {
+        if (total <= 0) {
+            return 0.0;
+        }
+        double v = (n * 100.0) / total;
+        // Keep it stable for UI by rounding to 1 decimal.
+        return Math.round(v * 10.0) / 10.0;
+    }
+
+    private String buildTopicGroupsResultJson(Long historyId, List<PreprocessedComment> comments, int seedTopN, int clusterK) {
+        // Seed groups: choose representative head terms, then expand each head into a small keyword set
+        // using comment-level co-occurrence. Classify comments by overlap with seed keyword sets.
+        final int seedSize = 6;
+        final int minCooccur = 2;
+        final int candidateHeadLimit = Math.max(seedTopN, clusterK * 6);
+        final int emIterations = 3;
+
+        final class SeedGroup {
+            final String head;
+            final List<String> keywords;
+            final Set<String> keywordSet;
+
+            SeedGroup(String head, List<String> keywords, Set<String> keywordSet) {
+                this.head = head;
+                this.keywords = keywords == null ? List.of() : keywords;
+                this.keywordSet = keywordSet == null ? Set.of() : keywordSet;
+            }
+        }
+
+        List<Set<String>> tokenSets = new ArrayList<>(comments.size());
+        Map<String, Long> docFreq = new HashMap<>(4096);
+        for (PreprocessedComment c : comments) {
+            Set<String> set = new HashSet<>(tokenizeForKeywords(c.cleanText));
+            tokenSets.add(set);
+            for (String t : set) {
+                if (t == null || t.isBlank()) {
+                    continue;
+                }
+                docFreq.merge(t, 1L, Long::sum);
+            }
+        }
+
+        List<String> candidateHeads = docFreq.entrySet()
+            .stream()
+            .sorted(Comparator.<Map.Entry<String, Long>>comparingLong(Map.Entry::getValue).reversed()
+                .thenComparing(Map.Entry::getKey))
+            .limit(candidateHeadLimit)
+            .map(Map.Entry::getKey)
+            .filter(t -> t != null && !t.isBlank() && !DEFAULT_STOPWORDS.contains(t))
+            .collect(Collectors.toList());
+
+        List<SeedGroup> seedGroups = new ArrayList<>(Math.max(1, clusterK));
+        for (String head : candidateHeads) {
+            int headSupport = 0;
+            Map<String, Integer> co = new HashMap<>(256);
+            for (Set<String> set : tokenSets) {
+                if (set == null || set.isEmpty() || !set.contains(head)) {
+                    continue;
+                }
+                headSupport++;
+                for (String t : set) {
+                    if (t == null || t.isBlank() || t.equals(head)) {
+                        continue;
+                    }
+                    co.merge(t, 1, Integer::sum);
+                }
+            }
+
+            // Skip extremely weak heads to avoid noisy topics.
+            if (headSupport < 2) {
+                continue;
+            }
+
+            List<String> keywords = new ArrayList<>(seedSize);
+            keywords.add(head);
+            co.entrySet()
+                .stream()
+                .filter(e -> e.getKey() != null && !e.getKey().isBlank() && e.getValue() != null && e.getValue() >= minCooccur)
+                .sorted(Comparator.<Map.Entry<String, Integer>>comparingInt(Map.Entry::getValue).reversed()
+                    .thenComparing(Map.Entry::getKey))
+                .limit(seedSize * 2L) // extra room, we'll stop at seedSize below
+                .forEach(e -> {
+                    if (keywords.size() >= seedSize) {
+                        return;
+                    }
+                    String t = e.getKey();
+                    if (!keywords.contains(t)) {
+                        keywords.add(t);
+                    }
+                });
+
+            Set<String> kwSet = new HashSet<>(keywords);
+
+            // Enforce topic diversity: skip if too similar to an existing seed group.
+            boolean tooSimilar = false;
+            for (SeedGroup g : seedGroups) {
+                int inter = 0;
+                for (String t : kwSet) {
+                    if (g.keywordSet.contains(t)) {
+                        inter++;
                     }
                 }
-                if (score > bestScore) {
-                    bestScore = score;
-                    best = i;
+                int union = kwSet.size() + g.keywordSet.size() - inter;
+                double jaccard = union <= 0 ? 0.0 : (inter * 1.0) / union;
+                if (jaccard >= 0.60) {
+                    tooSimilar = true;
+                    break;
                 }
             }
-            if (best < 0) {
-                clusters.get(-1).add(c);
-            } else {
-                clusters.get(best).add(c);
+            if (tooSimilar) {
+                continue;
             }
+
+            seedGroups.add(new SeedGroup(head, keywords, kwSet));
+            if (seedGroups.size() >= clusterK) {
+                break;
+            }
+        }
+
+        // Fallback: if co-occurrence seeds were not formed (very small / noisy dataset), fall back to top unigrams.
+        if (seedGroups.isEmpty()) {
+            List<String> heads = docFreq.entrySet()
+                .stream()
+                .sorted(Comparator.<Map.Entry<String, Long>>comparingLong(Map.Entry::getValue).reversed()
+                    .thenComparing(Map.Entry::getKey))
+                .limit(Math.max(1, clusterK))
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
+            for (String h : heads) {
+                seedGroups.add(new SeedGroup(h, List.of(h), Set.of(h)));
+            }
+        }
+
+        int k = Math.max(1, Math.min(clusterK, Math.max(1, seedGroups.size())));
+
+        // EM-like refinement: (E) assign comments to best seed group, (M) recompute group keywords from assigned bucket.
+        Map<Integer, List<Integer>> clusters = null;
+        int[] assignment = new int[comments.size()];
+        for (int i = 0; i < assignment.length; i++) {
+            assignment[i] = Integer.MIN_VALUE;
+        }
+        int iterationsRun = 0;
+        int movedTotal = 0;
+
+        for (int iter = 0; iter < emIterations; iter++) {
+            clusters = new HashMap<>();
+            for (int i = 0; i < k; i++) {
+                clusters.put(i, new ArrayList<>());
+            }
+            clusters.put(-1, new ArrayList<>());
+
+            int moved = 0;
+            for (int idx = 0; idx < comments.size(); idx++) {
+                Set<String> toks = idx < tokenSets.size() ? tokenSets.get(idx) : Set.of();
+                int dest = -1;
+                int bestScore = 0;
+                int best = -1;
+
+                if (toks != null && !toks.isEmpty()) {
+                    for (int i = 0; i < k; i++) {
+                        SeedGroup g = seedGroups.get(i);
+                        int score = 0;
+                        if (toks.contains(g.head)) {
+                            score += 2;
+                        }
+                        for (String t : g.keywords) {
+                            if (t == null || t.isBlank() || t.equals(g.head)) {
+                                continue;
+                            }
+                            if (toks.contains(t)) {
+                                score += 1;
+                            }
+                        }
+                        if (score > bestScore) {
+                            bestScore = score;
+                            best = i;
+                        }
+                    }
+                    if (bestScore > 0 && best >= 0) {
+                        dest = best;
+                    }
+                }
+
+                if (assignment[idx] != dest) {
+                    moved++;
+                    assignment[idx] = dest;
+                }
+                clusters.get(dest).add(idx);
+            }
+
+            iterationsRun = iter + 1;
+            movedTotal += moved;
+            if (moved == 0 || iter == emIterations - 1) {
+                break;
+            }
+
+            // M-step: update each seed group's keyword set based on current bucket token frequencies.
+            List<SeedGroup> refined = new ArrayList<>(k);
+            for (int i = 0; i < k; i++) {
+                SeedGroup base = seedGroups.get(i);
+                List<Integer> bucketIdx = clusters.get(i);
+                if (bucketIdx == null || bucketIdx.isEmpty()) {
+                    refined.add(base);
+                    continue;
+                }
+
+                Map<String, Integer> freq = new HashMap<>(512);
+                for (int idx : bucketIdx) {
+                    Set<String> set = idx < tokenSets.size() ? tokenSets.get(idx) : Set.of();
+                    if (set == null || set.isEmpty()) {
+                        continue;
+                    }
+                    for (String t : set) {
+                        if (t == null || t.isBlank() || DEFAULT_STOPWORDS.contains(t)) {
+                            continue;
+                        }
+                        freq.merge(t, 1, Integer::sum);
+                    }
+                }
+
+                List<String> newKeywords = new ArrayList<>(seedSize);
+                if (base.head != null && !base.head.isBlank()) {
+                    newKeywords.add(base.head);
+                }
+
+                freq.entrySet()
+                    .stream()
+                    .filter(e -> e.getKey() != null && !e.getKey().isBlank() && !e.getKey().equals(base.head))
+                    .sorted(Comparator.<Map.Entry<String, Integer>>comparingInt(Map.Entry::getValue).reversed()
+                        .thenComparing(e -> docFreq.getOrDefault(e.getKey(), Long.MAX_VALUE))
+                        .thenComparing(Map.Entry::getKey))
+                    .limit(seedSize * 4L)
+                    .forEach(e -> {
+                        if (newKeywords.size() >= seedSize) {
+                            return;
+                        }
+                        newKeywords.add(e.getKey());
+                    });
+
+                Set<String> kwSet = new HashSet<>(newKeywords);
+                refined.add(new SeedGroup(base.head, newKeywords, kwSet));
+            }
+            seedGroups = refined;
         }
 
         ObjectNode root = objectMapper.createObjectNode();
         root.put("historyId", historyId);
-        root.put("algorithm", "seed-keyword-overlap-v1");
+        root.put("algorithm", "seed-keyword-cooccurrence-em-v1");
         root.put("clusterK", k);
+        root.put("seedSize", seedSize);
+        root.put("minCooccur", minCooccur);
+        root.put("candidateHeads", candidateHeadLimit);
+        root.put("emIterations", emIterations);
+        root.put("iterationsRun", iterationsRun);
+        root.put("movedTotal", movedTotal);
 
         var seedArr = root.putArray("seeds");
+        var seedGroupArr = root.putArray("seedKeywordGroups");
         for (int i = 0; i < k; i++) {
-            seedArr.add(seeds.get(i));
+            SeedGroup g = seedGroups.get(i);
+            seedArr.add(g.head);
+            ObjectNode sg = objectMapper.createObjectNode();
+            sg.put("seed", g.head);
+            var kw = sg.putArray("keywords");
+            for (String t : g.keywords) {
+                kw.add(t);
+            }
+            seedGroupArr.add(sg);
         }
 
         var cArr = root.putArray("clusters");
         for (int i = -1; i < k; i++) {
-            List<PreprocessedComment> bucket = clusters.get(i);
+            List<Integer> bucket = clusters.get(i);
             if (bucket == null || bucket.isEmpty()) {
                 continue;
             }
             ObjectNode cNode = objectMapper.createObjectNode();
             cNode.put("clusterId", i);
             if (i >= 0) {
-                cNode.put("seed", seeds.get(i));
+                SeedGroup g = seedGroups.get(i);
+                cNode.put("seed", g.head);
+                var sk = cNode.putArray("seedKeywords");
+                for (String t : g.keywords) {
+                    sk.add(t);
+                }
             } else {
                 cNode.put("seed", "other");
             }
             cNode.put("size", bucket.size());
 
             Map<String, Long> localCounts = new HashMap<>(2048);
-            for (PreprocessedComment c : bucket) {
+            for (int idx : bucket) {
+                PreprocessedComment c = comments.get(idx);
                 for (String t : tokenizeForKeywords(c.cleanText)) {
                     localCounts.merge(t, 1L, Long::sum);
                 }
@@ -772,7 +1321,8 @@ public class YoutubeCommentService {
 
             var sampleArr = cNode.putArray("sampleCommentIds");
             int s = 0;
-            for (PreprocessedComment c : bucket) {
+            for (int idx : bucket) {
+                PreprocessedComment c = comments.get(idx);
                 if (c.commentId != null && !c.commentId.isBlank()) {
                     sampleArr.add(c.commentId);
                     if (++s >= 5) {
@@ -842,16 +1392,30 @@ public class YoutubeCommentService {
         if (t.equalsIgnoreCase("@MENTION") || t.equalsIgnoreCase("#TAG") || t.equalsIgnoreCase("EMOJI")) {
             return null;
         }
+
+        // Naive particle stripping for Korean (helps merge variants: "미국/미국이/미국은/미국의/미국을").
+        // Only strip if token stays at least 2 chars to avoid over-stripping.
+        for (String suf : KOR_JOSA_SUFFIXES) {
+            if (t.length() <= suf.length() + 1) {
+                continue;
+            }
+            if (t.endsWith(suf)) {
+                t = t.substring(0, t.length() - suf.length());
+                break;
+            }
+        }
         return t;
     }
 
     private static final class PreprocessedComment {
         private final String commentId;
         private final String cleanText;
+        private final String publishedAt;
 
-        private PreprocessedComment(String commentId, String cleanText) {
+        private PreprocessedComment(String commentId, String cleanText, String publishedAt) {
             this.commentId = commentId;
             this.cleanText = cleanText;
+            this.publishedAt = publishedAt;
         }
     }
 

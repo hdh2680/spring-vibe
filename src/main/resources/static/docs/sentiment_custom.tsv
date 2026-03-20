@@ -1,0 +1,41 @@
+# term<TAB>score
+# - This file is optional. If present, it overrides/extends `sentiment_lexicon.tsv` at app startup.
+# - Use integer scores (recommended: -1/0/+1).
+# - Whitespace-separated multi-word phrases are supported (n-grams).
+#
+# Examples (edit/extend for your domain):
+# 답답	-1
+# 노답	-1
+# 최악	-1
+# 실망	-1
+# 감동	1
+
+# WBC/baseball domain tuning (override noisy general words + add strong negative phrases)
+제대로	0
+나라망신	-1
+죽어라	-1
+우물안의 개구리	-1
+
+# Calibrated from youtube_comment_analysis_sentiments.id=13 samples (misclassified positives / domain rage comments)
+굴욕	-1
+완전 굴욕	-1
+처참	-1
+처참히	-1
+창피	-1
+창피하다	-1
+창피하다못해	-1
+부끄럽다	-1
+부끄럽구나	-1
+한심	-1
+한심하기	-1
+거품	-1
+거품야구	-1
+노답	-1
+개망신	-1
+코미디	-1
+개판	-1
+개판이네	-1
+잣크보	-1
+모지리	-1
+모지리들	-1
+우물안 개구리	-1
