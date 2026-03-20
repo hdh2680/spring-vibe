@@ -7,6 +7,82 @@
       overscroll-behavior: contain;
     }
 
+    /* Cleaner URL form layout */
+    .ytc-form {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 180px auto;
+      gap: 12px;
+      align-items: end;
+    }
+    @media (max-width: 980px) {
+      .ytc-form { grid-template-columns: 1fr; }
+    }
+
+    .ytc-field { min-width: 0; }
+    .ytc-label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 12px;
+      font-weight: 750;
+      color: var(--muted);
+      letter-spacing: -0.1px;
+    }
+    .ytc-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.90);
+      color: var(--text);
+      transition: box-shadow 120ms ease, border-color 120ms ease, background 120ms ease;
+    }
+    .ytc-input::placeholder { color: rgba(17, 24, 39, 0.45); }
+    .ytc-input:focus {
+      outline: none;
+      border-color: rgba(37, 99, 235, 0.35);
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+      background: rgba(255, 255, 255, 0.98);
+    }
+    .ytc-help {
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .ytc-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      align-items: center;
+      padding-top: 22px; /* align with inputs + labels */
+    }
+    @media (max-width: 980px) {
+      .ytc-actions { padding-top: 0; justify-content: flex-start; }
+    }
+    /* Override global .btn width:100% for inline form actions on this page */
+    .ytc-actions .btn {
+      width: auto;
+      padding: 10px 14px;
+      border-radius: 14px;
+    }
+    .ytc-actions .btn-primary {
+      background: linear-gradient(135deg, rgba(37, 99, 235, 0.95), rgba(22, 163, 74, 0.88));
+      border-color: rgba(37, 99, 235, 0.28);
+      color: rgba(255, 255, 255, 0.96);
+    }
+    .ytc-actions .btn-primary:hover {
+      background: linear-gradient(135deg, rgba(37, 99, 235, 0.98), rgba(22, 163, 74, 0.92));
+      border-color: rgba(37, 99, 235, 0.34);
+    }
+    .ytc-actions .btn-secondary { background: rgba(255, 255, 255, 0.78); }
+    .ytc-actions .btn-secondary:disabled,
+    .ytc-actions .btn-primary:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+      transform: none;
+    }
+
     /* Sticky header while scrolling */
     .ytc-table-wrap table.table thead th {
       position: sticky;
@@ -23,7 +99,7 @@
   <div class="toolbar">
     <div>
       <h3>유튜브 댓글분석</h3>
-      <p class="muted">URL 입력 후 댓글 목록을 수집합니다 (MVP)</p>
+      <p class="muted">URL 입력 후 댓글 목록을 수집합니다.</p>
     </div>
     <div>
       <a class="btn-link" th:href="@{/users/youtubeComment/analysis}">이력/분석</a>
@@ -31,21 +107,22 @@
   </div>
 
   <div class="panel" style="margin-bottom: 1rem">
-    <form id="ytcForm" th:action="@{/users/youtubeComment/search}" method="post" th:object="${form}" style="display:flex; gap:.5rem; align-items:flex-start; flex-wrap:wrap">
-      <div style="flex: 1; min-width: 320px">
-        <label class="muted" for="url" style="display:block; margin-bottom:.25rem">유튜브 URL</label>
+    <div class="panel-inner">
+      <form id="ytcForm" class="ytc-form" th:action="@{/users/youtubeComment/search}" method="post" th:object="${form}">
+      <div class="ytc-field">
+        <label class="ytc-label" for="url">유튜브 URL</label>
         <input
           id="url"
           type="text"
           th:field="*{url}"
           placeholder="예) https://www.youtube.com/watch?v=VIDEO_ID"
-          style="width:100%; padding:.6rem .7rem; border:1px solid rgba(0,0,0,.12); border-radius:.6rem"
+          class="ytc-input"
         />
-        <div class="muted" th:if="${#fields.hasErrors('url')}" th:errors="*{url}" style="margin-top:.35rem"></div>
+        <div class="ytc-help" th:if="${#fields.hasErrors('url')}" th:errors="*{url}"></div>
       </div>
 
-      <div style="width: 180px">
-        <label class="muted" for="limit" style="display:block; margin-bottom:.25rem">가져올 개수</label>
+      <div class="ytc-field">
+        <label class="ytc-label" for="limit">가져올 개수</label>
         <input
           id="limit"
           type="number"
@@ -53,16 +130,16 @@
           max="500"
           step="1"
           th:field="*{limit}"
-          style="width:100%; padding:.6rem .7rem; border:1px solid rgba(0,0,0,.12); border-radius:.6rem"
+          class="ytc-input"
         />
-        <div class="muted" th:if="${#fields.hasErrors('limit')}" th:errors="*{limit}" style="margin-top:.35rem"></div>
+        <div class="ytc-help" th:if="${#fields.hasErrors('limit')}" th:errors="*{limit}"></div>
       </div>
 
       <input type="hidden" th:field="*{pageToken}" />
 
-      <div style="padding-top: 1.45rem">
-        <button class="btn" type="submit">데이터 가져오기</button>
-        <button id="btnExportAsync" class="btn" type="submit" th:formaction="@{/users/youtubeComment/search/export}">저장(JSONL)</button>
+      <div class="ytc-actions">
+        <button class="btn btn-primary" type="submit">데이터 가져오기</button>
+        <button id="btnExportAsync" class="btn btn-secondary" type="submit" th:formaction="@{/users/youtubeComment/search/export}">저장(JSONL)</button>
       </div>
     </form>
 
@@ -73,6 +150,7 @@
     <script th:if="${successMessage != null}" th:inline="javascript">
       alert([[${successMessage}]]);
     </script>
+    </div>
   </div>
 
   <script th:inline="javascript">
@@ -117,6 +195,26 @@
       });
     })();
   </script>
+
+  <div th:if="${page == null}">
+    <div class="panel table-wrap ytc-table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th style="width: 180px">Author</th>
+            <th style="width: 170px">Published</th>
+            <th style="width: 80px">Likes</th>
+            <th>Comment</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td colspan="4" class="muted">아직 댓글 목록이 없습니다.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 
   <div th:if="${page != null}">
     <div class="toolbar" style="margin-bottom:.5rem">
@@ -164,7 +262,7 @@
           </tr>
           <tr th:each="c : ${page.comments}">
             <td th:text="${c.authorDisplayName}">author</td>
-            <td th:text="${c.publishedAt}">date</td>
+            <td th:text="${c.publishedAtView}">date</td>
             <td th:text="${c.likeCount}">0</td>
             <td style="white-space: pre-wrap" th:text="${c.text}">text</td>
           </tr>

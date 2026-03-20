@@ -95,3 +95,4 @@ http://localhost:8080/
 - AI 도움으로 변경한 내용이 있으면, 변경 건마다 작업 노트를 1개 작성한다: `/docs/aiwork/WORK_yyyyMMdd_HHmmss.md`
 - 작업 노트에는 다음을 포함한다: 목표(goal), 핵심 변경사항(key changes), 수정/추가한 파일(touched files), 실행/테스트한 명령(run/test commands), 후속 할 일(follow-ups)
 - `/docs/aiwork/`에 적재하는 작업 노트 본문은 한국어로 작성한다 (명령어/코드/파일명은 원문 그대로 표기)
+- 예외: **HTML/CSS 등 단순 디자인(레이아웃/스타일) 변경만 있는 경우에는 AI Work Log를 남기지 않는다.**

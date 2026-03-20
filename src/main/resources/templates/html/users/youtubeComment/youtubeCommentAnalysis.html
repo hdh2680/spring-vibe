@@ -36,9 +36,9 @@
         <tr th:each="h : ${histories}">
           <td th:text="${h.id}">1</td>
           <td style="word-break: break-word" th:text="${h.videoUrl}">url</td>
-          <td th:text="${h.originalSavedAt}">-</td>
-          <td th:text="${h.preprocessedSavedAt}">-</td>
-          <td th:text="${h.analysisRequestedAt}">-</td>
+          <td th:text="${h.originalSavedAt != null ? #temporals.format(h.originalSavedAt, 'yyyy-MM-dd HH:mm:ss') : '-'}">-</td>
+          <td th:text="${h.preprocessedSavedAt != null ? #temporals.format(h.preprocessedSavedAt, 'yyyy-MM-dd HH:mm:ss') : '-'}">-</td>
+          <td th:text="${h.analysisRequestedAt != null ? #temporals.format(h.analysisRequestedAt, 'yyyy-MM-dd HH:mm:ss') : '-'}">-</td>
           <td>
             <form th:if="${h.preprocessedSavedAt == null}" th:action="@{/users/youtubeComment/analysis/preprocess}" method="post" style="display:inline">
               <input type="hidden" name="id" th:value="${h.id}" />

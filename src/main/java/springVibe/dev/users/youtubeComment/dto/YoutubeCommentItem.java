@@ -8,6 +8,8 @@ public class YoutubeCommentItem {
     private String text;
     private Long likeCount;
     private OffsetDateTime publishedAt;
+    // For UI rendering: formatted in KST as "yyyy-MM-dd HH:mm:ss"
+    private String publishedAtView;
 
     public String getCommentId() {
         return commentId;
@@ -48,5 +50,12 @@ public class YoutubeCommentItem {
     public void setPublishedAt(OffsetDateTime publishedAt) {
         this.publishedAt = publishedAt;
     }
-}
 
+    public String getPublishedAtView() {
+        return publishedAtView;
+    }
+
+    public void setPublishedAtView(String publishedAtView) {
+        this.publishedAtView = publishedAtView;
+    }
+}
