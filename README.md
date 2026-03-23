@@ -1,15 +1,24 @@
-# Spring 기반 Vibe Coding 프로젝트
+# spring-vibe
 
-## 0. 변수 정의
-이 문서에서 사용되는 플레이스홀더:
-- `{{ROOT_PACKAGE}}` = springVibe
-- `{{DEVELOP_PACKAGE}}` = dev
+<div align="center">
+  <h3>Spring 기반 Vibe Coding 프로젝트</h3>
+  <p>아이디어를 빠르게 프로토타이핑하고, 실무형 기술 스택으로 확장 가능한 구조를 만드는 것을 목표로 합니다.</p>
+
+  <p>
+    <img alt="Java" src="https://img.shields.io/badge/Java-17-ED8B00?logo=openjdk&logoColor=white" />
+    <img alt="Spring Boot" src="https://img.shields.io/badge/Spring%20Boot-3.2.5-6DB33F?logo=springboot&logoColor=white" />
+    <img alt="Maven" src="https://img.shields.io/badge/Maven-Wrapper-C71A36?logo=apachemaven&logoColor=white" />
+    <img alt="MySQL" src="https://img.shields.io/badge/MySQL-8-4479A1?logo=mysql&logoColor=white" />
+    <img alt="Swagger" src="https://img.shields.io/badge/OpenAPI-Swagger%20UI-85EA2D?logo=swagger&logoColor=black" />
+  </p>
+</div>
 
 ---
 
-## 1. 프로젝트 개요
-spring-vibe는 단순한 코드 구현을 넘어 , 최신 AI 툴을 활용한 생산성 높은 개발 방식(Vibe Coding)을 지향합니다. 
-일상 속의 아이디어들을 빠르게 프로토타이핑하고, 실무적인 기술 스택을 결합하여 견고한 엔터프라이즈 구조로 발전시키는 것을 목적으로 합니다.
+## 1. 변수 정의
+이 문서에서 사용되는 플레이스홀더:
+- `{{ROOT_PACKAGE}}` = springVibe
+- `{{DEVELOP_PACKAGE}}` = dev
 
 ---
 
@@ -82,14 +91,21 @@ http://localhost:8080/login
 ### 5.6 Main
 http://localhost:8080/
 
-## 6. 참고 문서
-- `/docs/PRD.md` : 프로젝트의 목적, 사용자, 핵심 기능 등 **제품 요구사항을 정의한 문서**
-- `/docs/DATABASE_SCHEMA.md` : 시스템에서 사용하는 **데이터베이스 테이블 구조와 컬럼 정보를 정리한 문서**
-- `/docs/ARCHITECTURE.md` : 시스템의 **전체 아키텍처 구조와 패키지 설계 방식을 설명한 문서**
-- `/docs/CODING_RULE.md` : 코드 작성 시 지켜야 할 **코딩 스타일, 설계 원칙, 개발 규칙을 정리한 문서**
-- `/docs/FUNCTIONS.md` : 프로젝트에서 제공하는 **주요 기능 목록과 기능별 설명을 정리한 문서**
-- `/docs/TODOLIST.md` : 현재 진행해야 할 **개발 작업 목록과 진행 상태를 관리하는 문서**
-- `/docs/integrations/youtube-api.md` : YouTube Data API 사용을 위한 **인증/설정/쿼터/에러 처리 가이드**
+---
+
+## 📚 Docs
+
+기획/구조/규칙/기능은 아래 문서에 정리되어 있습니다.
+
+- [docs/PRD.md](docs/PRD.md): 요구사항(목적, 사용자, 핵심 기능)
+- [docs/DATABASE_SCHEMA.md](docs/DATABASE_SCHEMA.md): DB 스키마
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): 아키텍처/패키지 설계
+- [docs/CODING_RULE.md](docs/CODING_RULE.md): 코딩 규칙
+- [docs/FUNCTIONS.md](docs/FUNCTIONS.md): 구현 기능 목록
+- [docs/TODOLIST.md](docs/TODOLIST.md): 작업 목록/진행 상태
+- [docs/integrations/youtube-api.md](docs/integrations/youtube-api.md): YouTube API 가이드
+
+---
 
 ## 7. AI Work Log Rule
 - AI 도움으로 변경한 내용이 있으면, 변경 건마다 작업 노트를 1개 작성한다: `/docs/aiwork/WORK_yyyyMMdd_HHmmss.md`
