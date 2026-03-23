@@ -1,0 +1,17 @@
+# Local developer overrides (example)
+#
+# Usage:
+# - Create `application-local.yml` (gitignored) using this file as a reference, then set real values.
+# - Run with profile: `--spring.profiles.active=local`
+#
+# NOTE: Never commit real secrets. Prefer env vars in production environments.
+
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/springVibe?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Seoul
+    username: root
+    password: root
+
+integrations:
+  youtube:
+    api-key: ${YOUTUBE_API_KEY:} # set env var YOUTUBE_API_KEY for local runs

@@ -63,10 +63,10 @@ app:
   storage:
     attachments-dir: ${APP_STORAGE_ATTACHMENTS_DIR:C:/workspace/data/attachments}
 
-# External integrations (local-only hardcode allowed)
-# NOTE: Do not commit real secrets. Prefer env var: ${YOUTUBE_API_KEY:}
+# External integrations
+# NOTE: Do not commit real secrets. Provide via env var (recommended): YOUTUBE_API_KEY
 integrations:
   youtube:
-    api-key: "${YOUTUBE_API_KEY:}" # TODO: put your API key here for local testing (do not commit)
+    api-key: ${YOUTUBE_API_KEY:} # Empty means integration is not configured
 
 
