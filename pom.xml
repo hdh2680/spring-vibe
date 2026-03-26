@@ -104,13 +104,6 @@
             <version>1.17.2</version>
         </dependency>
 
-        <!-- CSV parsing (Amazon categories import) -->
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-csv</artifactId>
-            <version>1.11.0</version>
-        </dependency>
-
         <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>
