@@ -22,3 +22,6 @@ Thumbs.db
 /src/main/resources/application-local.yml
 /src/main/resources/application-local.properties
 
+# Large datasets (do not commit)
+/src/main/resources/static/docs/amazonProduct/
+
