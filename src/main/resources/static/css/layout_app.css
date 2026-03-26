@@ -441,3 +441,191 @@
         font-size: 12px;
       }
 
+      /* DevSearch */
+      .btn.btn-inline {
+        width: auto;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px 14px;
+      }
+
+      .btn-primary {
+        border-color: rgba(37, 99, 235, 0.28);
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.16), rgba(22, 163, 74, 0.10));
+      }
+
+      .btn-primary:hover {
+        border-color: rgba(37, 99, 235, 0.38);
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.20), rgba(22, 163, 74, 0.12));
+      }
+
+      .search-panel {
+        background:
+          radial-gradient(520px 180px at 18% 0%, rgba(37, 99, 235, 0.10), transparent 60%),
+          radial-gradient(520px 200px at 84% 0%, rgba(22, 163, 74, 0.10), transparent 62%),
+          rgba(255, 255, 255, 0.92);
+      }
+
+      .searchbar {
+        display: grid;
+        grid-template-columns: 1fr 120px auto;
+        gap: 12px;
+        align-items: end;
+      }
+
+      .searchbar .field {
+        margin: 0;
+      }
+
+      .searchbar-actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        justify-content: flex-end;
+        padding-bottom: 2px;
+      }
+
+      .alert {
+        margin-top: 10px;
+        border-radius: 14px;
+        padding: 10px 12px;
+        border: 1px solid rgba(17, 24, 39, 0.14);
+        background: rgba(255, 255, 255, 0.86);
+        font-size: 12px;
+      }
+
+      .alert-success {
+        border-color: rgba(22, 163, 74, 0.25);
+        background: rgba(22, 163, 74, 0.06);
+      }
+
+      .alert-danger {
+        border-color: rgba(220, 38, 38, 0.26);
+        background: rgba(220, 38, 38, 0.06);
+      }
+
+      @media (max-width: 980px) {
+        .searchbar {
+          grid-template-columns: 1fr;
+        }
+        .searchbar-actions {
+          justify-content: flex-start;
+        }
+      }
+
+      .pager {
+        margin-top: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 12px;
+        border-radius: 16px;
+        border: 1px solid rgba(17, 24, 39, 0.10);
+        background: rgba(255, 255, 255, 0.70);
+      }
+
+      .pager-actions {
+        display: inline-flex;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .btn-link.is-disabled {
+        opacity: 0.45;
+        pointer-events: none;
+      }
+
+      .thumb {
+        width: 56px;
+        height: 56px;
+        border-radius: 14px;
+        overflow: hidden;
+        border: 1px solid rgba(17, 24, 39, 0.12);
+        background:
+          radial-gradient(44px 36px at 30% 30%, rgba(37, 99, 235, 0.10), transparent 70%),
+          rgba(255, 255, 255, 0.72);
+      }
+
+      .thumb img {
+        width: 100%;
+        height: 100%;
+        display: block;
+        object-fit: cover;
+      }
+
+      .thumb.placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: rgba(17, 24, 39, 0.52);
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+      }
+
+      .tag-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      a.tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(17, 24, 39, 0.12);
+        background: rgba(255, 255, 255, 0.78);
+        color: rgba(17, 24, 39, 0.88);
+        text-decoration: none;
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      a.tag:hover {
+        border-color: rgba(37, 99, 235, 0.28);
+        background: rgba(37, 99, 235, 0.06);
+      }
+
+      .tag-count {
+        font-weight: 800;
+        font-size: 11px;
+        padding: 2px 6px;
+        border-radius: 999px;
+        border: 1px solid rgba(17, 24, 39, 0.12);
+        background: rgba(17, 24, 39, 0.03);
+        color: rgba(17, 24, 39, 0.70);
+      }
+
+      .markdown {
+        font-size: 13px;
+        line-height: 1.6;
+        color: rgba(17, 24, 39, 0.92);
+      }
+
+      .markdown pre {
+        margin: 12px 0;
+        padding: 12px 14px;
+        border-radius: 14px;
+        border: 1px solid rgba(17, 24, 39, 0.10);
+        background: rgba(17, 24, 39, 0.03);
+        overflow: auto;
+      }
+
+      .markdown code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+        font-size: 12px;
+      }
+
+      .markdown img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 14px;
+        border: 1px solid rgba(17, 24, 39, 0.10);
+      }
+

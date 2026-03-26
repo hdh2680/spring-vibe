@@ -1,0 +1,190 @@
+<section xmlns:th="http://www.thymeleaf.org" th:fragment="content">
+  <div class="toolbar">
+    <div>
+      <h3>개발 블로그 검색</h3>
+      <p class="muted">
+        total: <b th:text="${total}">0</b>
+        <span style="opacity:.5">|</span>
+        ES enabled: <b th:text="${esEnabled}">false</b>
+        <span th:if="${q != null and !q.isBlank()}">
+          <span style="opacity:.5">|</span>
+          used ES: <b th:text="${usedElasticsearch}">false</b>
+          <span th:if="${tookMs != null}">
+            <span style="opacity:.5">|</span>
+            took: <b th:text="${tookMs}">0</b>ms
+          </span>
+        </span>
+      </p>
+    </div>
+    <div>
+      <form th:if="${esEnabled}" th:action="@{/users/devSearch/reindex}" method="post" style="display:inline;">
+        <button class="btn btn-inline" type="submit">ES 재색인</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="panel panel-inner search-panel">
+    <form th:action="@{/users/devSearch/list}" method="get" class="searchbar">
+      <label class="field searchbar-main">
+        <div class="label">검색어</div>
+        <input id="devSearchQ" class="input" type="text" name="q" th:value="${q}" placeholder="제목/본문/태그" autocomplete="off" list="devSearchSuggest" />
+        <datalist id="devSearchSuggest"></datalist>
+      </label>
+
+      <label class="field searchbar-size">
+        <div class="label">개수</div>
+        <select class="select" name="size" th:value="${size}">
+          <option value="10" th:selected="${size == 10}">10</option>
+          <option value="20" th:selected="${size == 20}">20</option>
+          <option value="50" th:selected="${size == 50}">50</option>
+        </select>
+      </label>
+
+      <input type="hidden" name="page" value="0" />
+
+      <div class="searchbar-actions">
+        <button class="btn btn-inline btn-primary" type="submit">검색</button>
+        <a class="btn-link" th:href="@{/users/devSearch/list}">초기화</a>
+      </div>
+    </form>
+
+    <div th:if="${successMessage != null}" class="alert alert-success" th:text="${successMessage}">OK</div>
+    <div th:if="${errorMessage != null}" class="alert alert-danger">
+      <div><strong th:text="${errorCode}">ERR</strong></div>
+      <div th:text="${errorMessage}">message</div>
+    </div>
+
+    <div class="tags" th:if="${usedElasticsearch and topTags != null and !#lists.isEmpty(topTags)}">
+      <div class="muted" style="margin-top: 10px;">Top tags</div>
+      <div class="tag-row" style="margin-top: 8px;">
+        <a class="tag" th:each="t : ${topTags}" th:href="@{/users/devSearch/list(q=${t.tag}, page=0, size=${size})}">
+          <span th:text="${t.tag}">tag</span>
+          <span class="tag-count" th:text="${t.count}">0</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="pager" th:if="${totalPages != null and totalPages > 0}">
+    <div class="muted">
+      페이지: <b th:text="${page + 1}">1</b> / <b th:text="${totalPages}">1</b>
+      <span style="opacity:.5">|</span>
+      페이지당: <b th:text="${size}">20</b>
+    </div>
+    <div class="pager-actions">
+      <a class="btn-link"
+         th:classappend="${!hasPrev} ? ' is-disabled' : ''"
+         th:href="${hasPrev} ? @{/users/devSearch/list(q=${q}, page=${prevPage}, size=${size})} : '#'"
+         th:attr="aria-disabled=${!hasPrev}"
+      >이전</a>
+      <a class="btn-link"
+         th:classappend="${!hasNext} ? ' is-disabled' : ''"
+         th:href="${hasNext} ? @{/users/devSearch/list(q=${q}, page=${nextPage}, size=${size})} : '#'"
+         th:attr="aria-disabled=${!hasNext}"
+      >다음</a>
+    </div>
+  </div>
+
+  <div class="panel table-wrap" style="margin-top: 12px;">
+    <table class="table">
+      <thead>
+        <tr>
+          <th style="width: 78px;">썸네일</th>
+          <th style="width: 140px;">작성자</th>
+          <th>제목</th>
+          <th style="width: 220px;">태그</th>
+          <th style="width: 120px;">스코어</th>
+          <th style="width: 180px;">발행일</th>
+          <th style="width: 120px;">좋아요</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr th:if="${#lists.isEmpty(items)}">
+          <td colspan="7" class="muted">검색 결과가 없습니다.</td>
+        </tr>
+        <tr th:each="it : ${items}">
+          <td>
+            <div class="thumb"
+                 th:if="${it.thumbnail != null and !#strings.isEmpty(#strings.trim(it.thumbnail))}">
+              <img th:src="${it.thumbnail}" alt="" loading="lazy" referrerpolicy="no-referrer" />
+            </div>
+            <div class="thumb placeholder"
+                 th:if="${it.thumbnail == null or #strings.isEmpty(#strings.trim(it.thumbnail))}">
+              no
+            </div>
+          </td>
+          <td th:text="${it.username}">username</td>
+          <td>
+            <a class="action" th:href="@{/users/devSearch/view(id=${it.id})}" th:text="${it.title}">title</a>
+          </td>
+          <td>
+            <div class="muted" th:if="${it.tags != null and !#lists.isEmpty(it.tags)}"
+                 th:text="${#strings.arrayJoin(it.tags.toArray(), ', ')}">tags</div>
+            <div class="muted" th:if="${it.tags == null or #lists.isEmpty(it.tags)}">-</div>
+          </td>
+          <td>
+            <div class="muted" th:if="${usedElasticsearch and scores != null and scores[it.id] != null}">
+              <b th:text="${#numbers.formatDecimal(scores[it.id], 1, 2)}">0.00</b>
+            </div>
+            <div class="muted" th:if="${!usedElasticsearch or scores == null or scores[it.id] == null}">-</div>
+          </td>
+          <td th:text="${it.releasedAt != null ? #temporals.format(it.releasedAt, 'yyyy-MM-dd HH:mm:ss') : ''}">date</td>
+          <td th:text="${it.likes != null ? it.likes : 0}">0</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script th:if="${esEnabled}">
+    (function () {
+      var input = document.getElementById("devSearchQ");
+      var list = document.getElementById("devSearchSuggest");
+      if (!input || !list) return;
+
+      var timer = null;
+      var last = "";
+
+      function clearOptions() {
+        while (list.firstChild) list.removeChild(list.firstChild);
+      }
+
+      function setOptions(values) {
+        clearOptions();
+        for (var i = 0; i < values.length; i++) {
+          var opt = document.createElement("option");
+          opt.value = values[i];
+          list.appendChild(opt);
+        }
+      }
+
+      async function fetchSuggest(q) {
+        try {
+          var url = "/api/dev-search/suggest?q=" + encodeURIComponent(q) + "&limit=10";
+          var resp = await fetch(url, { method: "GET", headers: { "Accept": "application/json" } });
+          if (!resp.ok) return;
+          var data = await resp.json();
+          if (!Array.isArray(data)) return;
+          setOptions(data);
+        } catch (e) {
+          // ignore
+        }
+      }
+
+      input.addEventListener("input", function () {
+        var q = (input.value || "").trim();
+        if (q === last) return;
+        last = q;
+
+        if (timer) window.clearTimeout(timer);
+        if (q.length < 2) {
+          clearOptions();
+          return;
+        }
+
+        timer = window.setTimeout(function () {
+          fetchSuggest(q);
+        }, 180);
+      });
+    })();
+  </script>
+</section>

@@ -1,0 +1,39 @@
+<section xmlns:th="http://www.thymeleaf.org" th:fragment="content">
+  <div class="toolbar">
+    <div>
+      <h3>게시글 상세</h3>
+      <p class="muted">velog_post</p>
+    </div>
+    <div>
+      <a class="btn-link" th:href="@{/users/devSearch/list}">목록</a>
+    </div>
+  </div>
+
+  <div class="panel panel-inner" th:if="${post != null}">
+    <h3 th:text="${post.title}">title</h3>
+    <p class="muted" style="margin-top: 6px;">
+      <span th:text="${post.username}">username</span>
+      <span th:if="${post.releasedAt != null}">
+        <span style="opacity:.5">|</span>
+        <span th:text="${#temporals.format(post.releasedAt, 'yyyy-MM-dd HH:mm:ss')}">date</span>
+      </span>
+      <span>
+        <span style="opacity:.5">|</span>
+        likes: <b th:text="${post.likes != null ? post.likes : 0}">0</b>
+        <span style="opacity:.5">|</span>
+        comments: <b th:text="${post.commentsCount != null ? post.commentsCount : 0}">0</b>
+      </span>
+    </p>
+
+    <div style="margin-top: 10px;">
+      <a class="action" th:href="${canonicalUrl}" target="_blank" rel="noopener">원문 열기</a>
+    </div>
+
+    <p class="muted" th:if="${post.tags != null and !#lists.isEmpty(post.tags)}" style="margin-top: 10px;"
+         th:text="${#strings.arrayJoin(post.tags.toArray(), ', ')}">tags</p>
+
+    <hr style="margin: 14px 0; opacity:.5;" />
+
+    <div class="markdown" th:utext="${bodyHtml}"></div>
+  </div>
+</section>

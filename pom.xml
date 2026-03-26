@@ -34,6 +34,12 @@
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
 
+        <!-- Elasticsearch (Dev Search) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-elasticsearch</artifactId>
+        </dependency>
+
         <!-- MyBatis (Spring Boot 3) -->
         <dependency>
             <groupId>org.mybatis.spring.boot</groupId>
@@ -79,6 +85,25 @@
             <version>2.5.0</version>
         </dependency>
 
+        <!-- Markdown rendering (Dev Search post body) -->
+        <dependency>
+            <groupId>org.commonmark</groupId>
+            <artifactId>commonmark</artifactId>
+            <version>0.22.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.commonmark</groupId>
+            <artifactId>commonmark-ext-gfm-tables</artifactId>
+            <version>0.22.0</version>
+        </dependency>
+
+        <!-- HTML sanitization for rendered Markdown -->
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>1.17.2</version>
+        </dependency>
+
         <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -111,6 +136,9 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <mainClass>springVibe.SpringVibeApplication</mainClass>
+                </configuration>
             </plugin>
         </plugins>
     </build>

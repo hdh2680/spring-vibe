@@ -69,57 +69,16 @@
     - 체크박스로 메뉴 권한 부여/회수
 
 ### 4. 유튜브 댓글분석
-유튜브 URL을 입력받아 API를 통해 댓글 목록을 수집, 해당 데이터를 전처리, 분석 과정을 거쳐 시각화 자료를 제공한다.
-Client -> (URL입력) -> `Contoller` -> `Service` -> `Youtube Data API` -> 데이터 분석 -> Response API
+유튜브 댓글 분석 도메인의 상세 요구사항/흐름은 아래 문서를 참조한다.
 
-- 패키지 : `src/main/java/springVibe/dev/users/youtubeComment`
-- 매핑
-  - 댓글 수집: `/users/youtubeComment/search`
-  - 분석/이력: `/users/youtubeComment/analysis`
-- 화면: `templates/html/users/youtubeComment/`
+- `/docs/PRD-youtubeComment.md`
 
-#### 4.1 유튜브 댓글 조회
-- 컨트롤러 : `YoutubeCommentSearchController`
-- 화면 : `youtubeCommentSearch.html`
-- 기능
-  - `templates/html/users/youtubeComment/youtubeCommentSearch.html`에서 URL을 입력받는다.
-  - 입력받은 URL로 youtube API를 사용해 댓글 데이터를 수집한다.
-  - 댓글 내용을 목록으로 조회한다.
-  - 저장 버튼 클릭 시 `application.yml`의 `app.storage.attachments-dir/youtubeComment/{yyyyMMdd_HHmmss}.jsonl` 형식으로 댓글 데이터를 전부 수집하여 JSON Lines (.jsonl) 파일을 저장하고 저장한 정보를 `youtube_comment_analysis_histories` 테이블에 저장한다.
-    - `video_url` : 입력받은 URL
-    - `original_file_path` : 저장 버튼 클릭 시 저장된 파일경로
-    - `original_saved_at` : 저장 버튼 클릭 일시
+### 5. Elastic Search
 
-#### 4.2 유튜브 댓글 분석
-- 컨트롤러 : `YoutubeCommentAnalysisController`
-- 화면 : `youtubeCommentAnalysis.html`
-- 기능 
-  - `youtube_comment_analysis_histories` 테이블 목록을 조회한다. 목록 actions은 `preprocessed_saved_at` 컬럼이 null이라면 전처리수행, 전처리 수행이 됐다면 view(상세)로 이동할 수 있다.
-  - 테이블 목록에서 전처리 클릭 시 원본 `original_file_path`의 파일을 읽어 댓글 전처리 수행 후 원본형태에 전처리 된 문구열을 추가하여 JSON Lines(.jsonl) 파일을 저장하고 `preprocessed_file_path`, `preprocessed_saved_at` 컬럼을 수정한다.
-  - 전처리 정규화
-    - 기본 정규화: 유니코드 정규화(NFKC), 개행/탭 -> 공백, 연속 공백 축약, trim
-    - 노이즈 제거: URL 제거, HTML 엔티티/태그 제거, 불필요한 특수문자 제거(단, `! ? ㅋㅋ ㅠㅠ` 등 감정 신호는 완전 삭제보다 축약/토큰화 권장)
-    - 반복 문자 축약: `ㅋㅋㅋㅋㅋㅋ` -> `ㅋㅋ`, `!!!!` -> `!` 등 과도한 반복을 의미 보존 형태로 축약
-    - 멘션/해시태그 처리: `@id`, `#tag`는 제거 또는 토큰화(@MENTION, #TAG) 중 택1
-    - 스팸/광고/중복 처리(옵션): 광고/유도 문구 룰 기반 필터, 완전 동일 댓글 중복 제거, 언어 감지로 대상 외 언어 분리
-  - `youtubeCommentAnalysisView.html` 분석 상세화면이며 탭으로 화면을 구성함. 전처리, 댓글분석 탭들이 존재하며 전처리 탭에서 `analysis_requested_at`이 컬럼의 NULL여부를 판단해 분석수행 버튼을 활성화, 해당버튼으로 댓글 분석을 요청한다.
-  - 데이터 분석
-    - 키워드 분석
-      - Top N 키워드 : `youtube_comment_analysis_top_keywords`에 분석결과를 적재한다.
-      - 주제별 묶음 : `youtube_comment_analysis_topic_groups`에 분석결과를 적재한다.
-    - 감정분석 : `youtube_comment_analysis_sentiments`에 분석결과를 적재한다.
-      - 사전 기반 감정분석으로 댓글을 점수화 하여 긍정/중립/부정의 분포율을 제공한다.
-        - 사전 출처 : https://github.com/park1200656/KnuSentiLex (KNU 한국어 감성사전)
-          - 부정 : neg_pol_word.txt
-          - 중립 or Unknown : obj_unknown_pol_word.txt
-          - 긍정 : pos_pol_word.txt
-          - 점수 : SentiWord_Dict.txt
-        - txt파일을 시스템에서 읽기 쉽게 tsv 하나파일로 만듦. : `/resource/static/docs/sentiment_lexicon.tsv`
-      - 시간의 흐름에 따라 감정변화가 어떻게 변하는지 긍정/중립/부정을 그래프로 제공한다. (그래프단위 : 시간(3h), y축 : 비율(%))
-      - 감정분포별 댓글을 최대 50개까지 저장하여 하단 목록으로 제공한다.
-    - 네트워크 분석 (Word Co-occurrence Network) : 어떤 단어들이 동시에 자주 등장하는지 연결망을 만드는 분석입니다.
-      - `youtube_comment_analysis_word_networks`에 분석결과를 적재한다.
-  
+#### 5.1 개발 블로그(velog)
+개발 블로그 검색 도메인의 상세 요구사항/흐름은 아래 문서를 참조한다.
+- `/docs/PRD-devSearch.md`
+
 
 ## 결정 사항(Decision Log)
 - 화면 템플릿 경로 표준화: `templates/html/**` 하위로 통일 (구 `templates/admin/**` 사용 금지)

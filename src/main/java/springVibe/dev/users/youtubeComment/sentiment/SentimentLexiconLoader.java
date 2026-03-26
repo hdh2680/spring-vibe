@@ -13,8 +13,8 @@ import java.util.Map;
 
 @Service
 public class SentimentLexiconLoader {
-    private static final String DEFAULT_LEXICON_PATH = "static/docs/sentiment_lexicon.tsv";
-    private static final String CUSTOM_LEXICON_PATH = "static/docs/sentiment_custom.tsv";
+    private static final String DEFAULT_LEXICON_PATH = "static/docs/youtubeComment/sentiment_lexicon.tsv";
+    private static final String CUSTOM_LEXICON_PATH = "static/docs/youtubeComment/sentiment_custom.tsv";
 
     private volatile SentimentLexicon lexicon;
 
