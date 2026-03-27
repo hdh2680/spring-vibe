@@ -11,6 +11,20 @@
 - `ROLE_ADMIN` : 관리자
 - `ROLE_USER` : 사용자
 
+## 챗봇(ollama)
+
+- 목적: 로컬 Ollama 기반의 간단한 사내 도우미(요약/번역/개발 Q&A). 인터넷 뉴스 “근황” 조회 같은 실시간 정보는 제공하지 않는다.
+- UI: 좌측 사이드바의 `AI Chat` 버튼 클릭 시 모달(폰 메신저 스타일)로 대화창 오픈.
+  - 레이아웃: `src/main/resources/templates/layout/app.html`
+  - 스크립트/스타일: `src/main/resources/static/js/chat.js`, `src/main/resources/static/css/chat.css`
+- API:
+  - `POST /api/chat` 요청 `{ "message": "..." }` -> 응답 `{ "reply": "..." }`
+  - `DELETE /api/chat` 대화 히스토리 초기화(세션 기반)
+  - `GET /api/chat/health` Ollama 연결 상태 확인
+- 설정:
+  - `ollama.base-url` (env: `OLLAMA_BASE_URL`, 기본값 `http://localhost:11434`)
+  - `ollama.model` (env: `OLLAMA_MODEL`, 기본값 `qwen2.5:1.5b`)
+
 ## 공통
 ### 로그인
 - 패키지: `src/main/java/springVibe/dev/common/`
@@ -75,9 +89,52 @@
 
 ### 5. Elastic Search
 
+#### 5.0 Elasticsearch 터미널 구동 (Dev)
+로컬 개발용 Elasticsearch는 `docker-compose.dev-search.yml`로 구동한다.
+
+사전조건:
+- Docker Desktop 실행
+
+Elasticsearch만 실행:
+```powershell
+cd C:\workspace\java_lec\spring-vibe
+docker compose -f docker-compose.dev-search.yml up -d elasticsearch
+```
+
+Elasticsearch + Kibana 실행:
+```powershell
+cd C:\workspace\java_lec\spring-vibe
+docker compose -f docker-compose.dev-search.yml up -d
+```
+
+중지:
+```powershell
+cd C:\workspace\java_lec\spring-vibe
+docker compose -f docker-compose.dev-search.yml down
+```
+
+데이터 초기화(볼륨 삭제):
+```powershell
+cd C:\workspace\java_lec\spring-vibe
+docker compose -f docker-compose.dev-search.yml down -v
+```
+
+동작 확인:
+```powershell
+curl http://localhost:9200
+```
+
+주의:
+- `docker-compose.dev-search.yml`에서 `ES_JAVA_OPTS`로 힙을 잡는다. 메모리 부족하면 낮게 유지(예: `-Xms256m -Xmx256m`).
+- Docker Desktop에서 Images -> Run 으로 직접 띄울 경우, 반드시 포트 `9200:9200`를 publish 해야 `http://localhost:9200` 접근이 된다.
+
 #### 5.1 개발 블로그(velog)
 개발 블로그 검색 도메인의 상세 요구사항/흐름은 아래 문서를 참조한다.
 - `/docs/PRD-devSearch.md`
+
+#### 5.2 Amazon Product
+Amazon Product 도메인의 상세 요구사항/흐름은 아래 문서를 참조한다.
+- `/docs/PRD-amazonProduct.md`
 
 
 ## 결정 사항(Decision Log)

@@ -1,0 +1,142 @@
+<section xmlns:th="http://www.thymeleaf.org" th:fragment="content">
+  <link rel="stylesheet" th:href="@{/css/amazon_product.css}" />
+
+  <div class="toolbar">
+    <div>
+      <h3>Amazon Products</h3>
+      <p class="muted">
+        total: <b th:text="${total}">0</b>
+        <span style="opacity:.5">|</span>
+        ES enabled: <b th:text="${esEnabled}">false</b>
+        <span th:if="${q != null and !q.isBlank()}">
+          <span style="opacity:.5">|</span>
+          used ES: <b th:text="${usedElasticsearch}">false</b>
+          <span th:if="${tookMs != null}">
+            <span style="opacity:.5">|</span>
+            took: <b th:text="${tookMs}">0</b>ms
+          </span>
+        </span>
+      </p>
+    </div>
+  </div>
+
+  <div th:if="${errorMessage != null}" class="alert alert-danger" style="margin-top:12px;">
+    <div><strong th:text="${errorCode}">ERR</strong></div>
+    <div th:text="${errorMessage}">message</div>
+  </div>
+
+  <div class="amazon-layout" style="margin-top: 12px;">
+    <aside class="panel amazon-cats" aria-label="Categories">
+      <div class="panel-inner">
+        <div class="amazon-cats-head">
+          <h4>Categories</h4>
+          <span class="muted" th:text="${#lists.size(categories)} + ' shown'">0 shown</span>
+        </div>
+
+        <div class="amazon-cats-list">
+          <a class="amazon-cat"
+             th:each="c : ${categories}"
+             th:href="@{/users/amazonProduct/list(q=${q}, categoryId=${c.id}, sort=${sortKey}, page=0, size=${size})}"
+             th:classappend="${selectedCategoryId != null and selectedCategoryId == c.id} ? ' active' : ''">
+            <span class="amazon-cat-name" th:text="${c.name}">Category</span>
+            <span class="amazon-cat-count" th:text="${c.count}">0</span>
+          </a>
+        </div>
+      </div>
+    </aside>
+
+    <div class="amazon-main">
+      <div class="panel panel-inner amazon-search">
+        <form th:action="@{/users/amazonProduct/list}" method="get" class="amazon-searchbar">
+          <label class="field amazon-searchbar-q">
+            <div class="label">Search</div>
+            <input class="input" type="text" name="q" th:value="${q}" placeholder="상품명 (영문/한글 가능)" autocomplete="off" />
+          </label>
+
+          <label class="field amazon-searchbar-sort">
+            <div class="label">Sort</div>
+            <select class="select" name="sort">
+              <option value="STARS_DESC" th:selected="${sortKey == 'STARS_DESC'}">Stars</option>
+              <option value="REVIEWS_DESC" th:selected="${sortKey == 'REVIEWS_DESC'}">Reviews</option>
+              <option value="PRICE_ASC" th:selected="${sortKey == 'PRICE_ASC'}">Price (low)</option>
+              <option value="PRICE_DESC" th:selected="${sortKey == 'PRICE_DESC'}">Price (high)</option>
+              <option value="TITLE_ASC" th:selected="${sortKey == 'TITLE_ASC'}">Title (A-Z)</option>
+            </select>
+          </label>
+
+          <input type="hidden" name="categoryId" th:value="${selectedCategoryId}" />
+          <input type="hidden" name="page" value="0" />
+          <input type="hidden" name="size" th:value="${size}" />
+
+          <div class="amazon-searchbar-actions">
+            <button class="btn btn-inline btn-primary" type="submit">Search</button>
+            <a class="btn-link" th:href="@{/users/amazonProduct/list}">Reset</a>
+          </div>
+        </form>
+
+        <p class="muted" th:if="${q != null and !q.isBlank() and queryUsed != null and queryUsed != q}">
+          query used (ES): <b th:text="${queryUsed}">queryUsed</b>
+        </p>
+      </div>
+
+      <div class="pager" th:if="${totalPages != null and totalPages > 0}">
+        <div class="muted">
+          page: <b th:text="${page + 1}">1</b> / <b th:text="${totalPages}">1</b>
+          <span style="opacity:.5">|</span>
+          size: <b th:text="${size}">20</b>
+        </div>
+        <div class="pager-actions">
+          <a class="btn-link"
+             th:classappend="${!hasPrev} ? ' is-disabled' : ''"
+             th:href="${hasPrev} ? @{/users/amazonProduct/list(q=${q}, categoryId=${selectedCategoryId}, sort=${sortKey}, page=${prevPage}, size=${size})} : '#'"
+             th:attr="aria-disabled=${!hasPrev}"
+          >Prev</a>
+          <a class="btn-link"
+             th:classappend="${!hasNext} ? ' is-disabled' : ''"
+             th:href="${hasNext} ? @{/users/amazonProduct/list(q=${q}, categoryId=${selectedCategoryId}, sort=${sortKey}, page=${nextPage}, size=${size})} : '#'"
+             th:attr="aria-disabled=${!hasNext}"
+          >Next</a>
+        </div>
+      </div>
+
+      <div class="amazon-grid" th:if="${items != null}">
+        <div class="amazon-empty muted" th:if="${#lists.isEmpty(items)}">No results.</div>
+
+        <article class="amazon-card panel" th:each="it : ${items}">
+          <a class="amazon-img"
+             th:href="${it.productUrl}"
+             target="_blank"
+             rel="noreferrer noopener"
+             th:if="${it.imgUrl != null and !#strings.isEmpty(#strings.trim(it.imgUrl))}">
+            <img th:src="${it.imgUrl}" alt="" loading="lazy" referrerpolicy="no-referrer" />
+          </a>
+          <div class="amazon-img amazon-img placeholder" th:if="${it.imgUrl == null or #strings.isEmpty(#strings.trim(it.imgUrl))}">
+            no image
+          </div>
+
+          <div class="amazon-body">
+            <a class="amazon-title"
+               th:href="${it.productUrl}"
+               target="_blank"
+               rel="noreferrer noopener"
+               th:text="${it.productNameKo != null and !#strings.isEmpty(#strings.trim(it.productNameKo)) ? it.productNameKo : it.title}">
+              title
+            </a>
+            <div class="amazon-meta muted">
+              <span th:text="${it.stars != null ? it.stars : 0}">0</span>★
+              <span style="opacity:.5">|</span>
+              reviews: <span th:text="${it.reviews != null ? it.reviews : 0}">0</span>
+              <span style="opacity:.5">|</span>
+              <span th:text="${it.isBestSeller != null and it.isBestSeller ? 'Best seller' : ''}">Best seller</span>
+            </div>
+            <div class="amazon-price">
+              <span class="amazon-price-main" th:text="${it.price != null ? '$' + it.price : ''}">$0</span>
+              <span class="amazon-price-list muted" th:if="${it.listPrice != null and it.listPrice > 0}" th:text="${'$' + it.listPrice}">$0</span>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </div>
+</section>
+

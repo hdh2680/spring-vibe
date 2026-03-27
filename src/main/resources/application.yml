@@ -73,4 +73,9 @@ integrations:
   youtube:
     api-key: ${YOUTUBE_API_KEY:} # Empty means integration is not configured
 
+# Local LLM (Ollama)
+ollama:
+  base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+  model: ${OLLAMA_MODEL:qwen2.5:1.5b}
+
 

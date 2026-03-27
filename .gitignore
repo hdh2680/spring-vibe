@@ -25,3 +25,6 @@ Thumbs.db
 # Large datasets (do not commit)
 /src/main/resources/static/docs/amazonProduct/
 
+# Local LLM runtime (do not commit)
+/.ollama/
+

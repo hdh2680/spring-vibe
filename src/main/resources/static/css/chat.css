@@ -1,0 +1,290 @@
+:root {
+  --chat-bg: rgba(255, 255, 255, 0.7);
+  --chat-border: rgba(15, 23, 42, 0.12);
+  --chat-user: rgba(34, 197, 94, 0.14);
+  --chat-assistant: rgba(34, 197, 94, 0.06);
+  --chat-error: rgba(239, 68, 68, 0.14);
+  --chat-ink: rgba(2, 6, 23, 0.92);
+  --chat-muted: rgba(2, 6, 23, 0.56);
+  --chat-bubble-border: rgba(2, 6, 23, 0.10);
+  --chat-shadow: 0 24px 110px rgba(2, 6, 23, 0.28);
+
+  /* LINE-ish greens */
+  --chat-green: #22c55e;
+  --chat-green2: #16a34a;
+  --chat-green-weak: rgba(34, 197, 94, 0.10);
+}
+
+.chat-wrap {
+  display: grid;
+  gap: 12px;
+}
+
+.chat-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.chat-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.chat-health.is-bad {
+  color: #b91c1c;
+}
+
+.chat-log {
+  background: var(--chat-bg);
+  border: 1px solid var(--chat-border);
+  border-radius: 16px;
+  padding: 14px 12px;
+  height: min(56vh, 560px);
+  overflow: auto;
+}
+
+.chat-msg {
+  display: flex;
+  margin: 10px 0;
+}
+
+.chat-msg .chat-bubble {
+  position: relative;
+  border: 1px solid var(--chat-bubble-border);
+  border-radius: 16px;
+  padding: 10px 12px;
+  max-width: 820px;
+  color: var(--chat-ink);
+}
+
+.chat-user {
+  justify-content: flex-end;
+}
+
+.chat-user .chat-bubble {
+  background: linear-gradient(180deg, rgba(34, 197, 94, 0.22), rgba(34, 197, 94, 0.12));
+  border-color: rgba(22, 163, 74, 0.18);
+}
+
+.chat-assistant .chat-bubble {
+  background: rgba(255, 255, 255, 0.86);
+}
+
+.chat-error .chat-bubble {
+  background: var(--chat-error);
+}
+
+.chat-role {
+  font-size: 12px;
+  opacity: 0.7;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.chat-text {
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
+.chat-form {
+  display: block;
+}
+
+.chat-compose-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.chat-input textarea.input {
+  resize: vertical;
+  min-height: 54px;
+  max-height: 140px;
+  line-height: 1.35;
+}
+
+.chat-compose-row .btn {
+  height: 100%;
+  min-height: 54px; /* match textarea min-height */
+  padding: 10px 16px;
+}
+
+/* Modal shell (shared across pages via layout/app.html) */
+.chat-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+}
+
+.chat-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.42);
+  backdrop-filter: blur(6px);
+}
+
+.chat-dialog {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(980px, calc(100vw - 22px));
+  max-height: calc(100vh - 22px);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid var(--chat-border);
+  border-radius: 18px;
+  box-shadow: 0 22px 90px rgba(2, 6, 23, 0.25);
+  padding: 14px;
+}
+
+.chat-dialog-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.chat-dialog-title {
+  font-weight: 800;
+  letter-spacing: -0.2px;
+}
+
+.chat-dialog-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Tweak log height inside modal */
+.chat-modal .chat-log {
+  height: auto;
+  min-height: 220px;
+}
+
+/* Phone-like messenger mode */
+.chat-phone {
+  width: min(420px, calc(100vw - 22px));
+  height: min(78vh, 760px);
+  max-height: calc(100vh - 22px);
+  border-radius: 30px;
+  padding: 14px 14px 12px;
+  border-color: rgba(2, 6, 23, 0.14);
+  box-shadow: var(--chat-shadow);
+  background:
+    radial-gradient(520px 280px at 42% 0%, rgba(34, 197, 94, 0.18), transparent 62%),
+    radial-gradient(420px 240px at 92% 10%, rgba(22, 163, 74, 0.14), transparent 60%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.78));
+}
+
+.chat-phone::before {
+  content: "";
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 130px;
+  height: 18px;
+  border-radius: 999px;
+  background: rgba(2, 6, 23, 0.08);
+  border: 1px solid rgba(2, 6, 23, 0.10);
+}
+
+.chat-phone .chat-dialog-head {
+  padding-top: 12px;
+}
+
+.chat-phone .chat-health {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--chat-muted);
+}
+
+.chat-phone .chat-log {
+  border-radius: 22px;
+  border-color: rgba(2, 6, 23, 0.10);
+  background:
+    radial-gradient(900px 380px at 12% 0%, rgba(34, 197, 94, 0.16), transparent 62%),
+    radial-gradient(760px 320px at 88% 10%, rgba(22, 163, 74, 0.12), transparent 58%),
+    linear-gradient(180deg, rgba(248, 250, 252, 0.94), rgba(241, 245, 249, 0.84));
+}
+
+.chat-phone .chat-msg .chat-bubble {
+  border-radius: 20px;
+}
+
+.chat-phone .chat-user .chat-bubble {
+  border-top-right-radius: 10px;
+}
+
+.chat-phone .chat-assistant .chat-bubble {
+  border-top-left-radius: 10px;
+}
+
+.chat-phone .chat-role {
+  display: none; /* messenger vibe */
+}
+
+.chat-phone .chat-msg {
+  margin: 8px 0;
+}
+
+.chat-phone .chat-input .label {
+  display: none;
+}
+
+.chat-phone .chat-compose-row {
+  gap: 8px;
+}
+
+.chat-phone textarea.input {
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(2, 6, 23, 0.12);
+  min-height: 48px;
+  max-height: 120px;
+  padding: 12px 12px;
+}
+
+.chat-phone textarea.input:focus {
+  border-color: rgba(22, 163, 74, 0.40);
+  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.16);
+}
+
+.chat-phone .chat-compose-row .btn {
+  min-height: 48px;
+  border-radius: 18px;
+  padding: 10px 14px;
+  box-shadow: 0 10px 22px rgba(2, 6, 23, 0.10);
+  border-color: rgba(22, 163, 74, 0.28);
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.24), rgba(22, 163, 74, 0.16));
+}
+
+.chat-phone .chat-compose-row .btn:hover {
+  border-color: rgba(22, 163, 74, 0.38);
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.30), rgba(22, 163, 74, 0.20));
+}
+
+@media (max-width: 640px) {
+  .chat-compose-row {
+    grid-template-columns: 1fr;
+  }
+
+  .chat-compose-row .btn {
+    min-height: 44px;
+    height: auto;
+    width: 100%;
+  }
+
+  .chat-phone {
+    width: calc(100vw - 16px);
+    height: calc(100vh - 16px);
+    border-radius: 26px;
+  }
+}
