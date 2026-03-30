@@ -1,4 +1,74 @@
 <section xmlns:th="http://www.thymeleaf.org" th:fragment="content">
+  <style>
+    .btn-analyze {
+      width: auto;
+      background: linear-gradient(135deg, rgba(234, 88, 12, 0.96), rgba(220, 38, 38, 0.90));
+      border: 1px solid rgba(234, 88, 12, 0.22);
+      color: rgba(255, 255, 255, 0.96);
+      border-radius: 14px;
+      padding: 10px 14px;
+      font-weight: 900;
+      letter-spacing: -0.2px;
+    }
+    .btn-analyze:hover {
+      filter: brightness(1.02);
+      background: linear-gradient(135deg, rgba(234, 88, 12, 0.98), rgba(220, 38, 38, 0.94));
+      color: rgba(255, 255, 255, 0.98);
+    }
+
+    .ytc-summary {
+      background: linear-gradient(135deg, rgba(37, 99, 235, 0.06), rgba(22, 163, 74, 0.05));
+      border-color: rgba(17, 24, 39, 0.12);
+    }
+    .ytc-summary .kv dt {
+      color: rgba(17, 24, 39, 0.72);
+      font-weight: 900;
+      letter-spacing: -0.1px;
+    }
+
+    /* Hide legacy mojibake tab bar and render a clean one above tab panels. */
+    .tabs:not(.ytc-tabs) { display: none; }
+    .tab-panels > .tabs.ytc-tabs { display: none; } /* hide broken duplicate we had to work around */
+    .tab-panel[data-panel="pre"] > .panel:first-child { display: none; } /* hide legacy pre header panel */
+    .tab-panel[data-panel="pre"] form[action*="/users/youtubeComment/analysis/analyze"] { display: none; } /* button moved to top */
+
+    /* Hide the temporary topbar; we move its analyze button into the main toolbar via JS. */
+    .ytc-topbar { display: none; }
+  </style>
+
+  <script>
+    // Fix legacy mojibake labels in this template without rewriting the whole file.
+    document.addEventListener("DOMContentLoaded", () => {
+      const h3 = document.querySelector(".toolbar h3");
+      if (h3) h3.textContent = "유튜브 댓글 분석 결과";
+      const p = document.querySelector(".toolbar p.muted");
+      if (p) p.textContent = "분석 결과를 탭별로 확인합니다.";
+      const back = document.querySelector(".toolbar a.btn-link[href*='/users/youtubeComment/analysis']");
+      if (back) back.textContent = "목록";
+
+      // Keep "분석 수행" and "목록" on the same row (right side of the main toolbar).
+      const mainToolbar = document.querySelector(".toolbar");
+      const actions = mainToolbar ? mainToolbar.querySelector(":scope > div:last-child") : null;
+      const movedForm = document.querySelector(".ytc-topbar form");
+      if (actions) {
+        actions.style.display = "flex";
+        actions.style.alignItems = "center";
+        actions.style.gap = "10px";
+        if (movedForm) {
+          actions.insertBefore(movedForm, actions.firstChild);
+        }
+      }
+    });
+  </script>
+
+  <div class="ytc-topbar" style="margin-bottom: 0">
+    <div></div>
+    <div>
+      <form th:if="${history != null}" th:action="@{/users/youtubeComment/analysis/analyze(id=${history.id})}" method="post" style="display:inline">
+        <button type="submit" class="btn btn-analyze" style="cursor:pointer">분석 수행</button>
+      </form>
+    </div>
+  </div>
   <div class="toolbar">
     <div>
       <h3>유튜브 댓글 분석 결과</h3>
@@ -29,15 +99,19 @@
     })();
   </script>
 
-  <div th:if="${history != null}" class="panel" style="margin-top: 12px">
+  <div th:if="${history != null}" class="panel ytc-summary" style="margin-top: 12px">
     <div class="panel-inner">
       <h4>이력 정보</h4>
       <dl class="kv">
         <dt>ID</dt>
         <dd th:text="${history.id}">1</dd>
-        <dt>Video URL</dt>
+        <dt>영상명</dt>
+        <dd style="word-break: break-word" th:text="${#strings.isEmpty(history.videoTitle) ? '(제목 없음)' : history.videoTitle}">(제목 없음)</dd>
+        <dt>URL</dt>
         <dd style="word-break: break-word" th:text="${history.videoUrl}">url</dd>
-        <dt>Analysis Requested</dt>
+        <dt>비고</dt>
+        <dd style="white-space: pre-wrap; word-break: break-word" th:text="${#strings.isEmpty(history.remark) ? '-' : history.remark}">-</dd>
+        <dt>분석요청일시</dt>
         <dd th:text="${history.analysisRequestedAt != null ? #temporals.format(history.analysisRequestedAt, 'yyyy-MM-dd HH:mm:ss') : '-'}">-</dd>
       </dl>
     </div>
@@ -427,17 +501,38 @@
     <button id="tabSent" class="tab" type="button" role="tab" aria-selected="false" data-tab="sent">감정 분석</button>
  </div>
 
+  <div class="tabs ytc-tabs" role="tablist" aria-label="분석 결과 탭">
+    <button class="tab" type="button" role="tab" aria-selected="true" data-tab="pre">전처리</button>
+    <button class="tab" type="button" role="tab" aria-selected="false" data-tab="kw">키워드 분석</button>
+    <button class="tab" type="button" role="tab" aria-selected="false" data-tab="net">네트워크 분석</button>
+    <button class="tab" type="button" role="tab" aria-selected="false" data-tab="sent">감정 분석</button>
+  </div>
+
   <div class="tab-panels">
+    <div class="tabs ytc-tabs" role="tablist" aria-label="분석 결과 탭">
+      <button class="tab" type="button" role="tab" aria-selected="true" data-tab="pre">전처리</button>
+      <button id="tabKw" class="tab" type="button" role="tab" aria-selected="false" data-tab="kw">키워드 분석</button>
+      <button id="tabNet" class="tab" type="button" role="tab" aria-selected="false" data-tab="net">네트워크 분석</button>
+      <button id="tabSent" class="tab" type="button" role="tab" aria-selected="false" data-tab="sent">감정 분석</button>
+    </div>
     <div class="tab-panel" role="tabpanel" data-panel="pre">
+      <div class="panel" style="margin-top: 12px">
+        <div class="panel-inner" style="display:flex; align-items:baseline; justify-content:space-between; gap:12px">
+          <div>
+            <h4>전처리</h4>
+            <p class="muted">원본/전처리 텍스트 미리보기</p>
+          </div>
+        </div>
+      </div>
       <div class="panel" style="margin-top: 12px">
         <div class="panel-inner" style="display:flex; align-items:baseline; justify-content:space-between; gap:12px">
           <div>
             <h4>전처리</h4>
             <p class="muted">원본/전처리 텍스트 미리보기 및 분석 수행</p>
           </div>
-          <form th:if="${history != null}" th:action="@{/users/youtubeComment/analysis/analyze(id=${history.id})}" method="post" style="display:inline">
+          <!-- removed: analyze button moved to the top toolbar
             <button type="submit" class="btn-link" style="cursor:pointer">분석수행</button>
-          </form>
+          -->
         </div>
       </div>
 
@@ -452,12 +547,12 @@
           <table class="table" style="min-width: 980px">
             <thead>
               <tr>
-                <th style="width: 70px">No</th>
-                <th style="width: 180px">Author</th>
-                <th style="width: 170px">Published</th>
-                <th style="width: 80px">Likes</th>
-                <th style="width: 420px">Original Text</th>
-                <th>Preprocessed Text</th>
+                <th style="width: 70px">번호</th>
+                <th style="width: 180px">작성자</th>
+                <th style="width: 170px">작성일</th>
+                <th style="width: 80px">좋아요</th>
+                <th style="width: 420px">원문</th>
+                <th>전처리</th>
               </tr>
             </thead>
             <tbody>
@@ -495,10 +590,10 @@
             <table class="table kw-top-table">
               <thead>
                 <tr>
-                  <th style="width: 56px">Rank</th>
-                  <th style="width: 200px">Term</th>
-                  <th style="width: 72px">Count</th>
-                  <th>Bar</th>
+                  <th style="width: 56px">순위</th>
+                  <th style="width: 200px">키워드</th>
+                  <th style="width: 72px">횟수</th>
+                  <th>막대</th>
                 </tr>
               </thead>
               <tbody id="kwTopBody">
@@ -1245,20 +1340,17 @@
     }
 
     function wireTabs() {
-      const kw = document.getElementById("tabKw");
-      if (kw) {
-        kw.setAttribute("aria-disabled", analysisReady ? "false" : "true");
-      }
-      const net = document.getElementById("tabNet");
-      if (net) {
-        net.setAttribute("aria-disabled", analysisReady ? "false" : "true");
-      }
-      const sent = document.getElementById("tabSent");
-      if (sent) {
-        sent.setAttribute("aria-disabled", analysisReady ? "false" : "true");
-      }
-      const tabs = Array.from(document.querySelectorAll(".tab[role=tab]"));
+      const tabRoot = document.querySelector(".ytc-tabs");
+      const tabs = tabRoot ? Array.from(tabRoot.querySelectorAll(".tab[role=tab]")) : [];
       const panels = Array.from(document.querySelectorAll(".tab-panel[role=tabpanel]"));
+
+      const kw = tabRoot ? tabRoot.querySelector(".tab[data-tab='kw']") : null;
+      const net = tabRoot ? tabRoot.querySelector(".tab[data-tab='net']") : null;
+      const sent = tabRoot ? tabRoot.querySelector(".tab[data-tab='sent']") : null;
+      if (kw) kw.setAttribute("aria-disabled", analysisReady ? "false" : "true");
+      if (net) net.setAttribute("aria-disabled", analysisReady ? "false" : "true");
+      if (sent) sent.setAttribute("aria-disabled", analysisReady ? "false" : "true");
+
       for (const t of tabs) {
         t.addEventListener("click", () => {
           if (t.getAttribute("aria-disabled") === "true") return;

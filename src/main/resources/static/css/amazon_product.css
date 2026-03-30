@@ -5,14 +5,25 @@
 
 .amazon-layout {
   display: grid;
+  /* Categories : Products = 3 : 7 */
   grid-template-columns: minmax(220px, 3fr) minmax(0, 7fr);
   gap: 14px;
+  /* Keep natural document scroll; don't stretch rows (prevents large blank areas). */
   align-items: start;
 }
 
 .amazon-cats {
   position: sticky;
   top: 96px;
+  /* Keep categories visible while scrolling */
+  align-self: start;
+}
+
+.amazon-cats .panel-inner {
+  display: flex;
+  flex-direction: column;
+  /* Allow the scroll area to shrink inside the column */
+  min-height: 0;
 }
 
 .amazon-cats-head {
@@ -26,9 +37,12 @@
   margin-top: 10px;
   display: grid;
   gap: 6px;
-  max-height: calc(100vh - 240px);
+  flex: 1;
+  min-height: 0;
   overflow: auto;
   padding-right: 4px;
+  /* Default: cap list height so it doesn't push products down */
+  max-height: calc(100vh - 240px);
 }
 
 .amazon-cat {
@@ -75,11 +89,25 @@
 .amazon-main {
   display: grid;
   gap: 12px;
+  align-content: start;
+}
+
+/* Desktop/tablet: keep both columns at least viewport-ish height without killing page scroll. */
+@media (min-width: 981px) {
+  .amazon-layout {
+    min-height: calc(100dvh - 220px);
+  }
+  .amazon-cats {
+    min-height: calc(100dvh - 240px);
+  }
+  .amazon-main {
+    min-height: calc(100dvh - 240px);
+  }
 }
 
 .amazon-searchbar {
   display: grid;
-  grid-template-columns: 1fr 160px auto;
+  grid-template-columns: 1fr 200px 160px auto;
   gap: 10px;
   align-items: end;
 }
@@ -97,7 +125,7 @@
 
 .amazon-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -108,8 +136,8 @@
 .amazon-card {
   overflow: hidden;
   display: grid;
-  grid-template-columns: 120px 1fr;
-  min-height: 120px;
+  grid-template-columns: 132px 1fr;
+  min-height: 132px;
 }
 
 .amazon-img {
@@ -119,6 +147,8 @@
   border-right: 1px solid rgba(17, 24, 39, 0.08);
   text-decoration: none;
   color: inherit;
+  width: 132px;
+  height: 132px;
 }
 
 .amazon-img img {
@@ -148,14 +178,67 @@
   overflow: hidden;
 }
 
+.amazon-title .amazon-badge {
+  margin-right: 6px;
+  vertical-align: baseline;
+}
+
 .amazon-title:hover {
   text-decoration: underline;
 }
 
 .amazon-meta {
+  display: grid;
+  gap: 4px;
+}
+
+.amazon-rating-line {
   display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-height: 18px;
+}
+
+.amazon-stars {
+  position: relative;
+  display: inline-block;
+  font-size: 12px;
+  line-height: 1;
+  letter-spacing: 1px;
+  width: 5.6em; /* Keep width stable regardless of font metrics */
+}
+
+.amazon-stars-bg {
+  color: rgba(17, 24, 39, 0.22);
+}
+
+.amazon-stars-fg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  color: #f59e0b; /* amber */
+  text-shadow: 0 0 0.5px rgba(0, 0, 0, 0.25);
+}
+
+.amazon-rating-num {
+  font-weight: 850;
+  color: rgba(17, 24, 39, 0.78);
+}
+
+.amazon-reviews-line {
+  opacity: 0.82;
+}
+
+.amazon-badge {
+  font-size: 11px;
+  font-weight: 900;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  background: rgba(245, 158, 11, 0.12);
+  color: rgba(120, 53, 15, 0.95);
 }
 
 .amazon-price {
@@ -176,23 +259,18 @@
 
 @media (max-width: 1160px) {
   .amazon-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 980px) {
-  .amazon-layout {
-    grid-template-columns: 1fr;
-  }
-  .amazon-cats {
-    position: relative;
-    top: 0;
-  }
   .amazon-searchbar {
     grid-template-columns: 1fr;
   }
   .amazon-searchbar-actions {
     justify-content: flex-start;
   }
+  .amazon-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
-

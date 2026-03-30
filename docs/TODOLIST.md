@@ -25,6 +25,12 @@
 - [x] 유튜브 댓글 JSON Lines(.jsonl) 파일 저장
 - [x] 저장 이력 정보 DB 저장 (youtube_comment_analysis_histories)
 
+### 개선
+- [ ] 유튜브 댓글 조회 기능, 유튜브 댓글 분석 댓글수집 버튼클릭 모달화면으로 이동, 조회 메뉴 삭제
+- [ ] 동영상명, 비고 입력 추가
+- [ ] 데이터 가져오기 기능 삭제, URL입력 후 바로 분석 수행
+- [ ] 댓글 저장 -> 분석까지 일괄진행되도록 기능 변경
+
 ## 4. 유튜브 댓글 분석
 - [x] 분석 메인 화면 추가: `youtubeCommentAnalysis.html` / `youtubeCommentAnalysisView.html`
 - [x] 저장 이력 목록 조회(페이징/필터) + 액션(전처리/상세)

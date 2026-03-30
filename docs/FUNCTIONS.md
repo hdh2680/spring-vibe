@@ -69,10 +69,10 @@
     - `POST /users/youtubeComment/search/exportAsync` (JSON 응답으로 export 결과 반환)
   - 분석/이력:
     - `GET /users/youtubeComment/analysis` (이력 목록)
-    - `POST /users/youtubeComment/analysis/preprocess?id={historyId}` (전처리 수행 및 결과 파일 저장)
     - `GET /users/youtubeComment/analysis/view?id={historyId}` (상세: 전처리 프리뷰/카운트/분석 탭)
     - `POST /users/youtubeComment/analysis/analyze?id={historyId}` (분석 수행 및 결과 적재)
     - `GET /users/youtubeComment/analysis/result.json?id={historyId}` (분석 결과 JSON)
+    - `POST /users/youtubeComment/analysis/runAsync` (저장 -> 전처리 -> 분석 일괄 수행, JSON)
 
 ### 4.2 개발 블로그 검색(Dev Search)
 - Base(화면): `/users/devSearch`

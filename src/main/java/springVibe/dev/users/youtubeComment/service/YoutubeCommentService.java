@@ -299,6 +299,76 @@ public class YoutubeCommentService {
         return jsonlPath;
     }
 
+    public Path exportAllCommentsByUrlAsJsonlAndSaveHistory(String inputUrl, Long userId, String remark) {
+        Path jsonlPath = exportAllCommentsByUrlAsJsonl(inputUrl);
+
+        YoutubeCommentAnalysisHistory history = new YoutubeCommentAnalysisHistory();
+        history.setUserId(userId);
+        history.setVideoUrl(inputUrl);
+        history.setRemark(remark);
+        history.setOriginalFilePath(jsonlPath.toString());
+        history.setOriginalSavedAt(LocalDateTime.now(DEFAULT_ZONE_ID));
+
+        // Best-effort: do not fail the export if title lookup fails for any reason.
+        try {
+            String videoId = YoutubeUrlParser.extractVideoId(inputUrl);
+            if (videoId != null && !videoId.isBlank()) {
+                history.setVideoTitle(youtubeDataApiClient.getVideoTitle(videoId));
+            }
+        } catch (Exception ignored) {
+            // ignore
+        }
+
+        try {
+            youtubeCommentAnalysisHistoryMapper.insert(history);
+        } catch (Exception e) {
+            throw new BaseException("YOUTUBE_HISTORY_SAVE_FAILED", "저장 이력을 DB에 남기지 못했습니다.", e);
+        }
+
+        return jsonlPath;
+    }
+
+    public YoutubeCommentAnalysisHistory exportAllCommentsByUrlAsJsonlAndSaveHistoryRow(String inputUrl, Long userId, String remark) {
+        Path jsonlPath = exportAllCommentsByUrlAsJsonl(inputUrl);
+
+        YoutubeCommentAnalysisHistory history = new YoutubeCommentAnalysisHistory();
+        history.setUserId(userId);
+        history.setVideoUrl(inputUrl);
+        history.setRemark(remark);
+        history.setOriginalFilePath(jsonlPath.toString());
+        history.setOriginalSavedAt(LocalDateTime.now(DEFAULT_ZONE_ID));
+
+        // Best-effort: do not fail the export if title lookup fails for any reason.
+        try {
+            String videoId = YoutubeUrlParser.extractVideoId(inputUrl);
+            if (videoId != null && !videoId.isBlank()) {
+                history.setVideoTitle(youtubeDataApiClient.getVideoTitle(videoId));
+            }
+        } catch (Exception ignored) {
+            // ignore
+        }
+
+        try {
+            youtubeCommentAnalysisHistoryMapper.insert(history);
+        } catch (Exception e) {
+            throw new BaseException("YOUTUBE_HISTORY_SAVE_FAILED", "저장 이력을 DB에 남기지 못했습니다.", e);
+        }
+
+        return history;
+    }
+
+    public Long runFullAnalysisByUrl(String inputUrl, Long userId, String remark) {
+        YoutubeCommentAnalysisHistory history = exportAllCommentsByUrlAsJsonlAndSaveHistoryRow(inputUrl, userId, remark);
+        Long historyId = history == null ? null : history.getId();
+        if (historyId == null) {
+            throw new BaseException("YOUTUBE_HISTORY_SAVE_FAILED", "저장 이력을 생성하지 못했습니다(historyId null).");
+        }
+
+        preprocessHistoryIfNeeded(historyId, userId);
+        analyzeAndPersist(historyId, userId);
+        return historyId;
+    }
+
     public List<YoutubeCommentAnalysisHistory> listHistories(Long userId) {
         try {
             return youtubeCommentAnalysisHistoryMapper.selectList(userId);

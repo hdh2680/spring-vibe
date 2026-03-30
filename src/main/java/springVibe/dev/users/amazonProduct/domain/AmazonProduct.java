@@ -1,12 +1,14 @@
 package springVibe.dev.users.amazonProduct.domain;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import springVibe.dev.common.jpa.BooleanTrueFalseConverter;
 
 @Getter
 @Setter
@@ -46,10 +48,10 @@ public class AmazonProduct {
     @Column(name = "category_id")
     private Long categoryId;
 
-    @Column(name = "is_best_seller")
+    @Convert(converter = BooleanTrueFalseConverter.class)
+    @Column(name = "is_best_seller", length = 5)
     private Boolean isBestSeller;
 
     @Column(name = "bought_in_last_month")
     private Integer boughtInLastMonth;
 }
-

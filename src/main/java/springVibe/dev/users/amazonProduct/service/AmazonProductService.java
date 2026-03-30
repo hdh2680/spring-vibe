@@ -1,25 +1,24 @@
 package springVibe.dev.users.amazonProduct.service;
 
-import co.elastic.clients.elasticsearch._types.SortOrder;
-import co.elastic.clients.elasticsearch._types.aggregations.Aggregation;
-import co.elastic.clients.elasticsearch._types.aggregations.Aggregate;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.elasticsearch.client.elc.ElasticsearchAggregations;
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.IndexOperations;
 import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import springVibe.dev.users.amazonProduct.config.AmazonProductElasticsearchProperties;
 import springVibe.dev.users.amazonProduct.domain.AmazonCategory;
+import springVibe.dev.users.amazonProduct.domain.AmazonProduct;
 import springVibe.dev.users.amazonProduct.repository.AmazonCategoryRepository;
 import springVibe.dev.users.amazonProduct.repository.AmazonProductRepository;
 import springVibe.dev.users.amazonProduct.repository.AmazonProductRepository.AmazonProductCard;
-import springVibe.dev.users.amazonProduct.repository.AmazonProductRepository.CategoryCountRow;
 import springVibe.dev.users.amazonProduct.search.AmazonProductDocument;
 import springVibe.dev.users.chat.service.OllamaChatService;
 import springVibe.system.exception.BaseException;
@@ -28,6 +27,8 @@ import java.util.*;
 
 @Service
 public class AmazonProductService {
+    private static final Logger log = LoggerFactory.getLogger(AmazonProductService.class);
+
     private final AmazonProductRepository productRepository;
     private final AmazonCategoryRepository categoryRepository;
     private final AmazonProductElasticsearchProperties esProps;
@@ -56,7 +57,7 @@ public class AmazonProductService {
         TITLE_ASC
     }
 
-    public record CategoryItem(Long id, String name, long count) {}
+    public record CategoryOption(Long id, String name) {}
 
     public record ListResult(
         long total,
@@ -67,7 +68,7 @@ public class AmazonProductService {
         String queryUsed,
         Long selectedCategoryId,
         SortKey sortKey,
-        List<CategoryItem> categories,
+        List<CategoryOption> categories,
         List<AmazonProductCard> items
     ) {}
 
@@ -84,11 +85,18 @@ public class AmazonProductService {
         boolean esEnabled = esProps.isEnabled();
 
         String query = q == null ? "" : q.trim();
-
         if (query.isBlank()) {
-            List<CategoryItem> cats = buildCategoryItems(topCategoriesFromDb(null), 100);
+            List<CategoryOption> categoryOptions = listCategoryOptions();
+
+            long t1 = System.nanoTime();
             var pageable = PageRequest.of(safePage, safeSize, toDbSort(safeSort));
-            Page<AmazonProductCard> p = productRepository.searchCards("", categoryId, pageable);
+            Page<AmazonProductCard> p = productRepository.listCards(categoryId, pageable);
+            long tListMs = (System.nanoTime() - t1) / 1_000_000L;
+
+            if (tListMs > 500) {
+                log.info("AmazonProduct list(blank) slow: list={}ms page={} size={} categoryId={} sort={}",
+                    tListMs, safePage, safeSize, categoryId, safeSort);
+            }
             return new ListResult(
                 p.getTotalElements(),
                 null,
@@ -98,7 +106,7 @@ public class AmazonProductService {
                 query,
                 categoryId,
                 safeSort,
-                cats,
+                categoryOptions,
                 p.getContent()
             );
         }
@@ -116,23 +124,13 @@ public class AmazonProductService {
             ensureIndex(operations);
 
             String queryUsed = maybeTranslateQueryToEnglish(query);
+            List<CategoryOption> categoryOptions = listCategoryOptions();
 
-            // Build category list from query only (not category-filtered).
-            List<CategoryItem> cats = buildCategoryItems(topCategoriesFromEs(operations, queryUsed), 100);
+            int fetchLimit = computeEsFetchLimit(safePage, safeSize);
 
             long started = System.nanoTime();
-            SearchHits<AmazonProductDocument> hits = searchAsinsFromEs(
-                operations,
-                queryUsed,
-                categoryId,
-                safeSort,
-                safePage,
-                safeSize
-            );
+            SearchHits<AmazonProductDocument> hits = searchAsinsFromEs(operations, queryUsed, fetchLimit);
             long tookMs = Math.max(0L, (System.nanoTime() - started) / 1_000_000L);
-
-            long total = hits.getTotalHits();
-            Long tookMsBoxed = tookMs;
 
             List<String> asins = new ArrayList<>();
             for (SearchHit<AmazonProductDocument> hit : hits.getSearchHits()) {
@@ -143,24 +141,20 @@ public class AmazonProductService {
             }
 
             if (asins.isEmpty()) {
-                return new ListResult(total, tookMsBoxed, true, esEnabled, query, queryUsed, categoryId, safeSort, cats, List.of());
+                return new ListResult(0L, tookMs, true, esEnabled, query, queryUsed, categoryId, safeSort, categoryOptions, List.of());
             }
 
-            List<AmazonProductCard> rows = productRepository.findCardsByAsinIn(asins);
-            Map<String, AmazonProductCard> byAsin = new LinkedHashMap<>();
-            for (AmazonProductCard r : rows) {
-                if (r != null && r.getAsin() != null) {
-                    byAsin.put(r.getAsin(), r);
-                }
+            // ES only stores asin+title. Apply category filter/sorting/paging using DB-hydrated rows.
+            List<AmazonProductCard> candidates = hydrateCardsInOrder(asins);
+            if (categoryId != null) {
+                candidates = filterByCategoryId(candidates, categoryId);
             }
+            candidates = sortCards(candidates, safeSort);
 
-            List<AmazonProductCard> ordered = new ArrayList<>(asins.size());
-            for (String asin : asins) {
-                AmazonProductCard r = byAsin.get(asin);
-                if (r != null) ordered.add(r);
-            }
+            long total = candidates.size();
+            List<AmazonProductCard> pageItems = slicePage(candidates, safePage, safeSize);
 
-            return new ListResult(total, tookMsBoxed, true, esEnabled, query, queryUsed, categoryId, safeSort, cats, ordered);
+            return new ListResult(total, tookMs, true, esEnabled, query, queryUsed, categoryId, safeSort, categoryOptions, pageItems);
         } catch (Exception e) {
             // Keep the page usable even when ES is down.
             return listFromDb(query, categoryId, safeSort, safePage, safeSize);
@@ -168,9 +162,17 @@ public class AmazonProductService {
     }
 
     private ListResult listFromDb(String query, Long categoryId, SortKey sortKey, int page, int size) {
-        List<CategoryItem> cats = buildCategoryItems(topCategoriesFromDb(query), 100);
+        List<CategoryOption> categoryOptions = listCategoryOptions();
+
+        long t1 = System.nanoTime();
         var pageable = PageRequest.of(page, size, toDbSort(sortKey));
         Page<AmazonProductCard> p = productRepository.searchCards(query, categoryId, pageable);
+        long tListMs = (System.nanoTime() - t1) / 1_000_000L;
+
+        if (tListMs > 500) {
+            log.info("AmazonProduct list(db) slow: list={}ms page={} size={} categoryId={} sort={} qLen={}",
+                tListMs, page, size, categoryId, sortKey, query == null ? 0 : query.length());
+        }
         return new ListResult(
             p.getTotalElements(),
             null,
@@ -180,118 +182,108 @@ public class AmazonProductService {
             query,
             categoryId,
             sortKey,
-            cats,
+            categoryOptions,
             p.getContent()
         );
-    }
-
-    private List<CategoryCountRow> topCategoriesFromDb(String queryOrNull) {
-        var pageable = PageRequest.of(0, 100);
-        Page<CategoryCountRow> p = productRepository.countByCategoryForQuery(queryOrNull == null ? "" : queryOrNull, pageable);
-        return p.getContent();
-    }
-
-    private List<CategoryCountRow> topCategoriesFromEs(ElasticsearchOperations operations, String queryUsed) {
-        NativeQuery q = NativeQuery.builder()
-            .withQuery(qb -> qb.match(m -> m.field("title").query(queryUsed)))
-            .withAggregation("top_categories", Aggregation.of(a -> a
-                .terms(t -> t.field("categoryId").size(100))
-            ))
-            .withPageable(PageRequest.of(0, 1))
-            .build();
-
-        SearchHits<AmazonProductDocument> hits = operations.search(q, AmazonProductDocument.class);
-        return extractCategoryCounts(hits);
     }
 
     private SearchHits<AmazonProductDocument> searchAsinsFromEs(
         ElasticsearchOperations operations,
         String queryUsed,
-        Long categoryId,
-        SortKey sortKey,
-        int page,
-        int size
+        int limit
     ) {
-        var b = NativeQuery.builder()
-            .withQuery(qb -> qb.bool(bb -> {
-                bb.must(m -> m.match(mm -> mm.field("title").query(queryUsed)));
-                if (categoryId != null) {
-                    bb.filter(f -> f.term(t -> t.field("categoryId").value(v -> v.longValue(categoryId))));
-                }
-                return bb;
-            }))
-            .withPageable(PageRequest.of(page, size));
-
-        // Sorting in ES: if you sort by a field, relevance scoring is effectively ignored.
-        // That's acceptable here since UI offers explicit sort options.
-        switch (sortKey) {
-            case REVIEWS_DESC -> b.withSort(s -> s.field(f -> f.field("reviews").order(SortOrder.Desc)));
-            case PRICE_ASC -> b.withSort(s -> s.field(f -> f.field("price").order(SortOrder.Asc)));
-            case PRICE_DESC -> b.withSort(s -> s.field(f -> f.field("price").order(SortOrder.Desc)));
-            case TITLE_ASC -> b.withSort(s -> s.field(f -> f.field("title").order(SortOrder.Asc)));
-            case STARS_DESC -> b.withSort(s -> s.field(f -> f.field("stars").order(SortOrder.Desc)));
-        }
-
-        // Secondary tie-breakers.
-        b.withSort(s -> s.field(f -> f.field("reviews").order(SortOrder.Desc)));
-
-        return operations.search(b.build(), AmazonProductDocument.class);
+        int safeLimit = Math.min(Math.max(limit, 1), 20_000);
+        var q = NativeQuery.builder()
+            .withQuery(qb -> qb.match(m -> m.field("title").query(queryUsed)))
+            .withPageable(PageRequest.of(0, safeLimit))
+            .build();
+        return operations.search(q, AmazonProductDocument.class);
     }
 
-    private static List<CategoryCountRow> extractCategoryCounts(SearchHits<?> hits) {
-        if (hits == null || !hits.hasAggregations()) {
-            return List.of();
-        }
-        if (!(hits.getAggregations() instanceof ElasticsearchAggregations aggs)) {
-            return List.of();
-        }
+    private static int computeEsFetchLimit(int page, int size) {
+        long need = ((long) page + 1L) * (long) size;
+        // Over-fetch so category filtering + DB sorting still has enough candidates.
+        long over = need * 20L;
+        if (over < 500L) over = 500L;
+        if (over > 20_000L) over = 20_000L;
+        return (int) over;
+    }
 
-        var a = aggs.aggregationsAsMap().get("top_categories");
-        if (a == null || a.aggregation() == null) {
-            return List.of();
+    private List<AmazonProductCard> hydrateCardsInOrder(List<String> asins) {
+        List<AmazonProductCard> rows = productRepository.findCardsByAsinIn(asins);
+        Map<String, AmazonProductCard> byAsin = new HashMap<>();
+        for (AmazonProductCard r : rows) {
+            if (r != null && r.getAsin() != null) {
+                byAsin.put(r.getAsin(), r);
+            }
         }
-
-        Aggregate raw = a.aggregation().getAggregate();
-        if (raw == null || !raw.isLterms()) {
-            return List.of();
+        List<AmazonProductCard> ordered = new ArrayList<>(asins.size());
+        for (String asin : asins) {
+            AmazonProductCard r = byAsin.get(asin);
+            if (r != null) ordered.add(r);
         }
+        return ordered;
+    }
 
-        List<CategoryCountRow> out = new ArrayList<>();
-        for (var b : raw.lterms().buckets().array()) {
-            Long categoryId = b.key();
-            long cnt = b.docCount();
-            out.add(new CategoryCountRow() {
-                @Override public Long getCategoryId() { return categoryId; }
-                @Override public long getCnt() { return cnt; }
-            });
+    private static List<AmazonProductCard> filterByCategoryId(List<AmazonProductCard> in, long categoryId) {
+        if (in == null || in.isEmpty()) return List.of();
+        List<AmazonProductCard> out = new ArrayList<>(in.size());
+        for (AmazonProductCard r : in) {
+            if (r != null && r.getCategoryId() != null && r.getCategoryId().longValue() == categoryId) {
+                out.add(r);
+            }
         }
         return out;
     }
 
-    private List<CategoryItem> buildCategoryItems(List<CategoryCountRow> rows, int limit) {
+    private static List<AmazonProductCard> sortCards(List<AmazonProductCard> in, SortKey sortKey) {
+        if (in == null || in.size() <= 1) return in == null ? List.of() : in;
+        List<AmazonProductCard> out = new ArrayList<>(in);
+        Comparator<AmazonProductCard> c = switch (sortKey) {
+            case REVIEWS_DESC -> Comparator
+                .comparingInt((AmazonProductCard r) -> r == null || r.getReviews() == null ? Integer.MIN_VALUE : r.getReviews())
+                .reversed()
+                .thenComparingDouble(r -> r == null || r.getStars() == null ? Double.NEGATIVE_INFINITY : r.getStars());
+            case PRICE_ASC -> Comparator
+                .comparingDouble((AmazonProductCard r) -> r == null || r.getPrice() == null ? Double.POSITIVE_INFINITY : r.getPrice())
+                .thenComparingDouble(r -> r == null || r.getStars() == null ? Double.NEGATIVE_INFINITY : r.getStars()).reversed();
+            case PRICE_DESC -> Comparator
+                .comparingDouble((AmazonProductCard r) -> r == null || r.getPrice() == null ? Double.NEGATIVE_INFINITY : r.getPrice())
+                .reversed()
+                .thenComparingDouble(r -> r == null || r.getStars() == null ? Double.NEGATIVE_INFINITY : r.getStars());
+            case TITLE_ASC -> Comparator
+                .comparing((AmazonProductCard r) -> r == null ? "" : (r.getTitle() == null ? "" : r.getTitle()), String.CASE_INSENSITIVE_ORDER);
+            case STARS_DESC -> Comparator
+                .comparingDouble((AmazonProductCard r) -> r == null || r.getStars() == null ? Double.NEGATIVE_INFINITY : r.getStars())
+                .reversed()
+                .thenComparingInt(r -> r == null || r.getReviews() == null ? Integer.MIN_VALUE : r.getReviews());
+        };
+        out.sort(c);
+        return out;
+    }
+
+    private static List<AmazonProductCard> slicePage(List<AmazonProductCard> in, int page, int size) {
+        if (in == null || in.isEmpty()) return List.of();
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), 50);
+        long startL = (long) safePage * (long) safeSize;
+        if (startL >= in.size()) return List.of();
+        int start = (int) startL;
+        int end = Math.min(start + safeSize, in.size());
+        return in.subList(start, end);
+    }
+
+
+    private List<CategoryOption> listCategoryOptions() {
+        List<AmazonCategory> rows = categoryRepository.findAll();
         if (rows == null || rows.isEmpty()) return List.of();
 
-        List<Long> ids = new ArrayList<>();
-        for (CategoryCountRow r : rows) {
-            if (r == null || r.getCategoryId() == null) continue;
-            ids.add(r.getCategoryId());
-            if (ids.size() >= limit) break;
+        List<CategoryOption> out = new ArrayList<>(rows.size());
+        for (AmazonCategory c : rows) {
+            if (c == null || c.getId() == null) continue;
+            out.add(new CategoryOption(c.getId(), displayCategoryName(c)));
         }
-
-        Map<Long, AmazonCategory> byId = new HashMap<>();
-        for (AmazonCategory c : categoryRepository.findByIdIn(ids)) {
-            byId.put(c.getId(), c);
-        }
-
-        List<CategoryItem> out = new ArrayList<>();
-        for (CategoryCountRow r : rows) {
-            if (r == null || r.getCategoryId() == null) continue;
-            Long id = r.getCategoryId();
-            AmazonCategory c = byId.get(id);
-            String name = (c == null) ? ("Category " + id) : displayCategoryName(c);
-            out.add(new CategoryItem(id, name, r.getCnt()));
-            if (out.size() >= limit) break;
-        }
+        out.sort(Comparator.comparing(CategoryOption::name, String.CASE_INSENSITIVE_ORDER));
         return out;
     }
 
@@ -322,6 +314,103 @@ public class AmazonProductService {
         } catch (Exception e) {
             throw new BaseException("AMAZON_ES_UNAVAILABLE", "Elasticsearch is not reachable. Start it via docker compose.", e);
         }
+    }
+
+    /**
+     * Reindex all DB products into Elasticsearch. Intended for local/dev usage.
+     */
+    public int reindexAll() {
+        assertEsEnabled();
+
+        ElasticsearchOperations operations = operationsProvider.getIfAvailable();
+        if (operations == null) {
+            throw new BaseException("AMAZON_ES_UNAVAILABLE", "ElasticsearchOperations bean is not available.");
+        }
+
+        ensureIndex(operations);
+
+        int page = 0;
+        int batchSize = clamp(esProps.getReindex().getBatchSize(), 200, 5000);
+        int logEvery = clamp(esProps.getReindex().getLogEvery(), 1000, 200_000);
+        int indexed = 0;
+
+        while (true) {
+            Slice<AmazonProduct> p = productRepository.findAllByOrderByAsinAsc(PageRequest.of(page, batchSize));
+            if (p.isEmpty()) break;
+
+            List<AmazonProductDocument> docs = new ArrayList<>(p.getNumberOfElements());
+            for (AmazonProduct e : p.getContent()) {
+                AmazonProductDocument d = toDocument(e);
+                if (d != null && d.getAsin() != null) {
+                    docs.add(d);
+                }
+            }
+
+            if (!docs.isEmpty()) {
+                operations.save(docs);
+                indexed += docs.size();
+            }
+
+            if ((indexed % logEvery) < docs.size()) {
+                log.info("AmazonProduct ES reindex progress: indexed={} batchSize={} page={}", indexed, batchSize, page);
+            }
+
+            if (!p.hasNext()) break;
+            page++;
+        }
+
+        try {
+            operations.indexOps(AmazonProductDocument.class).refresh();
+        } catch (Exception ignore) {
+            // Refresh is best-effort for local/dev usage.
+        }
+
+        return indexed;
+    }
+
+    /**
+     * Delete the entire index (and recreate mapping).
+     */
+    public void clearIndex() {
+        assertEsEnabled();
+
+        ElasticsearchOperations operations = operationsProvider.getIfAvailable();
+        if (operations == null) {
+            throw new BaseException("AMAZON_ES_UNAVAILABLE", "ElasticsearchOperations bean is not available.");
+        }
+
+        try {
+            IndexOperations indexOps = operations.indexOps(AmazonProductDocument.class);
+            if (indexOps.exists()) {
+                indexOps.delete();
+            }
+            indexOps.createWithMapping();
+        } catch (Exception e) {
+            throw new BaseException("AMAZON_ES_UNAVAILABLE", "Elasticsearch is not reachable. Start it via docker compose.", e);
+        }
+    }
+
+    private void assertEsEnabled() {
+        if (!esProps.isEnabled()) {
+            throw new BaseException(
+                "AMAZON_ES_DISABLED",
+                "AmazonProduct Elasticsearch is disabled. Enable it via AMAZON_PRODUCT_ES_ENABLED=true (local profile)."
+            );
+        }
+    }
+
+    private static AmazonProductDocument toDocument(AmazonProduct e) {
+        if (e == null) return null;
+        AmazonProductDocument d = new AmazonProductDocument();
+        d.setAsin(e.getAsin());
+        d.setTitle(e.getTitle());
+        return d;
+    }
+
+    private static int clamp(int v, int min, int max) {
+        if (v < min) return min;
+        if (v > max) return max;
+        return v;
     }
 
     private String maybeTranslateQueryToEnglish(String q) {

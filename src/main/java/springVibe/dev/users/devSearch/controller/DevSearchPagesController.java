@@ -11,12 +11,14 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 /**
  * Dev Search pages (Thymeleaf).
@@ -123,6 +125,15 @@ public class DevSearchPagesController {
         model.addAttribute("canonicalUrl", "https://velog.io/@" + post.getUsername() + "/" + post.getUrlSlug());
         model.addAttribute("bodyHtml", markdownRenderService.renderToSafeHtml(post.getBody()));
         return render(model, "개발 블로그 검색", "html/users/devSearch/view");
+    }
+
+    @GetMapping(value = "/suggest", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public List<String> suggest(
+        @RequestParam("q") String q,
+        @RequestParam(value = "limit", required = false, defaultValue = "10") int limit
+    ) {
+        return devSearchService.suggestTitles(q, limit);
     }
 
     @PostMapping("/reindex")

@@ -2,7 +2,7 @@
 
 - DBMS: MySQL
 - Database: springVibe
-- Generated at: 2026-03-19 15:32:35 +09:00
+- Generated at: 2026-03-30 17:13:10 +09:00
 - Source: SHOW CREATE TABLE (and manual migration draft for new/changed tables)
 
 ## Tables
@@ -13,6 +13,8 @@
 - `roles`
 - `user_roles`
 - `users`
+- `amazon_category`
+- `amazon_product`
 - `youtube_comment_analysis_histories`
 - `youtube_comment_analysis_top_keywords`
 - `youtube_comment_analysis_topic_groups`
@@ -121,6 +123,45 @@ CREATE TABLE `users` (
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='회원 기본 정보 테이블'
 ```
 
+## `amazon_category`
+
+```sql
+CREATE TABLE `amazon_category` (
+  `id` bigint NOT NULL COMMENT '카테고리 ID (CSV 고정 ID)',
+
+  `category_name` varchar(255) NOT NULL COMMENT '카테고리명(원문)',
+  `category_name_ko` varchar(255) DEFAULT NULL COMMENT '카테고리명(한글)',
+
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Amazon 카테고리';
+```
+
+## `amazon_product`
+
+```sql
+CREATE TABLE `amazon_product` (
+  `asin` varchar(32) NOT NULL COMMENT 'ASIN',
+
+  `title` varchar(2000) DEFAULT NULL COMMENT '제품명(원문)',
+  `product_name_ko` varchar(2000) DEFAULT NULL COMMENT '제품명(한글)',
+
+  `img_url` varchar(2000) DEFAULT NULL COMMENT '이미지 URL',
+  `product_url` varchar(2000) DEFAULT NULL COMMENT '상품 URL',
+
+  `stars` double DEFAULT NULL COMMENT '별점',
+  `reviews` int DEFAULT NULL COMMENT '리뷰 수',
+  `price` double DEFAULT NULL COMMENT '가격',
+  `list_price` double DEFAULT NULL COMMENT '정가',
+
+  `category_id` bigint DEFAULT NULL COMMENT '카테고리 ID (amazon_category.id)',
+  `is_best_seller` varchar(5) DEFAULT NULL COMMENT '베스트셀러 여부(True/False)',
+  `bought_in_last_month` int DEFAULT NULL COMMENT '지난달 구매 수',
+
+  PRIMARY KEY (`asin`),
+  KEY `ix_amazon_product_category` (`category_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Amazon 상품';
+```
+
 ## `youtube_comment_analysis_histories`
 
 ```sql
@@ -129,6 +170,7 @@ CREATE TABLE `youtube_comment_analysis_histories` (
 
   `user_id` bigint DEFAULT NULL COMMENT '회원 ID',
   `video_url` varchar(2048) NOT NULL COMMENT '영상 URL',
+  `video_title` varchar(512) DEFAULT NULL COMMENT '영상명',
 
   `original_file_path` varchar(1024) NOT NULL COMMENT '원본파일 저장 경로',
   `original_saved_at` datetime(6) NOT NULL COMMENT '원본파일 저장 일시',
@@ -137,6 +179,7 @@ CREATE TABLE `youtube_comment_analysis_histories` (
   `preprocessed_saved_at` datetime(6) DEFAULT NULL COMMENT '전처리 일시',
 
   `analysis_requested_at` datetime(6) DEFAULT NULL COMMENT '분석요청일시',
+  `remark` varchar(1024) DEFAULT NULL COMMENT '비고',
 
   `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '생성일',
   `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '수정일',

@@ -75,7 +75,7 @@ public class YoutubeCommentSearchController {
 
         try {
             Long userId = resolveCurrentUserIdOrNull();
-            youtubeCommentService.exportAllCommentsByUrlAsJsonlAndSaveHistory(form.getUrl(), userId);
+            youtubeCommentService.exportAllCommentsByUrlAsJsonlAndSaveHistory(form.getUrl(), userId, form.getRemark());
             model.addAttribute("successMessage", "저장되었습니다.");
         } catch (BaseException e) {
             model.addAttribute("errorCode", e.getCode());
@@ -103,12 +103,36 @@ public class YoutubeCommentSearchController {
 
         try {
             Long userId = resolveCurrentUserIdOrNull();
-            Path saved = youtubeCommentService.exportAllCommentsByUrlAsJsonlAndSaveHistory(form.getUrl(), userId);
+            Path saved = youtubeCommentService.exportAllCommentsByUrlAsJsonlAndSaveHistory(form.getUrl(), userId, form.getRemark());
             return ResponseEntity.ok(ExportAsyncResponse.ok("저장되었습니다.", saved.toString()));
         } catch (BaseException e) {
-            return ResponseEntity.internalServerError().body(ExportAsyncResponse.fail(e.getCode(), e.getMessage()));
+            return ResponseEntity.badRequest().body(ExportAsyncResponse.fail(e.getCode(), e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(ExportAsyncResponse.fail("ERR001", e.getMessage()));
+        }
+    }
+
+    @PostMapping(value = "/collectAsync", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public ResponseEntity<CollectAsyncResponse> collectAsync(
+        @Valid @ModelAttribute("form") YoutubeCommentSearchForm form,
+        BindingResult bindingResult
+    ) {
+        if (bindingResult.hasErrors()) {
+            String msg = bindingResult.getAllErrors().isEmpty()
+                ? "입력값이 올바르지 않습니다."
+                : bindingResult.getAllErrors().get(0).getDefaultMessage();
+            return ResponseEntity.badRequest().body(CollectAsyncResponse.fail("VALIDATION_ERROR", msg));
+        }
+
+        try {
+            YoutubeCommentPage page = youtubeCommentService.collectCommentsByUrl(form.getUrl(), form.getPageToken(), form.getLimit());
+            return ResponseEntity.ok(CollectAsyncResponse.ok(page));
+        } catch (BaseException e) {
+            // Usually a user-input issue (invalid URL/videoId, missing config, etc.)
+            return ResponseEntity.badRequest().body(CollectAsyncResponse.fail(e.getCode(), e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(CollectAsyncResponse.fail("ERR001", e.getMessage()));
         }
     }
 
@@ -169,5 +193,43 @@ public class YoutubeCommentSearchController {
             return filePath;
         }
     }
-}
 
+    public static class CollectAsyncResponse {
+        private boolean success;
+        private String message;
+        private String errorCode;
+        private YoutubeCommentPage page;
+
+        public static CollectAsyncResponse ok(YoutubeCommentPage page) {
+            CollectAsyncResponse r = new CollectAsyncResponse();
+            r.success = true;
+            r.page = page;
+            r.message = "ok";
+            return r;
+        }
+
+        public static CollectAsyncResponse fail(String errorCode, String message) {
+            CollectAsyncResponse r = new CollectAsyncResponse();
+            r.success = false;
+            r.errorCode = errorCode;
+            r.message = message;
+            return r;
+        }
+
+        public boolean isSuccess() {
+            return success;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+
+        public String getErrorCode() {
+            return errorCode;
+        }
+
+        public YoutubeCommentPage getPage() {
+            return page;
+        }
+    }
+}

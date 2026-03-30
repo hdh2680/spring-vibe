@@ -5,7 +5,10 @@
       <p class="muted">저장 이력 목록을 조회하고, 전처리/상세 보기로 진행합니다.</p>
     </div>
     <div>
-      <a class="btn-link" th:href="@{/users/youtubeComment/search}">+ 댓글 수집</a>
+      <button id="btnOpenCollectModal" class="btn-link" type="button">+ 댓글 수집</button>
+      <noscript>
+        <a class="btn-link" th:href="@{/users/youtubeComment/search}">+ 댓글 수집</a>
+      </noscript>
     </div>
   </div>
 
@@ -17,16 +20,242 @@
     alert([[${successMessage}]]);
   </script>
 
+  <style>
+    .ytc-modal-backdrop[hidden] { display: none; }
+    .ytc-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.50);
+      z-index: 2000;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+    }
+    .ytc-modal {
+      width: min(1120px, 100%);
+      max-height: min(86vh, 980px);
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      border-radius: 18px;
+      border: 1px solid rgba(17, 24, 39, 0.14);
+      background: rgba(255, 255, 255, 0.96);
+      box-shadow: 0 30px 80px rgba(15, 23, 42, 0.28);
+      overflow: hidden;
+    }
+    .ytc-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 14px 10px 14px;
+      border-bottom: 1px solid rgba(17, 24, 39, 0.10);
+    }
+    .ytc-modal-title {
+      font-weight: 900;
+      letter-spacing: -0.2px;
+    }
+    .ytc-modal-close {
+      border: 1px solid rgba(17, 24, 39, 0.14);
+      background: rgba(255, 255, 255, 0.92);
+      border-radius: 12px;
+      padding: 8px 10px;
+      cursor: pointer;
+      font-weight: 850;
+      color: rgba(17, 24, 39, 0.82);
+    }
+
+    .ytc-modal-form {
+      padding: 12px 14px 12px 14px;
+      border-bottom: 1px solid rgba(17, 24, 39, 0.10);
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: end;
+    }
+    @media (max-width: 980px) {
+      .ytc-modal-form { grid-template-columns: 1fr; }
+    }
+    .ytc-field { min-width: 0; }
+    .ytc-field--full { grid-column: 1 / -1; }
+    .ytc-label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 12px;
+      font-weight: 750;
+      color: var(--muted);
+      letter-spacing: -0.1px;
+    }
+    .ytc-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.90);
+      color: var(--text);
+    }
+    .ytc-textarea {
+      width: 100%;
+      min-height: 64px;
+      resize: vertical;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.90);
+      color: var(--text);
+    }
+    .ytc-input:focus {
+      outline: none;
+      border-color: rgba(37, 99, 235, 0.35);
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+      background: rgba(255, 255, 255, 0.98);
+    }
+    .ytc-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      align-items: center;
+      padding-top: 22px;
+    }
+    @media (max-width: 980px) {
+      .ytc-actions { padding-top: 0; justify-content: flex-start; }
+    }
+    .ytc-actions .btn {
+      width: auto;
+      padding: 10px 14px;
+      border-radius: 14px;
+    }
+    .ytc-actions .btn-primary {
+      background: linear-gradient(135deg, rgba(37, 99, 235, 0.95), rgba(22, 163, 74, 0.88));
+      border-color: rgba(37, 99, 235, 0.28);
+      color: rgba(255, 255, 255, 0.96);
+    }
+    .ytc-actions .btn-secondary { background: rgba(255, 255, 255, 0.78); }
+    .ytc-actions .btn:disabled { opacity: 0.65; cursor: not-allowed; transform: none; }
+
+    .ytc-modal-body {
+      padding: 12px 14px 14px 14px;
+    }
+  </style>
+
+  <div id="ytcCollectModalBackdrop" class="ytc-modal-backdrop" hidden>
+    <div class="ytc-modal" role="dialog" aria-modal="true" aria-label="댓글 수집">
+      <div class="ytc-modal-header">
+        <div>
+          <div class="ytc-modal-title">댓글 수집</div>
+          <div class="muted" style="font-size: 12px; margin-top: 2px;">유튜브 URL을 입력해서 댓글을 가져오고 저장할 수 있습니다.</div>
+        </div>
+        <button id="btnCloseCollectModal" class="ytc-modal-close" type="button">닫기</button>
+      </div>
+
+      <form id="ytcCollectForm" class="ytc-modal-form">
+        <div class="ytc-field">
+          <label class="ytc-label" for="ytcUrl">유튜브 URL</label>
+          <input id="ytcUrl" name="url" type="text" class="ytc-input" placeholder="예: https://www.youtube.com/watch?v=VIDEO_ID" />
+        </div>
+        <div class="ytc-field ytc-field--full">
+          <label class="ytc-label" for="ytcRemark">비고</label>
+          <textarea id="ytcRemark" name="remark" class="ytc-textarea" placeholder="메모(선택)"></textarea>
+        </div>
+
+        <div class="ytc-actions">
+          <button id="btnExportAsync" class="btn btn-primary" type="button">분석 수행</button>
+        </div>
+      </form>
+
+      <div class="ytc-modal-body">
+        <div class="muted" style="font-size: 12px;">
+          분석 수행을 누르면 댓글 데이터를 저장하고(이력 생성), 이후 화면에서 전처리/분석을 진행할 수 있습니다.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script th:inline="javascript">
+    (() => {
+      const openBtn = document.getElementById('btnOpenCollectModal');
+      const backdrop = document.getElementById('ytcCollectModalBackdrop');
+      const closeBtn = document.getElementById('btnCloseCollectModal');
+      const form = document.getElementById('ytcCollectForm');
+      const btnExport = document.getElementById('btnExportAsync');
+
+      const exportUrl = /*[[@{/users/youtubeComment/analysis/runAsync}]]*/ '/users/youtubeComment/analysis/runAsync';
+
+      if (!openBtn || !backdrop || !closeBtn || !form || !btnExport || !window.fetch) return;
+
+      function setBackdrop(open) {
+        backdrop.hidden = !open;
+        document.body.style.overflow = open ? 'hidden' : '';
+        if (open) {
+          const urlEl = document.getElementById('ytcUrl');
+          if (urlEl) setTimeout(() => urlEl.focus(), 0);
+        }
+      }
+
+      openBtn.addEventListener('click', () => setBackdrop(true));
+      closeBtn.addEventListener('click', () => setBackdrop(false));
+      backdrop.addEventListener('click', (e) => {
+        if (e.target === backdrop) setBackdrop(false);
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e && e.key === 'Escape') setBackdrop(false);
+      });
+
+      async function postForm(url) {
+        const body = new URLSearchParams(new FormData(form));
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+          body
+        });
+        const json = await res.json().catch(() => null);
+        return { res, json };
+      }
+
+      function alertFrom(res, json) {
+        const code = json && json.errorCode ? json.errorCode : 'ERR';
+        const msg = json && json.message ? json.message : `요청 실패 (${res.status})`;
+        alert(`${code} - ${msg}`);
+      }
+
+      btnExport.addEventListener('click', async () => {
+        btnExport.disabled = true;
+        const prev = btnExport.textContent;
+        btnExport.textContent = '분석 수행 중...';
+        try {
+          const { res, json } = await postForm(exportUrl);
+          if (!res.ok) {
+            alertFrom(res, json);
+            return;
+          }
+          const redirectUrl = json && json.redirectUrl ? String(json.redirectUrl) : null;
+          if (redirectUrl) {
+            window.location.href = redirectUrl;
+            return;
+          }
+          const msg = json && json.message ? json.message : '완료되었습니다.';
+          alert(msg);
+          window.location.reload();
+        } catch (e) {
+          alert(e && e.message ? e.message : '저장 중 오류가 발생했습니다.');
+        } finally {
+          btnExport.disabled = false;
+          btnExport.textContent = prev;
+        }
+      });
+    })();
+  </script>
+
   <div class="panel table-wrap">
     <table class="table">
       <thead>
         <tr>
           <th style="width: 80px">ID</th>
-          <th>Video URL</th>
-          <th style="width: 170px">Original Saved</th>
-          <th style="width: 170px">Preprocessed Saved</th>
-          <th style="width: 170px">Analysis Requested</th>
-          <th style="width: 160px">Actions</th>
+          <th style="width: 320px">영상명</th>
+          <th>URL</th>
+          <th style="width: 170px">저장일시</th>
+          <th style="width: 170px">전처리일시</th>
+          <th style="width: 170px">분석요청일시</th>
         </tr>
       </thead>
       <tbody>
@@ -35,17 +264,13 @@
         </tr>
         <tr th:each="h : ${histories}">
           <td th:text="${h.id}">1</td>
+          <td style="word-break: break-word">
+            <a class="action" th:href="@{/users/youtubeComment/analysis/view(id=${h.id})}" th:text="${#strings.isEmpty(h.videoTitle) ? '(제목 없음)' : h.videoTitle}">(제목 없음)</a>
+          </td>
           <td style="word-break: break-word" th:text="${h.videoUrl}">url</td>
           <td th:text="${h.originalSavedAt != null ? #temporals.format(h.originalSavedAt, 'yyyy-MM-dd HH:mm:ss') : '-'}">-</td>
           <td th:text="${h.preprocessedSavedAt != null ? #temporals.format(h.preprocessedSavedAt, 'yyyy-MM-dd HH:mm:ss') : '-'}">-</td>
           <td th:text="${h.analysisRequestedAt != null ? #temporals.format(h.analysisRequestedAt, 'yyyy-MM-dd HH:mm:ss') : '-'}">-</td>
-          <td>
-            <form th:if="${h.preprocessedSavedAt == null}" th:action="@{/users/youtubeComment/analysis/preprocess}" method="post" style="display:inline">
-              <input type="hidden" name="id" th:value="${h.id}" />
-              <button class="btn-link" type="submit" style="cursor:pointer">전처리</button>
-            </form>
-            <a th:if="${h.preprocessedSavedAt != null}" class="action" th:href="@{/users/youtubeComment/analysis/view(id=${h.id})}">view</a>
-          </td>
         </tr>
       </tbody>
     </table>

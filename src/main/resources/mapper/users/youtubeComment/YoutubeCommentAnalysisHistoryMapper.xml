@@ -9,14 +9,18 @@
         INSERT INTO youtube_comment_analysis_histories (
             user_id,
             video_url,
+            video_title,
             original_file_path,
-            original_saved_at
+            original_saved_at,
+            remark
         )
         VALUES (
             #{userId},
             #{videoUrl},
+            #{videoTitle},
             #{originalFilePath},
-            #{originalSavedAt}
+            #{originalSavedAt},
+            #{remark}
         )
     </insert>
 
@@ -26,11 +30,13 @@
             id,
             user_id,
             video_url,
+            video_title,
             original_file_path,
             original_saved_at,
             preprocessed_file_path,
             preprocessed_saved_at,
             analysis_requested_at,
+            remark,
             created_at,
             updated_at
         FROM youtube_comment_analysis_histories
@@ -44,11 +50,13 @@
             id,
             user_id,
             video_url,
+            video_title,
             original_file_path,
             original_saved_at,
             preprocessed_file_path,
             preprocessed_saved_at,
             analysis_requested_at,
+            remark,
             created_at,
             updated_at
         FROM youtube_comment_analysis_histories

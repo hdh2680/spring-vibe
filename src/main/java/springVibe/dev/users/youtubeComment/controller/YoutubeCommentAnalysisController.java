@@ -1,23 +1,27 @@
 package springVibe.dev.users.youtubeComment.controller;
 
-import springVibe.dev.common.domain.UserAccount;
-import springVibe.dev.common.service.AuthService;
-import springVibe.dev.users.youtubeComment.domain.YoutubeCommentAnalysisHistory;
-import springVibe.dev.users.youtubeComment.service.YoutubeCommentService;
-import springVibe.system.exception.BaseException;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Controller;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import springVibe.dev.common.domain.UserAccount;
+import springVibe.dev.common.service.AuthService;
+import springVibe.dev.users.youtubeComment.domain.YoutubeCommentAnalysisHistory;
+import springVibe.dev.users.youtubeComment.dto.YoutubeCommentSearchForm;
+import springVibe.dev.users.youtubeComment.service.YoutubeCommentService;
+import springVibe.system.exception.BaseException;
 
-import java.nio.file.Path;
 import java.util.List;
 
 @Controller
@@ -48,28 +52,14 @@ public class YoutubeCommentAnalysisController {
         return render(model, "유튜브 댓글 분석", "html/users/youtubeComment/youtubeCommentAnalysis");
     }
 
-    @PostMapping("/preprocess")
-    public String preprocess(@RequestParam("id") Long id, Model model) {
-        try {
-            Long userId = resolveCurrentUserIdOrNull();
-            Path saved = youtubeCommentService.preprocessHistoryIfNeeded(id, userId);
-            model.addAttribute("successMessage", "전처리가 완료되었습니다.\n" + saved);
-        } catch (BaseException e) {
-            model.addAttribute("errorCode", e.getCode());
-            model.addAttribute("errorMessage", e.getMessage());
-        } catch (Exception e) {
-            model.addAttribute("errorCode", "ERR001");
-            model.addAttribute("errorMessage", e.getMessage());
-        }
-
-        // Re-render list with updated status.
-        return list(model);
-    }
-
+    /**
+     * 상세 화면의 "분석수행" 버튼: 전처리 -> 분석까지 한 번에 수행한다.
+     */
     @PostMapping("/analyze")
     public String analyze(@RequestParam("id") Long id, Model model) {
         try {
             Long userId = resolveCurrentUserIdOrNull();
+            youtubeCommentService.preprocessHistoryIfNeeded(id, userId);
             youtubeCommentService.analyzeAndPersist(id, userId);
             model.addAttribute("successMessage", "분석이 완료되었습니다.");
         } catch (BaseException e) {
@@ -83,6 +73,32 @@ public class YoutubeCommentAnalysisController {
         return view(id, model);
     }
 
+    /**
+     * 댓글 수집 모달의 "분석 수행" 버튼: 저장(이력 생성) -> 전처리 -> 분석까지 한 번에 수행한다.
+     */
+    @PostMapping(value = "/runAsync", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public ResponseEntity<RunAsyncResponse> runAsync(
+        @Valid @ModelAttribute("form") YoutubeCommentSearchForm form,
+        BindingResult bindingResult
+    ) {
+        if (bindingResult.hasErrors()) {
+            String msg = bindingResult.getAllErrors().isEmpty()
+                ? "입력값이 올바르지 않습니다."
+                : bindingResult.getAllErrors().get(0).getDefaultMessage();
+            return ResponseEntity.badRequest().body(RunAsyncResponse.fail("VALIDATION_ERROR", msg));
+        }
+
+        try {
+            Long userId = resolveCurrentUserIdOrNull();
+            Long historyId = youtubeCommentService.runFullAnalysisByUrl(form.getUrl(), userId, form.getRemark());
+            return ResponseEntity.ok(RunAsyncResponse.ok(historyId));
+        } catch (BaseException e) {
+            return ResponseEntity.badRequest().body(RunAsyncResponse.fail(e.getCode(), e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(RunAsyncResponse.fail("ERR001", e.getMessage()));
+        }
+    }
 
     @GetMapping(value = "/result.json", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> resultJson(@RequestParam("id") Long id) {
@@ -102,7 +118,7 @@ public class YoutubeCommentAnalysisController {
     }
 
     @GetMapping("/result/view")
-    public String resultView(@RequestParam("id") Long id, Model model) {
+    public String resultView(@RequestParam("id") Long id) {
         return "redirect:/users/youtubeComment/analysis/view?id=" + id;
     }
 
@@ -125,7 +141,6 @@ public class YoutubeCommentAnalysisController {
         return render(model, "유튜브 댓글 분석", "html/users/youtubeComment/youtubeCommentAnalysisView");
     }
 
-
     private static String jsonError(String code, String message) {
         return "{\"errorCode\":\"" + jsonEscape(code) + "\",\"errorMessage\":\"" + jsonEscape(message) + "\"}";
     }
@@ -140,6 +155,7 @@ public class YoutubeCommentAnalysisController {
             .replace("\r", "")
             .replace("\n", "\\n");
     }
+
     private Long resolveCurrentUserIdOrNull() {
         try {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -158,4 +174,50 @@ public class YoutubeCommentAnalysisController {
         model.addAttribute("contentTemplate", contentTemplate);
         return "layout/app";
     }
+
+    public static class RunAsyncResponse {
+        private boolean success;
+        private String message;
+        private String errorCode;
+        private Long historyId;
+        private String redirectUrl;
+
+        public static RunAsyncResponse ok(Long historyId) {
+            RunAsyncResponse r = new RunAsyncResponse();
+            r.success = true;
+            r.message = "ok";
+            r.historyId = historyId;
+            r.redirectUrl = historyId == null ? null : ("/users/youtubeComment/analysis/view?id=" + historyId);
+            return r;
+        }
+
+        public static RunAsyncResponse fail(String errorCode, String message) {
+            RunAsyncResponse r = new RunAsyncResponse();
+            r.success = false;
+            r.errorCode = errorCode;
+            r.message = message;
+            return r;
+        }
+
+        public boolean isSuccess() {
+            return success;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+
+        public String getErrorCode() {
+            return errorCode;
+        }
+
+        public Long getHistoryId() {
+            return historyId;
+        }
+
+        public String getRedirectUrl() {
+            return redirectUrl;
+        }
+    }
 }
+

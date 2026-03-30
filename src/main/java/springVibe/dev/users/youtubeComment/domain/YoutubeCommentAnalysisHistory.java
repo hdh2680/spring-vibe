@@ -10,11 +10,13 @@ public class YoutubeCommentAnalysisHistory {
     private Long id;
     private Long userId;
     private String videoUrl;
+    private String videoTitle;
     private String originalFilePath;
     private LocalDateTime originalSavedAt;
     private String preprocessedFilePath;
     private LocalDateTime preprocessedSavedAt;
     private LocalDateTime analysisRequestedAt;
+    private String remark;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -40,6 +42,14 @@ public class YoutubeCommentAnalysisHistory {
 
     public void setVideoUrl(String videoUrl) {
         this.videoUrl = videoUrl;
+    }
+
+    public String getVideoTitle() {
+        return videoTitle;
+    }
+
+    public void setVideoTitle(String videoTitle) {
+        this.videoTitle = videoTitle;
     }
 
     public String getOriginalFilePath() {
@@ -80,6 +90,14 @@ public class YoutubeCommentAnalysisHistory {
 
     public void setAnalysisRequestedAt(LocalDateTime analysisRequestedAt) {
         this.analysisRequestedAt = analysisRequestedAt;
+    }
+
+    public String getRemark() {
+        return remark;
+    }
+
+    public void setRemark(String remark) {
+        this.remark = remark;
     }
 
     public LocalDateTime getCreatedAt() {
