@@ -2,15 +2,6 @@
 
 <div align="center">
   <h3>Spring 기반 Vibe Coding 프로젝트</h3>
-  <p>아이디어를 빠르게 프로토타이핑하고, 실무형 기술 스택으로 확장 가능한 구조를 만드는 것을 목표로 합니다.</p>
-
-  <p>
-    <img alt="Java" src="https://img.shields.io/badge/Java-17-ED8B00?logo=openjdk&logoColor=white" />
-    <img alt="Spring Boot" src="https://img.shields.io/badge/Spring%20Boot-3.2.5-6DB33F?logo=springboot&logoColor=white" />
-    <img alt="Maven" src="https://img.shields.io/badge/Maven-Wrapper-C71A36?logo=apachemaven&logoColor=white" />
-    <img alt="MySQL" src="https://img.shields.io/badge/MySQL-8-4479A1?logo=mysql&logoColor=white" />
-    <img alt="Swagger" src="https://img.shields.io/badge/OpenAPI-Swagger%20UI-85EA2D?logo=swagger&logoColor=black" />
-  </p>
 </div>
 
 ![login](src/main/resources/static/images/login.png)
