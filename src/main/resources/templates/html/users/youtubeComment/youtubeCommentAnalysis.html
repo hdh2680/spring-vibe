@@ -1,11 +1,24 @@
 <section xmlns:th="http://www.thymeleaf.org" th:fragment="content">
   <div class="toolbar">
     <div>
-      <h3>유튜브 댓글 분석</h3>
+      <div class="ytc-title-row">
+        <h3 style="margin: 0;">유튜브 댓글 분석</h3>
+        <button
+          id="btnYoutubeCommentHelp"
+          type="button"
+          class="ytc-help"
+          aria-label="유튜브 댓글 분석 도움말"
+          title="댓글 수집 후 전처리/분석을 수행합니다. 감성/커스텀 사전은 버튼을 눌러 모달에서 확인할 수 있습니다."
+        >?</button>
+      </div>
     </div>
-    <div>
+    <div style="display: inline-flex; gap: 10px; align-items: center;">
+      <button id="btnOpenLexicon" class="btn-link" type="button" th:attr="data-url=@{/docs/youtubeComment/sentiment_lexicon.tsv}">감성사전</button>
+      <button id="btnOpenCustomLexicon" class="btn-link" type="button" th:attr="data-url=@{/users/youtubeComment/lexicon/custom.tsv}">커스텀사전</button>
       <button id="btnOpenCollectModal" class="btn-link" type="button">+ 댓글 수집</button>
       <noscript>
+        <a class="btn-link" th:href="@{/docs/youtubeComment/sentiment_lexicon.tsv}" target="_blank" rel="noopener">감성사전</a>
+        <a class="btn-link" th:href="@{/users/youtubeComment/lexicon/custom.tsv}" target="_blank" rel="noopener">커스텀사전</a>
         <a class="btn-link" th:href="@{/users/youtubeComment/search}">+ 댓글 수집</a>
       </noscript>
     </div>
@@ -20,6 +33,100 @@
   </script>
 
   <style>
+    .ytc-title-row {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .ytc-help {
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      border: 1px solid rgba(20, 24, 33, 0.16);
+      background: rgba(255, 255, 255, 0.86);
+      color: rgba(20, 24, 33, 0.74);
+      font-weight: 900;
+      font-size: 12px;
+      line-height: 1;
+      cursor: pointer;
+      user-select: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .ytc-help:hover {
+      background: rgba(255, 255, 255, 0.96);
+      border-color: rgba(20, 24, 33, 0.24);
+      color: rgba(20, 24, 33, 0.86);
+    }
+    .ytc-help:focus {
+      outline: none;
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+      border-color: rgba(37, 99, 235, 0.35);
+    }
+
+    .ytc-help-pop[hidden] { display: none; }
+    .ytc-help-pop {
+      position: absolute;
+      top: 30px;
+      left: 0;
+      width: min(860px, 96vw);
+      max-height: min(76vh, 860px);
+      overflow: auto;
+      z-index: 50;
+      border-radius: 16px;
+      border: 1px solid rgba(17, 24, 39, 0.14);
+      background: rgba(255, 255, 255, 0.98);
+      box-shadow: 0 18px 50px rgba(15, 23, 42, 0.22);
+    }
+    .ytc-help-pop-hd {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(17, 24, 39, 0.10);
+      position: sticky;
+      top: 0;
+      background: rgba(255, 255, 255, 0.98);
+    }
+    .ytc-help-pop-title {
+      font-weight: 900;
+      letter-spacing: -0.1px;
+      color: rgba(17, 24, 39, 0.86);
+      font-size: 12px;
+    }
+    .ytc-help-pop-actions {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .ytc-help-pop-actions a {
+      font-size: 12px;
+      font-weight: 850;
+      color: rgba(37, 99, 235, 0.85);
+      text-decoration: none;
+    }
+    .ytc-help-pop-actions a:hover {
+      text-decoration: underline;
+    }
+    .ytc-help-pop-bd {
+      padding: 10px 12px 12px 12px;
+      font-size: 12px;
+      line-height: 1.45;
+      color: rgba(17, 24, 39, 0.82);
+      white-space: pre-wrap;
+    }
+    .ytc-help-pop-bd code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace;
+      font-size: 11px;
+      background: rgba(17, 24, 39, 0.06);
+      border: 1px solid rgba(17, 24, 39, 0.10);
+      padding: 1px 6px;
+      border-radius: 999px;
+    }
+
     .ytc-modal-backdrop[hidden] { display: none; }
     .ytc-modal-backdrop {
       position: fixed;
@@ -135,7 +242,237 @@
     .ytc-modal-body {
       padding: 12px 14px 14px 14px;
     }
+
+    .dict-modal-backdrop[hidden] { display: none; }
+    .dict-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 6, 23, 0.45);
+      z-index: 2100;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+    }
+
+    .dict-modal {
+      width: min(600px, 100%);
+      height: min(88vh, 820px);
+      max-height: min(88vh, 820px);
+      display: grid;
+      /* header / search / custom-actions / table / footer */
+      grid-template-rows: auto auto auto 1fr auto;
+      border-radius: 18px;
+      border: 1px solid rgba(17, 24, 39, 0.14);
+      background: rgba(255, 255, 255, 0.96);
+      box-shadow: 0 30px 80px rgba(2, 6, 23, 0.28);
+      overflow: hidden;
+    }
+
+    .dict-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 14px 10px 14px;
+      border-bottom: 1px solid rgba(17, 24, 39, 0.10);
+    }
+
+    .dict-modal-title {
+      font-weight: 900;
+      letter-spacing: -0.2px;
+    }
+
+    .dict-modal-close {
+      border: 1px solid rgba(17, 24, 39, 0.14);
+      background: rgba(255, 255, 255, 0.92);
+      border-radius: 12px;
+      padding: 8px 10px;
+      cursor: pointer;
+      font-weight: 850;
+      color: rgba(17, 24, 39, 0.82);
+    }
+
+    .dict-toolbar {
+      padding: 12px 14px 12px 14px;
+      border-bottom: 1px solid rgba(17, 24, 39, 0.10);
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 140px auto;
+      gap: 12px;
+      align-items: end;
+    }
+
+    @media (max-width: 980px) {
+      .dict-toolbar { grid-template-columns: 1fr; }
+    }
+
+    .dict-tablewrap {
+      padding: 12px 14px 14px 14px;
+      overflow: auto;
+      min-height: 0; /* allow the 1fr row to scroll instead of resizing the modal */
+    }
+
+    table.dict-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    table.dict-table thead {
+      position: sticky;
+      top: 0;
+      background: rgba(255, 255, 255, 0.96);
+      border-bottom: 1px solid rgba(20, 24, 33, 0.08);
+    }
+
+    table.dict-table th,
+    table.dict-table td {
+      text-align: left;
+      padding: 10px 12px;
+      border-top: 1px solid rgba(20, 24, 33, 0.08);
+      vertical-align: top;
+    }
+
+    table.dict-table th {
+      border-top: 0;
+      color: rgba(20, 24, 33, 0.72);
+      font-weight: 800;
+    }
+
+    .dict-table .dict-del {
+      padding: 6px 8px;
+      min-height: 30px;
+      font-size: 11px;
+      border-radius: 12px;
+    }
+
+    .dict-footer {
+      padding: 10px 14px;
+      border-top: 1px solid rgba(17, 24, 39, 0.10);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.88);
+    }
+
+    .dict-pager {
+      display: inline-flex;
+      gap: 10px;
+      align-items: center;
+    }
   </style>
+
+  <script>
+    (function () {
+      var btn = document.getElementById("btnYoutubeCommentHelp");
+      if (!btn) return;
+
+      var url = "/docs/youtubeComment/help_popover.md";
+      var detailUrl = "/users/youtubeComment/help";
+      var imgUrl = "/docs/youtubeComment/help_flow.svg";
+      var pop = document.createElement("div");
+      pop.className = "ytc-help-pop";
+      pop.hidden = true;
+      pop.setAttribute("role", "dialog");
+      pop.setAttribute("aria-label", "유튜브 댓글 분석 도움말");
+
+      var hd = document.createElement("div");
+      hd.className = "ytc-help-pop-hd";
+      var title = document.createElement("div");
+      title.className = "ytc-help-pop-title";
+      title.textContent = "도움말";
+      var actions = document.createElement("div");
+      actions.className = "ytc-help-pop-actions";
+      var open = document.createElement("a");
+      open.href = detailUrl;
+      open.target = "_blank";
+      open.rel = "noopener";
+      open.textContent = "자세히보기";
+      var close = document.createElement("button");
+      close.type = "button";
+      close.className = "ytc-modal-close";
+      close.style.padding = "6px 8px";
+      close.style.borderRadius = "10px";
+      close.textContent = "닫기";
+      actions.appendChild(open);
+      actions.appendChild(close);
+      hd.appendChild(title);
+      hd.appendChild(actions);
+
+      var bd = document.createElement("div");
+      bd.className = "ytc-help-pop-bd";
+
+      var img = document.createElement("img");
+      img.alt = "유튜브 댓글 분석 흐름";
+      img.src = imgUrl;
+      img.style.width = "100%";
+      img.style.height = "auto";
+      img.style.display = "block";
+      img.style.borderRadius = "12px";
+      img.style.border = "1px solid rgba(17, 24, 39, 0.10)";
+      img.style.background = "rgba(255,255,255,0.92)";
+
+      var txt = document.createElement("div");
+      txt.style.marginTop = "10px";
+      txt.style.whiteSpace = "pre-wrap";
+      txt.textContent = "불러오는 중...";
+
+      bd.appendChild(img);
+      bd.appendChild(txt);
+
+      pop.appendChild(hd);
+      pop.appendChild(bd);
+
+      var host = btn.closest(".ytc-title-row");
+      if (!host) return;
+      host.appendChild(pop);
+
+      var loaded = false;
+      var hideTimer = null;
+
+      function show() {
+        if (hideTimer) window.clearTimeout(hideTimer);
+        pop.hidden = false;
+        if (loaded) return;
+        loaded = true;
+        fetch(url, { headers: { "Accept": "text/plain" } })
+          .then(function (r) { return r.text(); })
+          .then(function (t) {
+            txt.textContent = (t || "").trim() || "도움말 파일이 비어있습니다.";
+          })
+          .catch(function () {
+            txt.textContent = "도움말을 불러오지 못했습니다.";
+          });
+      }
+
+      function hideSoon() {
+        if (hideTimer) window.clearTimeout(hideTimer);
+        hideTimer = window.setTimeout(function () {
+          pop.hidden = true;
+        }, 120);
+      }
+
+      btn.addEventListener("mouseenter", show);
+      btn.addEventListener("focus", show);
+      btn.addEventListener("mouseleave", hideSoon);
+      btn.addEventListener("blur", hideSoon);
+
+      pop.addEventListener("mouseenter", function () {
+        if (hideTimer) window.clearTimeout(hideTimer);
+      });
+      pop.addEventListener("mouseleave", hideSoon);
+
+      close.addEventListener("click", function () {
+        pop.hidden = true;
+      });
+
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape") {
+          pop.hidden = true;
+        }
+      });
+    })();
+  </script>
 
   <div id="ytcCollectModalBackdrop" class="ytc-modal-backdrop" hidden>
     <div class="ytc-modal" role="dialog" aria-modal="true" aria-label="댓글 수집">
@@ -165,6 +502,73 @@
       <div class="ytc-modal-body">
         <div class="muted" style="font-size: 12px;">
           분석 수행을 누르면 댓글 데이터를 저장하고(이력 생성), 이후 화면에서 전처리/분석을 진행할 수 있습니다.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="dictModalBackdrop" class="dict-modal-backdrop" hidden>
+    <div class="dict-modal" role="dialog" aria-modal="true" aria-label="사전 조회">
+      <div class="dict-modal-header">
+        <div>
+          <div id="dictModalTitle" class="dict-modal-title">사전</div>
+          <div id="dictModalMeta" class="muted" style="font-size: 12px; margin-top: 2px;">로딩 중...</div>
+        </div>
+        <button id="btnCloseDictModal" class="dict-modal-close" type="button">닫기</button>
+      </div>
+
+      <form id="dictToolbar" class="dict-toolbar" role="search" onsubmit="return false;">
+        <label class="field" style="margin: 0;">
+          <div class="label">검색어</div>
+          <input id="dictQ" class="input" type="search" placeholder="term 검색..." autocomplete="off" />
+        </label>
+        <label class="field" style="margin: 0;">
+          <div class="label">페이지 크기</div>
+          <select id="dictSize" class="select">
+            <option value="20">20</option>
+            <option value="50" selected>50</option>
+            <option value="100">100</option>
+            <option value="200">200</option>
+          </select>
+        </label>
+        <div class="searchbar-actions" style="justify-content: flex-end;">
+          <button id="dictClear" class="btn-action btn-action--reset" type="button">검색 초기화</button>
+        </div>
+      </form>
+
+      <form id="dictCustomActions" class="dict-toolbar" style="border-bottom: 0; padding-top: 0; display: none;" onsubmit="return false;">
+        <label class="field" style="margin: 0;">
+          <div class="label">term</div>
+          <input id="customTerm" class="input" type="text" placeholder="추가/수정할 term" autocomplete="off" />
+        </label>
+        <label class="field" style="margin: 0;">
+          <div class="label">score</div>
+          <select id="customScore" class="select">
+            <option value="-1">-1</option>
+            <option value="0">0</option>
+            <option value="1" selected>1</option>
+          </select>
+        </label>
+        <div class="searchbar-actions" style="justify-content: flex-end;">
+          <button id="customUpsert" class="btn-action btn-action--search" type="button">추가/수정</button>
+        </div>
+      </form>
+
+      <div class="dict-tablewrap">
+        <table class="dict-table" aria-label="사전 테이블">
+          <thead>
+            <tr id="dictHeadRow"></tr>
+          </thead>
+          <tbody id="dictBody"></tbody>
+        </table>
+      </div>
+
+      <div class="dict-footer">
+        <div id="dictCount" class="muted">-</div>
+        <div class="dict-pager" aria-label="Pagination">
+          <button id="dictPrev" class="btn-action btn-action--reset" type="button">이전</button>
+          <div class="muted"><span id="dictPage">1</span> / <span id="dictTotalPages">1</span></div>
+          <button id="dictNext" class="btn-action btn-action--reset" type="button">다음</button>
         </div>
       </div>
     </div>
@@ -245,6 +649,363 @@
     })();
   </script>
 
+  <script>
+    (() => {
+      const btnLex = document.getElementById('btnOpenLexicon');
+      const btnCus = document.getElementById('btnOpenCustomLexicon');
+      const backdrop = document.getElementById('dictModalBackdrop');
+      const btnClose = document.getElementById('btnCloseDictModal');
+      const titleEl = document.getElementById('dictModalTitle');
+      const metaEl = document.getElementById('dictModalMeta');
+      const headRow = document.getElementById('dictHeadRow');
+      const bodyEl = document.getElementById('dictBody');
+      const qEl = document.getElementById('dictQ');
+      const sizeEl = document.getElementById('dictSize');
+      const clearBtn = document.getElementById('dictClear');
+      const customActions = document.getElementById('dictCustomActions');
+      const customTerm = document.getElementById('customTerm');
+      const customScore = document.getElementById('customScore');
+      const customUpsert = document.getElementById('customUpsert');
+      const prevBtn = document.getElementById('dictPrev');
+      const nextBtn = document.getElementById('dictNext');
+      const pageEl = document.getElementById('dictPage');
+      const totalPagesEl = document.getElementById('dictTotalPages');
+      const countEl = document.getElementById('dictCount');
+
+      if (!btnLex || !btnCus || !backdrop || !btnClose || !titleEl || !metaEl || !headRow || !bodyEl || !qEl || !sizeEl || !clearBtn || !customActions || !customTerm || !customScore || !customUpsert || !prevBtn || !nextBtn || !pageEl || !totalPagesEl || !countEl || !window.fetch) {
+        return;
+      }
+
+      const dicts = {
+        lexicon: {
+          key: 'lexicon',
+          title: '감성사전',
+          url: btnLex.dataset && btnLex.dataset.url ? String(btnLex.dataset.url) : '/docs/youtubeComment/sentiment_lexicon.tsv',
+          columns: ['term', 'score']
+        },
+        custom: {
+          key: 'custom',
+          title: '커스텀사전',
+          url: btnCus.dataset && btnCus.dataset.url ? String(btnCus.dataset.url) : '/docs/youtubeComment/sentiment_custom.tsv',
+          columns: ['term', 'score']
+        }
+      };
+
+      const cache = new Map(); // key -> { rows: string[][], loadedAt: number }
+      const state = {
+        dictKey: null,
+        rows: [],
+        q: '',
+        page: 0,
+        size: Math.max(1, Number(sizeEl.value) || 50)
+      };
+
+      function csrfHeaders() {
+        const token = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+        const header = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+        if (!token || !header) return {};
+        return { [header]: token };
+      }
+
+      async function postForm(url, data) {
+        const body = new URLSearchParams();
+        for (const k of Object.keys(data || {})) {
+          body.set(k, data[k] == null ? '' : String(data[k]));
+        }
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8', ...csrfHeaders() },
+          body
+        });
+        const json = await res.json().catch(() => null);
+        return { res, json };
+      }
+
+      function setBackdrop(open) {
+        backdrop.hidden = !open;
+        document.body.style.overflow = open ? 'hidden' : '';
+        if (open) setTimeout(() => qEl.focus(), 0);
+      }
+
+      function escClose(e) {
+        if (e && e.key === 'Escape') setBackdrop(false);
+      }
+
+      btnClose.addEventListener('click', () => setBackdrop(false));
+      backdrop.addEventListener('click', (e) => { if (e.target === backdrop) setBackdrop(false); });
+      document.addEventListener('keydown', escClose);
+
+      function parseTsv(text, columnsLen) {
+        const out = [];
+        const lines = String(text || '').split(/\r?\n/);
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
+          if (!line || !line.trim()) continue;
+          if (line.startsWith('#')) continue;
+          const parts = line.split('\t');
+          if (parts.length < 2) continue;
+          const row = parts.slice(0, columnsLen).map((s) => (s == null ? '' : String(s)));
+          // Pad if row is shorter (defensive).
+          while (row.length < columnsLen) row.push('');
+          out.push(row);
+        }
+        return out;
+      }
+
+      function setHeaders(cols) {
+        headRow.innerHTML = '';
+        for (let i = 0; i < cols.length; i++) {
+          const th = document.createElement('th');
+          th.scope = 'col';
+          th.textContent = cols[i];
+          headRow.appendChild(th);
+        }
+        if (state.dictKey === 'custom') {
+          const th = document.createElement('th');
+          th.scope = 'col';
+          th.textContent = '삭제';
+          headRow.appendChild(th);
+        }
+      }
+
+      function filteredRows() {
+        const q = (state.q || '').trim().toLowerCase();
+        if (!q) return state.rows;
+        return state.rows.filter((r) => {
+          for (let i = 0; i < r.length; i++) {
+            if (String(r[i] || '').toLowerCase().includes(q)) return true;
+          }
+          return false;
+        });
+      }
+
+      function render() {
+        const dict = dicts[state.dictKey];
+        const cols = dict ? dict.columns : [];
+        const all = filteredRows();
+        const size = Math.max(1, Number(state.size) || 50);
+        const total = all.length;
+        const totalPages = Math.max(1, Math.ceil(total / size));
+        const page = Math.min(Math.max(0, state.page), totalPages - 1);
+        state.page = page;
+
+        const start = page * size;
+        const end = Math.min(total, start + size);
+        const slice = all.slice(start, end);
+
+        bodyEl.innerHTML = '';
+        if (slice.length === 0) {
+          const tr = document.createElement('tr');
+          const td = document.createElement('td');
+          td.colSpan = Math.max(1, cols.length) + (state.dictKey === 'custom' ? 1 : 0);
+          td.className = 'muted';
+          td.textContent = '결과가 없습니다.';
+          tr.appendChild(td);
+          bodyEl.appendChild(tr);
+        } else {
+          for (let i = 0; i < slice.length; i++) {
+            const tr = document.createElement('tr');
+            const row = slice[i];
+            for (let j = 0; j < cols.length; j++) {
+              const td = document.createElement('td');
+              td.textContent = row[j] == null ? '' : String(row[j]);
+              tr.appendChild(td);
+            }
+            if (state.dictKey === 'custom') {
+              tr.style.cursor = 'pointer';
+              tr.addEventListener('click', () => {
+                const t = row[0] == null ? '' : String(row[0]).trim();
+                const sRaw = row[1] == null ? '' : String(row[1]).trim();
+                const s = Number.parseInt(sRaw, 10);
+                if (t) {
+                  customTerm.value = t;
+                  if (Number.isFinite(s)) {
+                    customScore.value = String(s);
+                  }
+                  customTerm.focus();
+                  customTerm.select();
+                }
+              });
+
+              const td = document.createElement('td');
+              const btn = document.createElement('button');
+              btn.type = 'button';
+              btn.className = 'btn-action btn-action--reset dict-del';
+              btn.textContent = '삭제';
+              const term = row[0] == null ? '' : String(row[0]);
+              btn.addEventListener('click', async (e) => {
+                // Prevent row click (fill form) when deleting.
+                if (e && e.stopPropagation) e.stopPropagation();
+                if (!term) return;
+                if (!confirm(`[${term}] 삭제할까요?`)) return;
+                btn.disabled = true;
+                try {
+                  const { res, json } = await postForm('/users/youtubeComment/lexicon/custom/delete', { term });
+                  if (!res.ok) {
+                    const msg = json && json.message ? String(json.message) : `삭제 실패 (${res.status})`;
+                    alert(msg);
+                    return;
+                  }
+                  cache.delete('custom');
+                  await loadAndOpen('custom', { keepState: true });
+                } finally {
+                  btn.disabled = false;
+                }
+              });
+              td.appendChild(btn);
+              tr.appendChild(td);
+            }
+            bodyEl.appendChild(tr);
+          }
+        }
+
+        pageEl.textContent = String(page + 1);
+        totalPagesEl.textContent = String(totalPages);
+        countEl.textContent = total <= 0
+          ? `총 0건`
+          : `총 ${total.toLocaleString()}건 (표시 ${start + 1}~${end})`;
+        prevBtn.disabled = page <= 0;
+        nextBtn.disabled = page >= totalPages - 1;
+      }
+
+      async function loadAndOpen(dictKey, opts) {
+        const keepState = !!(opts && opts.keepState);
+        const dict = dicts[dictKey];
+        if (!dict) return;
+        state.dictKey = dictKey;
+        if (!keepState) {
+          state.q = '';
+          state.page = 0;
+          qEl.value = '';
+        }
+
+        titleEl.textContent = dict.title;
+        metaEl.textContent = '로딩 중...';
+        customActions.style.display = dictKey === 'custom' ? '' : 'none';
+        setHeaders(dict.columns);
+        bodyEl.innerHTML = '';
+        setBackdrop(true);
+
+        const cached = cache.get(dictKey);
+        if (cached && Array.isArray(cached.rows)) {
+          state.rows = cached.rows;
+          metaEl.textContent = `원본 TSV: ${dict.url} · ${cached.rows.length.toLocaleString()} rows`;
+          render();
+          return;
+        }
+
+        try {
+          const res = await fetch(dict.url);
+          if (!res.ok) {
+            metaEl.textContent = `불러오기 실패 (${res.status})`;
+            state.rows = [];
+            render();
+            return;
+          }
+          const text = await res.text();
+          const rows = parseTsv(text, dict.columns.length);
+          cache.set(dictKey, { rows, loadedAt: Date.now() });
+          state.rows = rows;
+          metaEl.textContent = `원본 TSV: ${dict.url} · ${rows.length.toLocaleString()} rows`;
+          render();
+        } catch (e) {
+          metaEl.textContent = e && e.message ? e.message : '불러오기 실패';
+          state.rows = [];
+          render();
+        }
+      }
+
+      btnLex.addEventListener('click', () => loadAndOpen('lexicon'));
+      btnCus.addEventListener('click', () => loadAndOpen('custom'));
+
+      customUpsert.addEventListener('click', async () => {
+        if (state.dictKey !== 'custom') return;
+        const term = (customTerm.value || '').trim();
+        const score = Number(customScore.value);
+        if (!term) {
+          alert('term을 입력하세요.');
+          customTerm.focus();
+          return;
+        }
+        if (!Number.isFinite(score)) {
+          alert('score가 올바르지 않습니다.');
+          return;
+        }
+        customUpsert.disabled = true;
+        try {
+          const { res, json } = await postForm('/users/youtubeComment/lexicon/custom/add', { term, score });
+          if (!res.ok) {
+            const msg = json && json.message ? String(json.message) : `저장 실패 (${res.status})`;
+            alert(msg);
+            return;
+          }
+          cache.delete('custom');
+          await loadAndOpen('custom', { keepState: true });
+          customTerm.value = '';
+          customTerm.focus();
+        } finally {
+          customUpsert.disabled = false;
+        }
+      });
+
+      let qTimer = null;
+      qEl.addEventListener('input', () => {
+        if (qTimer) window.clearTimeout(qTimer);
+        qTimer = window.setTimeout(() => {
+          state.q = qEl.value || '';
+          state.page = 0;
+          render();
+        }, 120);
+      });
+
+      sizeEl.addEventListener('change', () => {
+        state.size = Number(sizeEl.value) || 50;
+        state.page = 0;
+        render();
+      });
+
+      clearBtn.addEventListener('click', () => {
+        qEl.value = '';
+        state.q = '';
+        state.page = 0;
+        render();
+      });
+
+      prevBtn.addEventListener('click', () => {
+        state.page = Math.max(0, state.page - 1);
+        render();
+      });
+      nextBtn.addEventListener('click', () => {
+        state.page = state.page + 1;
+        render();
+      });
+    })();
+  </script>
+
+  <section aria-label="Search, table, pagination" style="margin-top: 12px">
+    <div class="panel panel-inner search-panel">
+      <form class="searchbar" role="search" th:action="@{/users/youtubeComment/analysis}" method="get">
+        <label class="field">
+          <div class="label">검색어</div>
+          <input class="input" type="search" name="q" th:value="${q}" placeholder="제목, URL, 비고, ID로 검색..." />
+        </label>
+        <label class="field">
+          <div class="label">검색대상</div>
+          <select class="select" name="field">
+            <option value="all" th:selected="${field == null or field == 'all'}">전체</option>
+            <option value="title" th:selected="${field == 'title'}">제목</option>
+            <option value="url" th:selected="${field == 'url'}">URL</option>
+            <option value="remark" th:selected="${field == 'remark'}">비고</option>
+            <option value="id" th:selected="${field == 'id'}">ID</option>
+          </select>
+        </label>
+        <div class="searchbar-actions">
+          <button class="btn-action btn-action--search" type="submit">검색</button>
+          <a class="btn-action btn-action--reset" th:href="@{/users/youtubeComment/analysis}">초기화</a>
+        </div>
+      </form>
+    </div>
+
   <div class="panel table-wrap">
     <table class="table">
       <thead>
@@ -274,4 +1035,5 @@
       </tbody>
     </table>
   </div>
+  </section>
 </section>

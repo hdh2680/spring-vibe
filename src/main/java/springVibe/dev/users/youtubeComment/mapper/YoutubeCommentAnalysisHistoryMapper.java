@@ -13,6 +13,12 @@ public interface YoutubeCommentAnalysisHistoryMapper {
 
     List<YoutubeCommentAnalysisHistory> selectList(@Param("userId") Long userId);
 
+    List<YoutubeCommentAnalysisHistory> selectListByQuery(
+        @Param("userId") Long userId,
+        @Param("q") String q,
+        @Param("field") String field
+    );
+
     YoutubeCommentAnalysisHistory selectById(@Param("id") Long id, @Param("userId") Long userId);
 
     int updatePreprocessed(

@@ -20,26 +20,47 @@ import springVibe.dev.common.service.AuthService;
 import springVibe.dev.users.youtubeComment.domain.YoutubeCommentAnalysisHistory;
 import springVibe.dev.users.youtubeComment.dto.YoutubeCommentSearchForm;
 import springVibe.dev.users.youtubeComment.service.YoutubeCommentService;
+import springVibe.dev.users.youtubeComment.service.YoutubeCommentService.SentimentItemsPage;
+import springVibe.dev.users.youtubeComment.service.YoutubeCommentSentimentLlmReviewService;
 import springVibe.system.exception.BaseException;
 
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/users/youtubeComment/analysis")
 public class YoutubeCommentAnalysisController {
     private final YoutubeCommentService youtubeCommentService;
     private final AuthService authService;
+    private final YoutubeCommentSentimentLlmReviewService llmReviewService;
 
-    public YoutubeCommentAnalysisController(YoutubeCommentService youtubeCommentService, AuthService authService) {
+    public YoutubeCommentAnalysisController(
+        YoutubeCommentService youtubeCommentService,
+        AuthService authService,
+        YoutubeCommentSentimentLlmReviewService llmReviewService
+    ) {
         this.youtubeCommentService = youtubeCommentService;
         this.authService = authService;
+        this.llmReviewService = llmReviewService;
     }
 
     @GetMapping
-    public String list(Model model) {
+    public String list(
+        @RequestParam(value = "q", required = false) String q,
+        @RequestParam(value = "field", required = false, defaultValue = "all") String field,
+        Model model
+    ) {
+        String query = q == null ? null : q.trim();
+        if (query != null && query.isBlank()) {
+            query = null;
+        }
+        String normalizedField = normalizeSearchField(field);
+        model.addAttribute("q", query);
+        model.addAttribute("field", normalizedField);
+
         try {
             Long userId = resolveCurrentUserIdOrNull();
-            List<YoutubeCommentAnalysisHistory> histories = youtubeCommentService.listHistories(userId);
+            List<YoutubeCommentAnalysisHistory> histories = youtubeCommentService.listHistories(userId, query, normalizedField);
             model.addAttribute("histories", histories);
         } catch (BaseException e) {
             model.addAttribute("errorCode", e.getCode());
@@ -55,6 +76,17 @@ public class YoutubeCommentAnalysisController {
     /**
      * 상세 화면의 "분석수행" 버튼: 전처리 -> 분석까지 한 번에 수행한다.
      */
+    private static String normalizeSearchField(String field) {
+        if (field == null) {
+            return "all";
+        }
+        String f = field.trim().toLowerCase();
+        return switch (f) {
+            case "all", "id", "title", "url", "remark" -> f;
+            default -> "all";
+        };
+    }
+
     @PostMapping("/analyze")
     public String analyze(@RequestParam("id") Long id, Model model) {
         try {
@@ -114,6 +146,96 @@ public class YoutubeCommentAnalysisController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(jsonError("ERR001", e.getMessage()));
+        }
+    }
+
+    @GetMapping(value = "/sentiment-items.json", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<SentimentItemsPage> sentimentItems(
+        @RequestParam("id") Long historyId,
+        @RequestParam(value = "q", required = false) String q,
+        @RequestParam(value = "label", required = false) String label,
+        @RequestParam(value = "page", required = false) Integer page,
+        @RequestParam(value = "size", required = false) Integer size
+    ) {
+        Long userId = resolveCurrentUserIdOrNull();
+        SentimentItemsPage out = youtubeCommentService.listSentimentItems(historyId, userId, q, label, page, size);
+        return ResponseEntity.ok(out);
+    }
+
+    @GetMapping(value = "/sentiment-summary.json", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public ResponseEntity<?> sentimentSummary(@RequestParam("id") Long historyId) {
+        try {
+            Long userId = resolveCurrentUserIdOrNull();
+            return ResponseEntity.ok(youtubeCommentService.computeSentimentSummaryFromDb(historyId, userId));
+        } catch (BaseException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Map.of("errorCode", e.getCode(), "errorMessage", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Map.of("errorCode", "ERR001", "errorMessage", e.getMessage()));
+        }
+    }
+
+    @PostMapping(value = "/sentiment-items/llm-review", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public ResponseEntity<?> llmReview(
+        @RequestParam("id") Long historyId,
+        @RequestParam("itemIds") List<Long> itemIds
+    ) {
+        try {
+            Long userId = resolveCurrentUserIdOrNull();
+            return ResponseEntity.ok(llmReviewService.review(historyId, userId, itemIds));
+        } catch (BaseException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Map.of("errorCode", e.getCode(), "errorMessage", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Map.of("errorCode", "ERR001", "errorMessage", e.getMessage()));
+        }
+    }
+
+    @GetMapping(value = "/lexicon-suggestions.json", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public ResponseEntity<?> pendingLexiconSuggestions(
+        @RequestParam("id") Long historyId,
+        @RequestParam(value = "limit", required = false) Integer limit
+    ) {
+        try {
+            Long userId = resolveCurrentUserIdOrNull();
+            return ResponseEntity.ok(llmReviewService.listPending(historyId, userId, limit));
+        } catch (BaseException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Map.of("errorCode", e.getCode(), "errorMessage", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Map.of("errorCode", "ERR001", "errorMessage", e.getMessage()));
+        }
+    }
+
+    @PostMapping(value = "/lexicon-suggestions/apply", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public ResponseEntity<?> applyLexiconSuggestions(
+        @RequestParam("id") Long historyId,
+        @RequestParam("suggestionIds") List<Long> suggestionIds
+    ) {
+        try {
+            Long userId = resolveCurrentUserIdOrNull();
+            return ResponseEntity.ok(llmReviewService.applySuggestions(historyId, userId, suggestionIds));
+        } catch (BaseException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Map.of("errorCode", e.getCode(), "errorMessage", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Map.of("errorCode", "ERR001", "errorMessage", e.getMessage()));
         }
     }
 
@@ -220,4 +342,3 @@ public class YoutubeCommentAnalysisController {
         }
     }
 }
-

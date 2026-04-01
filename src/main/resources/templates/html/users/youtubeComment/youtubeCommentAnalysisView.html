@@ -426,42 +426,62 @@
       color: rgba(17, 24, 39, 0.72);
     }
 
-    .sent-sample-tabs {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-bottom: 10px;
+    .sent-items-searchbar {
+      grid-template-columns: 1fr 140px 120px auto;
     }
-    .sent-sample-tab {
-      border: 1px solid rgba(17, 24, 39, 0.16);
-      background: rgba(255, 255, 255, 0.85);
-      border-radius: 999px;
-      padding: 6px 10px;
-      font-size: 12px;
-      cursor: pointer;
-      color: rgba(17, 24, 39, 0.82);
+    @media (max-width: 980px) {
+      .sent-items-searchbar { grid-template-columns: 1fr; }
     }
-    .sent-sample-tab[aria-selected="true"] {
-      border-color: rgba(17, 24, 39, 0.28);
-      background: rgba(17, 24, 39, 0.06);
-      font-weight: 700;
-    }
-    .sent-sample-table-wrap {
-      max-height: 52vh;
-      overflow: auto;
+
+    .sent-items-tablewrap {
+      margin-top: 10px;
       border: 1px solid rgba(17, 24, 39, 0.10);
-      border-radius: 12px;
-      background: rgba(255, 255, 255, 0.88);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.92);
+      height: 420px; /* keep the panel height stable while searching */
+      overflow: auto;
     }
-    .sent-sample-table {
+    .sent-items-table {
       width: 100%;
       table-layout: fixed;
-      min-width: 860px;
+      min-width: 1180px;
     }
-    .sent-sample-table td:nth-child(5) {
+    .sent-items-table td:nth-child(8) {
       white-space: pre-wrap;
       overflow-wrap: anywhere;
       word-break: break-word;
+    }
+    .sent-items-foot {
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .sent-items-pager {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: nowrap;
+    }
+    .sent-items-page {
+      white-space: nowrap;
+    }
+    .ytc-spin {
+      width: 14px;
+      height: 14px;
+      border-radius: 999px;
+      border: 2px solid rgba(17, 24, 39, 0.18);
+      border-top-color: rgba(37, 99, 235, 0.85);
+      animation: ytcSpin 800ms linear infinite;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    .ytc-spin[hidden] { display: none !important; }
+    #sentItemLlmStatus[hidden] { display: none !important; }
+    @keyframes ytcSpin {
+      to { transform: rotate(360deg); }
     }
 
     .net-split {
@@ -538,15 +558,15 @@
           </div>
         </div>
         <div style="max-height: 70vh; overflow: auto">
-          <table class="table" style="min-width: 980px">
+          <table class="table" style="min-width: 1360px; table-layout: fixed;">
             <thead>
               <tr>
                 <th style="width: 70px">번호</th>
                 <th style="width: 180px">작성자</th>
                 <th style="width: 170px">작성일</th>
                 <th style="width: 80px">좋아요</th>
-                <th style="width: 420px">원문</th>
-                <th>전처리</th>
+                <th style="width: 340px">원문</th>
+                <th style="width: 520px">전처리</th>
               </tr>
             </thead>
             <tbody>
@@ -683,12 +703,110 @@
       </div>
 
       <div class="panel" style="margin-top: 12px">
-        <div class="panel-inner">
-          <h4>감정분포별 댓글</h4>
-          <p class="muted">감정분포별 댓글입니다 최대 50개 제공</p>
+        <div class="panel-inner search-panel">
+          <h4>감정분석 댓글 목록</h4>
+
+          <form class="searchbar sent-items-searchbar" role="search" aria-label="Search, table, pagination" onsubmit="return false;">
+            <label class="field searchbar-main">
+              <div class="label">검색어</div>
+              <input id="sentItemQ" class="input" type="search" placeholder="댓글 내용 또는 댓글 ID" autocomplete="off"/>
+            </label>
+
+            <label class="field">
+              <div class="label">감정</div>
+              <select id="sentItemLabel" class="select">
+                <option value="">전체</option>
+                <option value="POSITIVE">긍정</option>
+                <option value="NEUTRAL">중립</option>
+                <option value="NEGATIVE">부정</option>
+                <option value="UNKNOWN">미분류</option>
+              </select>
+            </label>
+
+            <label class="field searchbar-size">
+              <div class="label">개수</div>
+              <select id="sentItemSize" class="select">
+                <option value="20">20</option>
+                <option value="50" selected>50</option>
+                <option value="100">100</option>
+              </select>
+            </label>
+
+            <div class="searchbar-actions">
+              <button id="sentItemSearch" class="btn-action btn-action--search" type="button">검색</button>
+              <button id="sentItemReset" class="btn-action btn-action--reset" type="button">초기화</button>
+              <button id="sentItemLlmReview" class="btn-action" type="button">LLM 재판단</button>
+              <span id="sentItemLlmSpinner" class="ytc-spin" hidden aria-hidden="true"></span>
+              <span id="sentItemLlmStatus" class="muted" hidden>재판단중...</span>
+            </div>
+          </form>
         </div>
+
         <div class="panel-inner">
-          <div id="sentSamples"></div>
+          <div class="sent-items-tablewrap">
+            <table class="table sent-items-table">
+              <thead>
+              <tr>
+                <th style="width: 54px">
+                  <input id="sentItemAll" type="checkbox" aria-label="전체 선택"/>
+                </th>
+                <th style="width: 170px">작성일</th>
+                <th style="width: 90px">사전</th>
+                <th style="width: 90px">LLM</th>
+                <th style="width: 90px">최종</th>
+                <th style="width: 80px">점수</th>
+                <th style="width: 90px">매칭수</th>
+                <th>댓글</th>
+              </tr>
+              </thead>
+              <tbody id="sentItemBody">
+              <tr><td colspan="8" class="muted">분석 결과를 불러오는 중...</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="sent-items-foot">
+            <div class="muted" id="sentItemMeta"></div>
+            <div class="sent-items-pager">
+              <button id="sentItemPrev" type="button" class="btn">이전</button>
+              <span class="muted sent-items-page"><span id="sentItemPage">1</span>/<span id="sentItemTotalPages">1</span></span>
+              <button id="sentItemNext" type="button" class="btn">다음</button>
+            </div>
+          </div>
+
+          <div class="panel" style="margin-top: 12px;">
+            <div class="panel-inner search-panel">
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+                <div>
+                  <h4 style="margin:0;">커스텀사전 반영 제안</h4>
+                  <p class="muted" style="margin-top:6px;">LLM 재판단 결과로 생성된 제안을 선택 반영합니다. (파일: sentiment_custom.tsv)</p>
+                </div>
+                <div style="display:flex; gap:10px; align-items:center;">
+                  <button id="lexSugRefresh" class="btn-action" type="button">새로고침</button>
+                  <button id="lexSugApply" class="btn-action btn-action--search" type="button">선택 반영</button>
+                </div>
+              </div>
+            </div>
+            <div class="panel-inner">
+              <div class="table-wrap" style="max-height: 42vh; overflow: auto;">
+                <table class="table" style="min-width: 980px;">
+                  <thead>
+                  <tr>
+                    <th style="width: 54px"><input id="lexSugAll" type="checkbox" aria-label="제안 전체 선택"/></th>
+                    <th style="width: 100px">작업</th>
+                    <th style="width: 240px">term</th>
+                    <th style="width: 90px">score</th>
+                    <th>reason</th>
+                  </tr>
+                  </thead>
+                  <tbody id="lexSugBody">
+                  <tr><td colspan="5" class="muted">제안이 없습니다.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="muted" id="lexSugMeta" style="margin-top: 10px;"></div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -891,11 +1009,9 @@
     function renderSentiments(sentiments) {
       const overallEl = document.getElementById("sentOverall");
       const chartEl = document.getElementById("sentTimeChart");
-      const samplesEl = document.getElementById("sentSamples");
       const summaryEl = document.getElementById("sentSummary");
       if (overallEl) overallEl.innerHTML = "";
       if (chartEl) chartEl.innerHTML = "";
-      if (samplesEl) samplesEl.innerHTML = "";
       if (summaryEl) summaryEl.innerHTML = "";
 
       if (!sentiments || !sentiments.overall) {
@@ -1055,99 +1171,6 @@
 
       chartEl.innerHTML = svg;
 
-      renderSentimentSamples(sentiments);
-    }
-
-    function renderSentimentSamples(sentiments) {
-      const host = document.getElementById("sentSamples");
-      if (!host) return;
-      host.innerHTML = "";
-
-      const examples = sentiments && sentiments.examples ? sentiments.examples : null;
-      if (!examples) {
-        host.appendChild(el("div", { class: "muted" }, ["예시 댓글 데이터가 없습니다."]));
-        return;
-      }
-
-      const tabs = [
-        { key: "positive", label: "긍정", color: "#16a34a" },
-        { key: "neutral", label: "중립", color: "#64748b" },
-        { key: "negative", label: "부정", color: "#dc2626" },
-        { key: "unknown", label: "미분류", color: "#94a3b8" }
-      ];
-
-      const counts = Object.fromEntries(tabs.map(t => [t.key, Array.isArray(examples[t.key]) ? examples[t.key].length : 0]));
-      const defaultKey = tabs
-        .slice()
-        .sort((a, b) => (counts[b.key] || 0) - (counts[a.key] || 0))[0]?.key || "negative";
-
-      const btnWrap = el("div", { class: "sent-sample-tabs", role: "tablist", "aria-label": "sentiment sample tabs" }, []);
-      const panels = new Map();
-
-      const mkTable = (rows) => {
-        const wrap = el("div", { class: "sent-sample-table-wrap" }, []);
-        const table = el("table", { class: "table sent-sample-table" }, []);
-        table.appendChild(el("thead", null, [
-          el("tr", null, [
-            el("th", { style: { width: "60px" } }, ["No"]),
-            el("th", { style: { width: "150px" } }, ["Published"]),
-            el("th", { style: { width: "70px" } }, ["Score"]),
-            el("th", { style: { width: "260px" } }, ["Comment ID"]),
-            el("th", null, ["Text"])
-          ])
-        ]));
-        const tbody = el("tbody", null, []);
-        if (!rows || rows.length === 0) {
-          tbody.appendChild(el("tr", null, [
-            el("td", { colspan: "5", class: "muted" }, ["데이터가 없습니다."])
-          ]));
-        } else {
-          rows.forEach((r, idx) => {
-            tbody.appendChild(el("tr", null, [
-              el("td", { class: "muted" }, [String(idx + 1)]),
-              el("td", { class: "muted" }, [String(r.publishedAt || "")]),
-              el("td", { class: "muted" }, [String(r.score != null ? r.score : "")]),
-              el("td", { class: "muted" }, [String(r.commentId || "")]),
-              el("td", null, [String(r.text || "")])
-            ]));
-          });
-        }
-        table.appendChild(tbody);
-        wrap.appendChild(table);
-        return wrap;
-      };
-
-      const setActive = (key) => {
-        for (const btn of btnWrap.querySelectorAll(".sent-sample-tab")) {
-          btn.setAttribute("aria-selected", btn.getAttribute("data-key") === key ? "true" : "false");
-        }
-        for (const [k, panel] of panels.entries()) {
-          panel.hidden = k !== key;
-        }
-      };
-
-      tabs.forEach(t => {
-        const rows = Array.isArray(examples[t.key]) ? examples[t.key] : [];
-        const btn = el("button", {
-          type: "button",
-          class: "sent-sample-tab",
-          role: "tab",
-          "data-key": t.key,
-          "aria-selected": (t.key === defaultKey) ? "true" : "false",
-          style: { borderColor: "rgba(17,24,39,0.16)" }
-        }, [`${t.label} (${rows.length})`]);
-        btn.addEventListener("click", () => setActive(t.key));
-        btnWrap.appendChild(btn);
-
-        const panel = el("div", { role: "tabpanel" }, []);
-        panel.hidden = t.key !== defaultKey;
-        panel.appendChild(mkTable(rows));
-        panels.set(t.key, panel);
-      });
-
-      host.appendChild(btnWrap);
-      for (const p of panels.values()) host.appendChild(p);
-      setActive(defaultKey);
     }
 
     function renderWordNetwork(net) {
@@ -1333,6 +1356,460 @@
         `</svg>`;
     }
 
+    const sentimentItemsState = {
+      wired: false,
+      loading: false,
+      page: 0,
+      size: 50,
+      q: "",
+      label: "",
+      selectedIds: new Set()
+    };
+
+    function sentItemEls() {
+      return {
+        q: document.getElementById("sentItemQ"),
+        label: document.getElementById("sentItemLabel"),
+        size: document.getElementById("sentItemSize"),
+        search: document.getElementById("sentItemSearch"),
+        reset: document.getElementById("sentItemReset"),
+        llm: document.getElementById("sentItemLlmReview"),
+        all: document.getElementById("sentItemAll"),
+        llmSpinner: document.getElementById("sentItemLlmSpinner"),
+        llmStatus: document.getElementById("sentItemLlmStatus"),
+        body: document.getElementById("sentItemBody"),
+        meta: document.getElementById("sentItemMeta"),
+        prev: document.getElementById("sentItemPrev"),
+        next: document.getElementById("sentItemNext"),
+        page: document.getElementById("sentItemPage"),
+        totalPages: document.getElementById("sentItemTotalPages")
+      };
+    }
+
+    function setLlmBusy(busy) {
+      const els = sentItemEls();
+      if (els.llm) els.llm.disabled = !!busy;
+      if (els.search) els.search.disabled = !!busy;
+      if (els.reset) els.reset.disabled = !!busy;
+      if (els.llmSpinner) els.llmSpinner.hidden = !busy;
+      if (els.llmStatus) els.llmStatus.hidden = !busy;
+    }
+
+    function renderSentItemMessage(msg) {
+      const els = sentItemEls();
+      if (!els.body) return;
+      els.body.innerHTML = "";
+      els.body.appendChild(el("tr", null, [el("td", { colspan: "8", class: "muted" }, [msg])]));
+    }
+
+    function normalizeSentLabelUi(v) {
+      const x = (v || "").trim().toUpperCase();
+      if (!x) return "";
+      if (x === "POSITIVE" || x === "NEGATIVE" || x === "NEUTRAL" || x === "UNKNOWN") return x;
+      return "";
+    }
+
+    function pad2(n) {
+      return String(n).padStart(2, "0");
+    }
+
+    function fmtYmdHms(v) {
+      if (v == null) return "";
+      const s = String(v).trim();
+      if (!s) return "";
+      if (/^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}$/.test(s)) return s;
+
+      // Common: 2026-03-19T07:54:21Z / 2026-03-19T07:54:21+09:00
+      const d = new Date(s);
+      if (!Number.isNaN(d.getTime())) {
+        return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+      }
+
+      // Fallback: 2026-03-19 07:54:21.123...
+      const m = s.match(/^(\\d{4}-\\d{2}-\\d{2})[ T](\\d{2}:\\d{2}:\\d{2})/);
+      if (m) return `${m[1]} ${m[2]}`;
+      return s;
+    }
+
+    function syncSentItemStateFromUi() {
+      const els = sentItemEls();
+      if (!els.q || !els.label || !els.size) return;
+      sentimentItemsState.q = (els.q.value || "").trim();
+      sentimentItemsState.label = normalizeSentLabelUi(els.label.value);
+      const s = Number(els.size.value || 50);
+      sentimentItemsState.size = Number.isFinite(s) ? Math.max(1, Math.min(200, s)) : 50;
+    }
+
+    function renderSentimentItems(items) {
+      const els = sentItemEls();
+      if (!els.body) return;
+      els.body.innerHTML = "";
+
+      if (!Array.isArray(items) || items.length === 0) {
+        els.body.appendChild(el("tr", null, [el("td", { colspan: "8", class: "muted" }, ["결과가 없습니다."])]));
+        return;
+      }
+
+      for (const it of items) {
+        const id = it && it.id != null ? Number(it.id) : null;
+        const lex = String(it.lexLabel ?? "");
+        const llm = String(it.llmLabel ?? "");
+        const finalLabel = String(it.finalLabel ?? (it.llmLabel ?? it.lexLabel ?? ""));
+        const checked = id != null && sentimentItemsState.selectedIds.has(id);
+
+        const chk = document.createElement("input");
+        chk.type = "checkbox";
+        chk.className = "sent-item-chk";
+        if (id != null && Number.isFinite(id)) chk.setAttribute("data-id", String(id));
+        chk.checked = checked;
+
+        els.body.appendChild(el("tr", null, [
+          el("td", null, [
+            chk
+          ]),
+          el("td", null, [fmtYmdHms(it.publishedAt)]),
+          el("td", null, [lex]),
+          el("td", null, [llm]),
+          el("td", null, [finalLabel]),
+          el("td", null, [String(it.lexScore ?? 0)]),
+          el("td", null, [String(it.matched ?? 0)]),
+          el("td", null, [String(it.textClean ?? "")])
+        ]));
+      }
+    }
+
+    function updateSentItemPager(total, page, size) {
+      const els = sentItemEls();
+      if (!els.meta || !els.page || !els.totalPages || !els.prev || !els.next) return;
+
+      const t = Number(total ?? 0);
+      const p = Number(page ?? 0);
+      const s = Number(size ?? 50);
+      const totalPages = s > 0 ? Math.max(1, Math.ceil(t / s)) : 1;
+      const displayPage = Math.min(totalPages, Math.max(1, p + 1));
+
+      els.page.textContent = String(displayPage);
+      els.totalPages.textContent = String(totalPages);
+      els.meta.textContent = `총 ${t.toLocaleString()}건`;
+
+      els.prev.disabled = p <= 0;
+      els.next.disabled = p >= totalPages - 1;
+    }
+
+    function getCsrf() {
+      const token = document.querySelector('meta[name="_csrf"]')?.getAttribute("content") || "";
+      const header = document.querySelector('meta[name="_csrf_header"]')?.getAttribute("content") || "X-CSRF-TOKEN";
+      return { token, header };
+    }
+
+    function lexSugEls() {
+      return {
+        all: document.getElementById("lexSugAll"),
+        body: document.getElementById("lexSugBody"),
+        meta: document.getElementById("lexSugMeta"),
+        refresh: document.getElementById("lexSugRefresh"),
+        apply: document.getElementById("lexSugApply")
+      };
+    }
+
+    function renderLexSugMessage(msg) {
+      const els = lexSugEls();
+      if (!els.body) return;
+      els.body.innerHTML = "";
+      els.body.appendChild(el("tr", null, [el("td", { colspan: "5", class: "muted" }, [msg])]));
+    }
+
+    function renderLexSuggestions(rows) {
+      const els = lexSugEls();
+      if (!els.body) return;
+      els.body.innerHTML = "";
+
+      if (!Array.isArray(rows) || rows.length === 0) {
+        renderLexSugMessage("제안이 없습니다.");
+        if (els.meta) els.meta.textContent = "";
+        if (els.all) els.all.checked = false;
+        return;
+      }
+
+      const total = rows.length;
+      if (els.meta) els.meta.textContent = `대기중 제안 ${total.toLocaleString()}건`;
+
+      for (const r of rows) {
+        const id = r && r.id != null ? Number(r.id) : null;
+        const chk = document.createElement("input");
+        chk.type = "checkbox";
+        chk.className = "lex-sug-chk";
+        if (id != null && Number.isFinite(id)) chk.setAttribute("data-id", String(id));
+
+        els.body.appendChild(el("tr", null, [
+          el("td", null, [chk]),
+          el("td", null, [String(r.action ?? "")]),
+          el("td", null, [String(r.term ?? "")]),
+          el("td", null, [String(r.score ?? "")]),
+          el("td", null, [String(r.reason ?? "")])
+        ]));
+      }
+    }
+
+    async function loadLexSuggestions() {
+      const els = lexSugEls();
+      if (!els.body) return;
+      if (!historyId) return;
+      if (!analysisReady) {
+        renderLexSugMessage("분석이 아직 수행되지 않았습니다.");
+        return;
+      }
+
+      try {
+        renderLexSugMessage("불러오는 중...");
+        const sp = new URLSearchParams();
+        sp.set("id", String(historyId));
+        sp.set("limit", "200");
+        const res = await fetch(`/users/youtubeComment/analysis/lexicon-suggestions.json?${sp.toString()}`, { headers: { "Accept": "application/json" } });
+        const txt = await res.text();
+        let data;
+        try { data = JSON.parse(txt); } catch {
+          renderLexSugMessage("제안 JSON 파싱에 실패했습니다.");
+          return;
+        }
+        if (!res.ok || (data && data.errorCode)) {
+          renderLexSugMessage((data && data.errorMessage) ? data.errorMessage : `제안 조회에 실패했습니다. (${res.status})`);
+          return;
+        }
+        renderLexSuggestions(data);
+      } catch (e) {
+        renderLexSugMessage("제안 조회에 실패했습니다: " + (e && e.message ? e.message : String(e)));
+      }
+    }
+
+    async function applyLexSuggestions() {
+      const els = lexSugEls();
+      if (!els.body) return;
+      const ids = Array.from(els.body.querySelectorAll("input.lex-sug-chk:checked"))
+        .map(x => Number(x.getAttribute("data-id")))
+        .filter(x => Number.isFinite(x));
+
+      if (ids.length === 0) {
+        alert("반영할 제안을 선택해주세요.");
+        return;
+      }
+
+      const ok = confirm(`선택한 ${ids.length}건을 커스텀사전에 반영할까요?`);
+      if (!ok) return;
+
+      const sp = new URLSearchParams();
+      sp.set("id", String(historyId));
+      for (const id of ids) sp.append("suggestionIds", String(id));
+
+      const csrf = getCsrf();
+      const headers = { "Accept": "application/json", "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" };
+      if (csrf.token) headers[csrf.header] = csrf.token;
+
+      try {
+        const res = await fetch(`/users/youtubeComment/analysis/lexicon-suggestions/apply`, { method: "POST", headers, body: sp.toString() });
+        const txt = await res.text();
+        let data;
+        try { data = JSON.parse(txt); } catch {
+          alert("반영 응답 JSON 파싱에 실패했습니다.");
+          return;
+        }
+        if (!res.ok || (data && data.errorCode)) {
+          alert((data && data.errorMessage) ? data.errorMessage : `반영에 실패했습니다. (${res.status})`);
+          return;
+        }
+        const a = Number(data.appliedCount ?? 0);
+        const r = Number(data.rejectedCount ?? 0);
+        alert(`반영 완료: ${a}건 (거절: ${r}건)`);
+        await loadLexSuggestions();
+        await loadSentimentSummary();
+      } catch (e) {
+        alert("반영에 실패했습니다: " + (e && e.message ? e.message : String(e)));
+      }
+    }
+
+    async function loadSentimentItems(opts) {
+      const ensureVisible = opts && opts.ensureVisible ? true : false;
+      const resetPage = opts && opts.resetPage ? true : false;
+
+      const els = sentItemEls();
+      if (!els.body) return; // panel not present
+      if (!historyId) return;
+      if (!analysisReady) {
+        renderSentItemMessage("분석이 아직 수행되지 않았습니다.");
+        return;
+      }
+
+      if (ensureVisible) {
+        const panel = document.querySelector(".tab-panel[data-panel='sent']");
+        if (panel && panel.hidden) return;
+      }
+
+      if (sentimentItemsState.loading) return;
+      sentimentItemsState.loading = true;
+
+      try {
+        if (resetPage) sentimentItemsState.page = 0;
+        syncSentItemStateFromUi();
+        renderSentItemMessage("불러오는 중...");
+
+        const sp = new URLSearchParams();
+        sp.set("id", String(historyId));
+        sp.set("page", String(sentimentItemsState.page));
+        sp.set("size", String(sentimentItemsState.size));
+        if (sentimentItemsState.q) sp.set("q", sentimentItemsState.q);
+        if (sentimentItemsState.label) sp.set("label", sentimentItemsState.label);
+
+        const res = await fetch(`/users/youtubeComment/analysis/sentiment-items.json?${sp.toString()}`, { headers: { "Accept": "application/json" } });
+        const txt = await res.text();
+        let data;
+        try {
+          data = JSON.parse(txt);
+        } catch {
+          renderSentItemMessage("목록 JSON 파싱에 실패했습니다.");
+          return;
+        }
+        if (!res.ok || (data && data.errorCode)) {
+          renderSentItemMessage((data && data.errorMessage) ? data.errorMessage : `목록 조회에 실패했습니다. (${res.status})`);
+          return;
+        }
+
+        renderSentimentItems(data.items || []);
+        updateSentItemPager(data.total ?? 0, data.page ?? 0, data.size ?? sentimentItemsState.size);
+      } catch (e) {
+        renderSentItemMessage("목록 조회에 실패했습니다: " + (e && e.message ? e.message : String(e)));
+      } finally {
+        sentimentItemsState.loading = false;
+      }
+    }
+
+    async function loadSentimentSummary() {
+      if (!historyId) return;
+      if (!analysisReady) return;
+      try {
+        const res = await fetch(`/users/youtubeComment/analysis/sentiment-summary.json?id=${historyId}`, { headers: { "Accept": "application/json" } });
+        const txt = await res.text();
+        let data;
+        try { data = JSON.parse(txt); } catch { return; }
+        if (!res.ok || (data && data.errorCode)) return;
+        renderSentiments(data);
+      } catch (e) {
+        // ignore; summary is optional
+      }
+    }
+
+    function wireSentimentItems() {
+      if (sentimentItemsState.wired) return;
+      const els = sentItemEls();
+      if (!els.q || !els.label || !els.size || !els.search || !els.reset || !els.prev || !els.next || !els.body) return;
+      sentimentItemsState.wired = true;
+      setLlmBusy(false);
+
+      els.search.addEventListener("click", () => loadSentimentItems({ resetPage: true, ensureVisible: true }));
+      els.reset.addEventListener("click", () => {
+        els.q.value = "";
+        els.label.value = "";
+        els.size.value = "50";
+        sentimentItemsState.page = 0;
+        loadSentimentItems({ resetPage: true, ensureVisible: true });
+      });
+      els.size.addEventListener("change", () => loadSentimentItems({ resetPage: true, ensureVisible: true }));
+      els.label.addEventListener("change", () => loadSentimentItems({ resetPage: true, ensureVisible: true }));
+      els.q.addEventListener("keydown", (ev) => {
+        if (ev.key === "Enter") {
+          ev.preventDefault();
+          loadSentimentItems({ resetPage: true, ensureVisible: true });
+        }
+      });
+
+      els.prev.addEventListener("click", () => {
+        if (sentimentItemsState.page <= 0) return;
+        sentimentItemsState.page -= 1;
+        loadSentimentItems({ ensureVisible: true });
+      });
+      els.next.addEventListener("click", () => {
+        sentimentItemsState.page += 1;
+        loadSentimentItems({ ensureVisible: true });
+      });
+
+      if (els.all) {
+        els.all.addEventListener("change", () => {
+          const checked = !!els.all.checked;
+          for (const cb of els.body.querySelectorAll("input.sent-item-chk")) {
+            cb.checked = checked;
+            const id = Number(cb.getAttribute("data-id"));
+            if (!Number.isFinite(id)) continue;
+            if (checked) sentimentItemsState.selectedIds.add(id);
+            else sentimentItemsState.selectedIds.delete(id);
+          }
+        });
+      }
+
+      els.body.addEventListener("change", (ev) => {
+        const t = ev && ev.target ? ev.target : null;
+        if (!t || !t.classList || !t.classList.contains("sent-item-chk")) return;
+        const id = Number(t.getAttribute("data-id"));
+        if (!Number.isFinite(id)) return;
+        if (t.checked) sentimentItemsState.selectedIds.add(id);
+        else sentimentItemsState.selectedIds.delete(id);
+      });
+
+      if (els.llm) {
+        els.llm.addEventListener("click", async () => {
+          const ids = Array.from(sentimentItemsState.selectedIds.values());
+          if (ids.length === 0) {
+            alert("LLM 재판단할 댓글을 선택해주세요.");
+            return;
+          }
+          const ok = confirm(`선택한 ${ids.length}건을 LLM으로 재판단할까요? (최대 20건 권장)`);
+          if (!ok) return;
+
+          const sp = new URLSearchParams();
+          sp.set("id", String(historyId));
+          for (const id of ids) sp.append("itemIds", String(id));
+
+          const csrf = getCsrf();
+          const headers = { "Accept": "application/json", "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" };
+          if (csrf.token) headers[csrf.header] = csrf.token;
+
+          try {
+            setLlmBusy(true);
+            const res = await fetch(`/users/youtubeComment/analysis/sentiment-items/llm-review`, { method: "POST", headers, body: sp.toString() });
+            const txt = await res.text();
+            let data;
+            try { data = JSON.parse(txt); } catch {
+              alert("LLM 응답 JSON 파싱에 실패했습니다.");
+              return;
+            }
+            if (!res.ok || (data && data.errorCode)) {
+              alert((data && data.errorMessage) ? data.errorMessage : `LLM 요청에 실패했습니다. (${res.status})`);
+              return;
+            }
+            alert(`LLM 재판단 완료: ${Number(data.updatedCount ?? 0)}건, 제안 생성: ${Number(data.suggestionInsertedCount ?? 0)}건`);
+            await loadSentimentItems({ ensureVisible: true });
+            await loadSentimentSummary();
+            await loadLexSuggestions();
+          } catch (e) {
+            alert("LLM 요청에 실패했습니다: " + (e && e.message ? e.message : String(e)));
+          } finally {
+            setLlmBusy(false);
+          }
+        });
+      }
+
+      // lexicon suggestion panel
+      const lexEls = lexSugEls();
+      if (lexEls.refresh) lexEls.refresh.addEventListener("click", () => loadLexSuggestions());
+      if (lexEls.apply) lexEls.apply.addEventListener("click", () => applyLexSuggestions());
+      if (lexEls.all && lexEls.body) {
+        lexEls.all.addEventListener("change", () => {
+          const checked = !!lexEls.all.checked;
+          for (const cb of lexEls.body.querySelectorAll("input.lex-sug-chk")) {
+            cb.checked = checked;
+          }
+        });
+      }
+    }
+
     function wireTabs() {
       const tabRoot = document.querySelector(".ytc-tabs");
       const tabs = tabRoot ? Array.from(tabRoot.querySelectorAll(".tab[role=tab]")) : [];
@@ -1352,6 +1829,12 @@
           for (const x of tabs) x.setAttribute("aria-selected", x === t ? "true" : "false");
           for (const p of panels) {
             p.hidden = p.getAttribute("data-panel") !== k;
+          }
+          if (k === "sent") {
+            wireSentimentItems();
+            loadSentimentItems({ ensureVisible: true });
+            loadLexSuggestions();
+            loadSentimentSummary();
           }
         });
       }
@@ -1398,7 +1881,12 @@ let data;
         renderTopKeywords(topKeywords);
         renderTopicGroups(clusters);
         renderWordNetwork(wordNetwork);
+        // Prefer DB-derived summary so LLM corrections reflect immediately.
         renderSentiments(sentiments);
+        wireSentimentItems();
+        loadSentimentItems({ ensureVisible: true });
+        loadLexSuggestions();
+        loadSentimentSummary();
       } catch (e) {
         setLoadingError("분석 결과 조회에 실패했습니다: " + (e && e.message ? e.message : String(e)));
       }

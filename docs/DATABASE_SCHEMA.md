@@ -2,7 +2,7 @@
 
 - DBMS: MySQL
 - Database: springVibe
-- Generated at: 2026-03-30 17:13:10 +09:00
+- Generated at: 2026-04-01 16:20:32 +09:00
 - Source: SHOW CREATE TABLE (and manual migration draft for new/changed tables)
 
 ## Tables
@@ -19,6 +19,7 @@
 - `youtube_comment_analysis_top_keywords`
 - `youtube_comment_analysis_topic_groups`
 - `youtube_comment_analysis_sentiments`
+- `youtube_comment_analysis_sentiment_items`
 - `youtube_comment_analysis_word_networks`
 
 ## `login_logs`
@@ -267,6 +268,43 @@ CREATE TABLE `youtube_comment_analysis_sentiments` (
   CONSTRAINT `fk_ycas_user`
     FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='유튜브 댓글 감정분석(사전기반) 결과';
+```
+
+## `youtube_comment_analysis_sentiment_items`
+
+```sql
+CREATE TABLE `youtube_comment_analysis_sentiment_items` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '감정분석 댓글 결과 ID',
+
+  `history_id` bigint NOT NULL COMMENT '이력 ID (youtube_comment_analysis_histories.id)',
+  `user_id` bigint DEFAULT NULL COMMENT '회원 ID',
+
+  `comment_id` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '댓글 ID',
+  `published_at` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '작성일(문자열)',
+  `text_clean` mediumtext COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '전처리된 댓글 텍스트',
+
+  `lex_label` varchar(16) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '사전기반 라벨(POSITIVE/NEUTRAL/NEGATIVE/UNKNOWN)',
+  `lex_score` int NOT NULL COMMENT '사전기반 점수',
+  `matched` int NOT NULL COMMENT '매칭된 단어 수',
+
+  `llm_label` varchar(16) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'LLM 라벨(재판단)',
+  `final_label` varchar(16) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '최종 라벨',
+  `corrected` bit(1) NOT NULL DEFAULT b'0' COMMENT '수정 여부',
+  `corrected_reason` varchar(512) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '수정 사유',
+
+  `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '생성일',
+  `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '수정일',
+
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_ycas_history_comment` (`history_id`, `comment_id`),
+  KEY `idx_ycas_history_user` (`history_id`, `user_id`),
+  KEY `idx_ycas_history_final` (`history_id`, `final_label`),
+  KEY `idx_ycas_history_lex` (`history_id`, `lex_label`),
+  CONSTRAINT `fk_ycasi_history`
+    FOREIGN KEY (`history_id`) REFERENCES `youtube_comment_analysis_histories` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_ycasi_user`
+    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='유튜브 댓글 감정분석(사전기반) 댓글 단위 결과';
 ```
 
 ## `youtube_comment_analysis_word_networks`

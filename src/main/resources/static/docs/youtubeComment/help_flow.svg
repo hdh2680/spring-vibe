@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="260" viewBox="0 0 980 260" role="img" aria-label="YouTube comment analysis flow: collect, preprocess, analyze, correct">
+  <defs>
+    <style>
+      .bg { fill: #ffffff; }
+      .title { font: 800 16px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; fill: rgba(17,24,39,0.88); letter-spacing: -0.2px; }
+      .sub { font: 600 12px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; fill: rgba(17,24,39,0.68); }
+      .chip { font: 800 11px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; fill: rgba(17,24,39,0.78); }
+      .card { stroke: rgba(17,24,39,0.14); stroke-width: 1; rx: 18; }
+      .hint { font: 650 11px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; fill: rgba(17,24,39,0.62); }
+      .arrow { stroke: rgba(17,24,39,0.22); stroke-width: 2; fill: none; stroke-linecap: round; }
+    </style>
+
+    <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="rgba(26,166,200,0.18)"/>
+      <stop offset="1" stop-color="rgba(91,102,255,0.12)"/>
+    </linearGradient>
+    <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="rgba(37,99,235,0.12)"/>
+      <stop offset="1" stop-color="rgba(16,185,129,0.10)"/>
+    </linearGradient>
+    <linearGradient id="g3" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="rgba(245,158,11,0.14)"/>
+      <stop offset="1" stop-color="rgba(234,88,12,0.10)"/>
+    </linearGradient>
+    <linearGradient id="g4" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="rgba(220,38,38,0.10)"/>
+      <stop offset="1" stop-color="rgba(124,58,237,0.10)"/>
+    </linearGradient>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="980" height="260" rx="22"/>
+
+  <text class="title" x="24" y="34">유튜브 댓글 분석 흐름</text>
+  <text class="sub" x="24" y="56">수집 -> 전처리 -> 분석 -> LLM 보정(선택)</text>
+
+  <!-- Cards -->
+  <g transform="translate(24,78)">
+    <rect class="card" x="0" y="0" width="220" height="150" fill="url(#g1)"/>
+    <text class="chip" x="16" y="28">1. 수집</text>
+    <text class="sub" x="16" y="52">YouTube Data API</text>
+    <text class="hint" x="16" y="78">원본 저장: JSONL</text>
+    <text class="hint" x="16" y="98">이력 저장: DB</text>
+    <text class="hint" x="16" y="118">video_url, file_path</text>
+  </g>
+
+  <g transform="translate(260,78)">
+    <rect class="card" x="0" y="0" width="220" height="150" fill="url(#g2)"/>
+    <text class="chip" x="16" y="28">2. 전처리</text>
+    <text class="sub" x="16" y="52">정규화 + 노이즈 제거</text>
+    <text class="hint" x="16" y="78">NFKC, URL/HTML 제거</text>
+    <text class="hint" x="16" y="98">반복 축약(ㅋㅋ/ㅠㅠ/!?...)</text>
+    <text class="hint" x="16" y="118">전처리 저장: JSONL</text>
+  </g>
+
+  <g transform="translate(496,78)">
+    <rect class="card" x="0" y="0" width="220" height="150" fill="url(#g3)"/>
+    <text class="chip" x="16" y="28">3. 분석</text>
+    <text class="sub" x="16" y="52">키워드 / 주제 / 감정 / 네트워크</text>
+    <text class="hint" x="16" y="78">감정: 사전 기반 1차 분류</text>
+    <text class="hint" x="16" y="98">요약: result_json</text>
+    <text class="hint" x="16" y="118">댓글단위: sentiment_items(DB)</text>
+  </g>
+
+  <g transform="translate(732,78)">
+    <rect class="card" x="0" y="0" width="220" height="150" fill="url(#g4)"/>
+    <text class="chip" x="16" y="28">4. 보정(선택)</text>
+    <text class="sub" x="16" y="52">Ollama LLM 재판단</text>
+    <text class="hint" x="16" y="78">오분류 후보만 선택</text>
+    <text class="hint" x="16" y="98">llm_label/final_label 기록</text>
+    <text class="hint" x="16" y="118">커스텀사전 반영 가능</text>
+  </g>
+
+  <!-- Arrows -->
+  <path class="arrow" d="M 244 153 L 260 153"/>
+  <path class="arrow" d="M 480 153 L 496 153"/>
+  <path class="arrow" d="M 716 153 L 732 153"/>
+  <path class="arrow" d="M 257 153 L 251 148"/>
+  <path class="arrow" d="M 257 153 L 251 158"/>
+  <path class="arrow" d="M 493 153 L 487 148"/>
+  <path class="arrow" d="M 493 153 L 487 158"/>
+  <path class="arrow" d="M 729 153 L 723 148"/>
+  <path class="arrow" d="M 729 153 L 723 158"/>
+</svg>
+

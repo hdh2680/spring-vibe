@@ -44,6 +44,50 @@
         ORDER BY id DESC
     </select>
 
+    <select id="selectListByQuery"
+            resultType="springVibe.dev.users.youtubeComment.domain.YoutubeCommentAnalysisHistory">
+        SELECT
+            id,
+            user_id,
+            video_url,
+            video_title,
+            original_file_path,
+            original_saved_at,
+            preprocessed_file_path,
+            preprocessed_saved_at,
+            analysis_requested_at,
+            remark,
+            created_at,
+            updated_at
+        FROM youtube_comment_analysis_histories
+        WHERE (#{userId} IS NULL OR user_id = #{userId})
+          <if test="q != null and q != ''">
+            <choose>
+              <when test="field == 'id'">
+                AND CAST(id AS CHAR) = #{q}
+              </when>
+              <when test="field == 'title'">
+                AND video_title LIKE CONCAT('%', #{q}, '%')
+              </when>
+              <when test="field == 'url'">
+                AND video_url LIKE CONCAT('%', #{q}, '%')
+              </when>
+              <when test="field == 'remark'">
+                AND remark LIKE CONCAT('%', #{q}, '%')
+              </when>
+              <otherwise>
+                AND (
+                  CAST(id AS CHAR) = #{q}
+                  OR video_title LIKE CONCAT('%', #{q}, '%')
+                  OR video_url LIKE CONCAT('%', #{q}, '%')
+                  OR remark LIKE CONCAT('%', #{q}, '%')
+                )
+              </otherwise>
+            </choose>
+          </if>
+        ORDER BY id DESC
+    </select>
+
     <select id="selectById"
             resultType="springVibe.dev.users.youtubeComment.domain.YoutubeCommentAnalysisHistory">
         SELECT

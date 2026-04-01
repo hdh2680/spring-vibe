@@ -1,18 +1,16 @@
 :root {
   --chat-bg: rgba(255, 255, 255, 0.7);
   --chat-border: rgba(15, 23, 42, 0.12);
-  --chat-user: rgba(34, 197, 94, 0.14);
-  --chat-assistant: rgba(34, 197, 94, 0.06);
+  /* Match app tone (layout_app.css): cyan/blue accents instead of LINE-like greens. */
+  --chat-accent: var(--a, #1aa6c8);
+  --chat-accent2: var(--b, #5b66ff);
+  --chat-user: rgba(26, 166, 200, 0.14);
+  --chat-assistant: rgba(26, 166, 200, 0.06);
   --chat-error: rgba(239, 68, 68, 0.14);
   --chat-ink: rgba(2, 6, 23, 0.92);
   --chat-muted: rgba(2, 6, 23, 0.56);
   --chat-bubble-border: rgba(2, 6, 23, 0.10);
   --chat-shadow: 0 24px 110px rgba(2, 6, 23, 0.28);
-
-  /* LINE-ish greens */
-  --chat-green: #22c55e;
-  --chat-green2: #16a34a;
-  --chat-green-weak: rgba(34, 197, 94, 0.10);
 }
 
 .chat-wrap {
@@ -64,8 +62,8 @@
 }
 
 .chat-user .chat-bubble {
-  background: linear-gradient(180deg, rgba(34, 197, 94, 0.22), rgba(34, 197, 94, 0.12));
-  border-color: rgba(22, 163, 74, 0.18);
+  background: linear-gradient(180deg, rgba(26, 166, 200, 0.18), rgba(91, 102, 255, 0.10));
+  border-color: rgba(26, 166, 200, 0.20);
 }
 
 .chat-assistant .chat-bubble {
@@ -160,6 +158,48 @@
   display: flex;
   gap: 8px;
   align-items: center;
+  padding: 6px;
+  border-radius: 999px;
+  border: 1px solid rgba(2, 6, 23, 0.10);
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 14px 44px rgba(2, 6, 23, 0.10);
+}
+
+/* Header controls should feel like a compact pill-group, not full-size form buttons. */
+.chat-dialog-actions .btn {
+  border-radius: 999px;
+  padding: 8px 10px;
+  min-height: 34px;
+  border-color: rgba(2, 6, 23, 0.12);
+  background: transparent;
+  font-weight: 850;
+  font-size: 12px;
+  color: rgba(2, 6, 23, 0.76);
+  box-shadow: none;
+  transform: none;
+}
+
+.chat-dialog-actions .btn:hover {
+  background: rgba(2, 6, 23, 0.04);
+  border-color: rgba(2, 6, 23, 0.16);
+  transform: none;
+}
+
+.chat-dialog-actions .btn:active {
+  background: rgba(2, 6, 23, 0.06);
+  transform: none;
+}
+
+#chatClear.btn:hover {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.18);
+  color: rgba(185, 28, 28, 0.92);
+}
+
+#chatClose.btn:hover {
+  background: rgba(26, 166, 200, 0.08);
+  border-color: rgba(26, 166, 200, 0.20);
+  color: rgba(2, 6, 23, 0.84);
 }
 
 /* Tweak log height inside modal */
@@ -178,8 +218,8 @@
   border-color: rgba(2, 6, 23, 0.14);
   box-shadow: var(--chat-shadow);
   background:
-    radial-gradient(520px 280px at 42% 0%, rgba(34, 197, 94, 0.18), transparent 62%),
-    radial-gradient(420px 240px at 92% 10%, rgba(22, 163, 74, 0.14), transparent 60%),
+    radial-gradient(520px 280px at 42% 0%, rgba(26, 166, 200, 0.16), transparent 62%),
+    radial-gradient(420px 240px at 92% 10%, rgba(91, 102, 255, 0.14), transparent 60%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.78));
 }
 
@@ -210,8 +250,8 @@
   border-radius: 22px;
   border-color: rgba(2, 6, 23, 0.10);
   background:
-    radial-gradient(900px 380px at 12% 0%, rgba(34, 197, 94, 0.16), transparent 62%),
-    radial-gradient(760px 320px at 88% 10%, rgba(22, 163, 74, 0.12), transparent 58%),
+    radial-gradient(900px 380px at 12% 0%, rgba(26, 166, 200, 0.14), transparent 62%),
+    radial-gradient(760px 320px at 88% 10%, rgba(91, 102, 255, 0.10), transparent 58%),
     linear-gradient(180deg, rgba(248, 250, 252, 0.94), rgba(241, 245, 249, 0.84));
 }
 
@@ -253,8 +293,8 @@
 }
 
 .chat-phone textarea.input:focus {
-  border-color: rgba(22, 163, 74, 0.40);
-  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.16);
+  border-color: rgba(26, 166, 200, 0.40);
+  box-shadow: 0 0 0 4px rgba(26, 166, 200, 0.14);
 }
 
 .chat-phone .chat-compose-row .btn {
@@ -262,13 +302,13 @@
   border-radius: 18px;
   padding: 10px 14px;
   box-shadow: 0 10px 22px rgba(2, 6, 23, 0.10);
-  border-color: rgba(22, 163, 74, 0.28);
-  background: linear-gradient(135deg, rgba(34, 197, 94, 0.24), rgba(22, 163, 74, 0.16));
+  border-color: rgba(26, 166, 200, 0.28);
+  background: linear-gradient(135deg, rgba(26, 166, 200, 0.22), rgba(91, 102, 255, 0.16));
 }
 
 .chat-phone .chat-compose-row .btn:hover {
-  border-color: rgba(22, 163, 74, 0.38);
-  background: linear-gradient(135deg, rgba(34, 197, 94, 0.30), rgba(22, 163, 74, 0.20));
+  border-color: rgba(26, 166, 200, 0.38);
+  background: linear-gradient(135deg, rgba(26, 166, 200, 0.28), rgba(91, 102, 255, 0.20));
 }
 
 @media (max-width: 640px) {

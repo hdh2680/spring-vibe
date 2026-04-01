@@ -3,6 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:if="${_csrf != null}" th:content="${_csrf.headerName}" />
     <title th:text="${pageTitle} + ' | Spring-vibe'">Spring-vibe</title>
     <link rel="stylesheet" th:href="@{/css/brand.css}" />
     <link rel="stylesheet" th:href="@{/css/layout_app.css}" />
@@ -107,7 +109,17 @@
             </button>
 
             <th:block th:if="${isAuthenticated}">
-              <button id="chatOpen" class="sv-btn sv-btn--pill" type="button" aria-haspopup="dialog" aria-controls="chatModal">AI Chat</button>
+              <button id="chatOpen" class="sv-btn sv-btn--pill sv-btn--icon" type="button" aria-haspopup="dialog" aria-controls="chatModal">
+                <svg class="sv-btn__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path d="M10 4h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M12 4v2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <rect x="5" y="7" width="14" height="12" rx="4" fill="none" stroke="currentColor" stroke-width="2"/>
+                  <path d="M9 19v2M15 19v2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M8 12h.01M16 12h.01" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                  <path d="M9.5 15.5h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <span>AI Chat</span>
+              </button>
 
               <form th:action="@{/logout}" method="post">
                 <button class="sv-btn sv-btn--ghost" type="submit">Logout</button>
@@ -118,12 +130,6 @@
       </header>
 
       <main class="main" aria-label="Content">
-        <header class="topbar" th:if="${contentTemplate != 'html/intro'}">
-          <div>
-            <h2 th:text="${pageTitle}">Dashboard</h2>
-          </div>
-        </header>
-
         <section class="content">
           <th:block th:replace="${contentTemplate} :: content"></th:block>
         </section>

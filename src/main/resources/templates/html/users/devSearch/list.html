@@ -10,11 +10,11 @@
     </div>
   </div>
 
-  <div class="panel panel-inner search-panel">
-    <form th:action="@{/users/devSearch/list}" method="get" class="searchbar">
+  <div class="panel panel-inner search-panel" style="margin-top: 12px;">
+    <form th:action="@{/users/devSearch/list}" method="get" class="searchbar" role="search">
       <label class="field searchbar-main">
         <div class="label">검색어</div>
-        <input id="devSearchQ" class="input" type="text" name="q" th:value="${q}" placeholder="제목/본문/태그" autocomplete="off" list="devSearchSuggest" />
+        <input id="devSearchQ" class="input" type="search" name="q" th:value="${q}" placeholder="제목/본문/태그" autocomplete="off" list="devSearchSuggest" />
         <datalist id="devSearchSuggest"></datalist>
       </label>
 

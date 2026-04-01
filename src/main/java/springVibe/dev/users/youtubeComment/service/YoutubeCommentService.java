@@ -8,6 +8,7 @@ import springVibe.dev.users.youtubeComment.dto.YoutubeCommentPage;
 import springVibe.dev.users.youtubeComment.dto.youtube.CommentThreadsResponse;
 import springVibe.dev.users.youtubeComment.mapper.YoutubeCommentAnalysisHistoryMapper;
 import springVibe.dev.users.youtubeComment.mapper.YoutubeCommentAnalysisResultMapper;
+import springVibe.dev.users.youtubeComment.mapper.YoutubeCommentAnalysisSentimentItemMapper;
 import springVibe.dev.users.youtubeComment.sentiment.SentimentAnalyzer;
 import springVibe.dev.users.youtubeComment.util.YoutubeUrlParser;
 import springVibe.system.storage.StorageProperties;
@@ -41,6 +42,7 @@ import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import springVibe.dev.users.youtubeComment.dto.YoutubeCommentSentimentItemRow;
 
 @Service
 public class YoutubeCommentService {
@@ -88,6 +90,7 @@ public class YoutubeCommentService {
     private final ObjectMapper objectMapper;
     private final YoutubeCommentAnalysisHistoryMapper youtubeCommentAnalysisHistoryMapper;
     private final YoutubeCommentAnalysisResultMapper youtubeCommentAnalysisResultMapper;
+    private final YoutubeCommentAnalysisSentimentItemMapper youtubeCommentAnalysisSentimentItemMapper;
     private final SentimentAnalyzer sentimentAnalyzer;
 
     public YoutubeCommentService(
@@ -96,6 +99,7 @@ public class YoutubeCommentService {
         ObjectMapper objectMapper,
         YoutubeCommentAnalysisHistoryMapper youtubeCommentAnalysisHistoryMapper,
         YoutubeCommentAnalysisResultMapper youtubeCommentAnalysisResultMapper,
+        YoutubeCommentAnalysisSentimentItemMapper youtubeCommentAnalysisSentimentItemMapper,
         SentimentAnalyzer sentimentAnalyzer
     ) {
         this.youtubeDataApiClient = youtubeDataApiClient;
@@ -103,7 +107,159 @@ public class YoutubeCommentService {
         this.objectMapper = objectMapper;
         this.youtubeCommentAnalysisHistoryMapper = youtubeCommentAnalysisHistoryMapper;
         this.youtubeCommentAnalysisResultMapper = youtubeCommentAnalysisResultMapper;
+        this.youtubeCommentAnalysisSentimentItemMapper = youtubeCommentAnalysisSentimentItemMapper;
         this.sentimentAnalyzer = sentimentAnalyzer;
+    }
+
+    public SentimentItemsPage listSentimentItems(Long historyId, Long userId, String q, String label, Integer page, Integer size) {
+        if (historyId == null) {
+            throw new BaseException("YOUTUBE_HISTORY_ID_REQUIRED", "historyId가 필요합니다.");
+        }
+        String query = q == null ? null : q.trim();
+        if (query != null && query.isBlank()) {
+            query = null;
+        }
+        String normalizedLabel = normalizeSentLabel(label);
+        int s = size == null ? 50 : size;
+        if (s < 1) s = 1;
+        if (s > 200) s = 200;
+        int p = page == null ? 0 : page;
+        if (p < 0) p = 0;
+        int offset = p * s;
+
+        try {
+            long total = youtubeCommentAnalysisSentimentItemMapper.countByHistoryId(historyId, userId, query, normalizedLabel);
+            List<YoutubeCommentSentimentItemRow> items = total <= 0
+                ? List.of()
+                : youtubeCommentAnalysisSentimentItemMapper.selectPageByHistoryId(historyId, userId, query, normalizedLabel, s, offset);
+            return new SentimentItemsPage(total, p, s, items);
+        } catch (BaseException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new BaseException("YOUTUBE_SENTIMENT_ITEMS_LIST_FAILED", "감정분석 댓글 목록 조회에 실패했습니다.", e);
+        }
+    }
+
+    private static String normalizeSentLabel(String label) {
+        if (label == null) return null;
+        String l = label.trim().toUpperCase(Locale.ROOT);
+        return switch (l) {
+            case "POSITIVE", "NEUTRAL", "NEGATIVE", "UNKNOWN" -> l;
+            default -> null;
+        };
+    }
+
+    public record SentimentItemsPage(long total, int page, int size, List<YoutubeCommentSentimentItemRow> items) {
+    }
+
+    public JsonNode computeSentimentSummaryFromDb(Long historyId, Long userId) {
+        if (historyId == null) {
+            throw new BaseException("YOUTUBE_HISTORY_ID_REQUIRED", "historyId가 필요합니다.");
+        }
+        try {
+            List<YoutubeCommentSentimentItemRow> rows = youtubeCommentAnalysisSentimentItemMapper.selectSummaryByHistoryId(historyId, userId);
+            if (rows == null) rows = List.of();
+
+            int pos = 0;
+            int neu = 0;
+            int neg = 0;
+            int unk = 0;
+
+            class Bucket {
+                int pos;
+                int neu;
+                int neg;
+                int unk;
+                int total() { return pos + neu + neg + unk; }
+                int classifiedTotal() { return pos + neu + neg; }
+            }
+            Map<ZonedDateTime, Bucket> byHour = new HashMap<>();
+
+            for (YoutubeCommentSentimentItemRow r : rows) {
+                String label = r.getFinalLabel();
+                if (label == null || label.isBlank()) {
+                    label = r.getLlmLabel();
+                }
+                if (label == null || label.isBlank()) {
+                    label = r.getLexLabel();
+                }
+                String normalized = label == null ? "UNKNOWN" : label.trim().toUpperCase(Locale.ROOT);
+                if (!normalized.equals("POSITIVE") && !normalized.equals("NEUTRAL") && !normalized.equals("NEGATIVE")) {
+                    normalized = "UNKNOWN";
+                }
+
+                if (normalized.equals("UNKNOWN")) unk++;
+                else if (normalized.equals("POSITIVE")) pos++;
+                else if (normalized.equals("NEGATIVE")) neg++;
+                else neu++;
+
+                ZonedDateTime hour = parseToHourBucketOrNull(r.getPublishedAt());
+                if (hour != null) {
+                    Bucket b = byHour.computeIfAbsent(hour, k -> new Bucket());
+                    if (normalized.equals("UNKNOWN")) b.unk++;
+                    else if (normalized.equals("POSITIVE")) b.pos++;
+                    else if (normalized.equals("NEGATIVE")) b.neg++;
+                    else b.neu++;
+                }
+            }
+
+            int total = pos + neu + neg + unk;
+            int classifiedTotal = pos + neu + neg;
+
+            ObjectNode root = objectMapper.createObjectNode();
+            root.put("historyId", historyId);
+            root.put("algorithm", "items-final-label-v1");
+            root.put("bucket", "3h");
+            root.put("timezone", DEFAULT_ZONE_ID.getId());
+            root.put("total", total);
+            root.put("classifiedTotal", classifiedTotal);
+
+            ObjectNode overall = root.putObject("overall");
+            overall.put("positiveCount", pos);
+            overall.put("neutralCount", neu);
+            overall.put("negativeCount", neg);
+            overall.put("unknownCount", unk);
+            overall.put("positivePct", pct(pos, total));
+            overall.put("neutralPct", pct(neu, total));
+            overall.put("negativePct", pct(neg, total));
+            overall.put("unknownPct", pct(unk, total));
+            overall.put("classifiedPct", pct(classifiedTotal, total));
+            overall.put("positivePctClassified", pct(pos, classifiedTotal));
+            overall.put("neutralPctClassified", pct(neu, classifiedTotal));
+            overall.put("negativePctClassified", pct(neg, classifiedTotal));
+
+            var arr = root.putArray("byHour");
+            byHour.keySet()
+                .stream()
+                .sorted()
+                .forEach((hour) -> {
+                    Bucket b = byHour.get(hour);
+                    int t = b == null ? 0 : b.total();
+                    int ct = b == null ? 0 : b.classifiedTotal();
+                    ObjectNode row = objectMapper.createObjectNode();
+                    row.put("hour", hour.format(PUBLISHED_AT_FORMATTER));
+                    row.put("total", t);
+                    row.put("classifiedTotal", ct);
+                    row.put("positiveCount", b == null ? 0 : b.pos);
+                    row.put("neutralCount", b == null ? 0 : b.neu);
+                    row.put("negativeCount", b == null ? 0 : b.neg);
+                    row.put("unknownCount", b == null ? 0 : b.unk);
+                    row.put("positivePct", pct(b == null ? 0 : b.pos, t));
+                    row.put("neutralPct", pct(b == null ? 0 : b.neu, t));
+                    row.put("negativePct", pct(b == null ? 0 : b.neg, t));
+                    row.put("unknownPct", pct(b == null ? 0 : b.unk, t));
+                    row.put("positivePctClassified", pct(b == null ? 0 : b.pos, ct));
+                    row.put("neutralPctClassified", pct(b == null ? 0 : b.neu, ct));
+                    row.put("negativePctClassified", pct(b == null ? 0 : b.neg, ct));
+                    arr.add(row);
+                });
+
+            return root;
+        } catch (BaseException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new BaseException("YOUTUBE_SENTIMENT_SUMMARY_FAILED", "감정분석 요약 계산에 실패했습니다.", e);
+        }
     }
 
     public YoutubeCommentPage collectCommentsByUrl(String inputUrl, String pageToken) {
@@ -371,10 +527,42 @@ public class YoutubeCommentService {
 
     public List<YoutubeCommentAnalysisHistory> listHistories(Long userId) {
         try {
-            return youtubeCommentAnalysisHistoryMapper.selectList(userId);
+            return listHistories(userId, null, "all");
+        } catch (BaseException e) {
+            throw e;
         } catch (Exception e) {
             throw new BaseException("YOUTUBE_HISTORY_LIST_FAILED", "저장 이력 목록 조회에 실패했습니다.", e);
         }
+    }
+
+    public List<YoutubeCommentAnalysisHistory> listHistories(Long userId, String q, String field) {
+        String query = q == null ? null : q.trim();
+        if (query != null && query.isBlank()) {
+            query = null;
+        }
+        String normalizedField = normalizeSearchField(field);
+
+        try {
+            if (query == null) {
+                return youtubeCommentAnalysisHistoryMapper.selectList(userId);
+            }
+            return youtubeCommentAnalysisHistoryMapper.selectListByQuery(userId, query, normalizedField);
+        } catch (BaseException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new BaseException("YOUTUBE_HISTORY_LIST_FAILED", "????대젰 紐⑸줉 議고쉶???ㅽ뙣?덉뒿?덈떎.", e);
+        }
+    }
+
+    private static String normalizeSearchField(String field) {
+        if (field == null) {
+            return "all";
+        }
+        String f = field.trim().toLowerCase();
+        return switch (f) {
+            case "all", "id", "title", "url", "remark" -> f;
+            default -> "all";
+        };
     }
 
     public YoutubeCommentAnalysisHistory findHistoryOrThrow(Long id, Long userId) {
@@ -626,6 +814,7 @@ public class YoutubeCommentService {
         String topJson = buildTopKeywordsResultJson(historyId, comments, safeTopN, useBigrams);
         String topicJson = buildTopicGroupsResultJson(historyId, comments, safeTopN, safeK);
         String sentimentJson = buildSentimentResultJson(historyId, comments);
+        List<YoutubeCommentSentimentItemRow> sentimentItems = buildSentimentItems(comments);
         String networkJson = buildWordNetworkResultJson(historyId, comments);
 
         int insertedTop;
@@ -637,13 +826,22 @@ public class YoutubeCommentService {
             youtubeCommentAnalysisResultMapper.deleteTopicGroupsByHistoryId(historyId, history.getUserId());
             youtubeCommentAnalysisResultMapper.deleteSentimentsByHistoryId(historyId, history.getUserId());
             youtubeCommentAnalysisResultMapper.deleteWordNetworksByHistoryId(historyId, history.getUserId());
+            youtubeCommentAnalysisSentimentItemMapper.deleteByHistoryId(historyId, history.getUserId());
 
             insertedTop = youtubeCommentAnalysisResultMapper.insertTopKeywords(historyId, history.getUserId(), now, paramsJson, topJson);
             insertedTopic = youtubeCommentAnalysisResultMapper.insertTopicGroups(historyId, history.getUserId(), now, paramsJson, topicJson);
             insertedSentiment = youtubeCommentAnalysisResultMapper.insertSentiments(historyId, history.getUserId(), now, paramsJson, sentimentJson);
             insertedNetwork = youtubeCommentAnalysisResultMapper.insertWordNetworks(historyId, history.getUserId(), now, paramsJson, networkJson);
+
+            // Persist per-comment sentiment items for later review/LLM correction.
+            final int batchSize = 500;
+            for (int i = 0; i < sentimentItems.size(); i += batchSize) {
+                int end = Math.min(sentimentItems.size(), i + batchSize);
+                List<YoutubeCommentSentimentItemRow> chunk = sentimentItems.subList(i, end);
+                youtubeCommentAnalysisSentimentItemMapper.insertBatch(historyId, history.getUserId(), chunk);
+            }
         } catch (Exception e) {
-            throw new BaseException("YOUTUBE_ANALYSIS_DB_INSERT_FAILED", "분석 결과를 DB에 저장하지 못했습니다.", e);
+            throw new BaseException("YOUTUBE_ANALYSIS_DB_INSERT_FAILED", "분석 결과를 DB에 저장하지 못했습니다. (" + rootCauseMessage(e) + ")", e);
         }
 
         if (insertedTop <= 0 || insertedTopic <= 0 || insertedSentiment <= 0 || insertedNetwork <= 0) {
@@ -696,7 +894,8 @@ public class YoutubeCommentService {
             } else {
                 root.putNull("wordNetwork");
             }
-            return objectMapper.writeValueAsString(root);
+            String json = objectMapper.writeValueAsString(root);
+            return json;
         } catch (Exception e) {
             throw new BaseException("YOUTUBE_ANALYSIS_RESULT_JSON_FAILED", "분석 결과 JSON 조합에 실패했습니다.", e);
         }
@@ -919,7 +1118,6 @@ public class YoutubeCommentService {
         int neu = 0;
         int neg = 0;
         int unk = 0;
-        final int maxExamplesPerLabel = 50;
 
         class Bucket {
             int pos;
@@ -931,12 +1129,6 @@ public class YoutubeCommentService {
         }
 
         Map<ZonedDateTime, Bucket> byHour = new HashMap<>();
-
-        // Store a few example comments per label for UI debug/inspection.
-        List<ObjectNode> posExamples = new ArrayList<>(maxExamplesPerLabel);
-        List<ObjectNode> neuExamples = new ArrayList<>(maxExamplesPerLabel);
-        List<ObjectNode> negExamples = new ArrayList<>(maxExamplesPerLabel);
-        List<ObjectNode> unkExamples = new ArrayList<>(maxExamplesPerLabel);
 
         for (PreprocessedComment c : comments) {
             SentimentAnalyzer.Result r = sentimentAnalyzer.analyze(c.cleanText);
@@ -951,22 +1143,6 @@ public class YoutubeCommentService {
                 neg++;
             } else {
                 neu++;
-            }
-
-            // Collect examples (max N per label).
-            List<ObjectNode> bucket = unknown
-                ? unkExamples
-                : (label == SentimentAnalyzer.Label.POSITIVE ? posExamples
-                : (label == SentimentAnalyzer.Label.NEGATIVE ? negExamples : neuExamples));
-            if (bucket.size() < maxExamplesPerLabel) {
-                ObjectNode ex = objectMapper.createObjectNode();
-                ex.put("commentId", c.commentId);
-                ex.put("publishedAt", formatPublishedAtForView(c.publishedAt));
-                ex.put("text", c.cleanText);
-                ex.put("score", r.score());
-                ex.put("matched", r.matched());
-                ex.put("label", unknown ? "UNKNOWN" : label.name());
-                bucket.add(ex);
             }
 
             ZonedDateTime hour = parseToHourBucketOrNull(c.publishedAt);
@@ -990,7 +1166,6 @@ public class YoutubeCommentService {
         root.put("timezone", DEFAULT_ZONE_ID.getId());
         root.put("total", total);
         root.put("classifiedTotal", classifiedTotal);
-        root.put("maxExamplesPerLabel", maxExamplesPerLabel);
 
         ObjectNode overall = root.putObject("overall");
         overall.put("positiveCount", pos);
@@ -1005,16 +1180,6 @@ public class YoutubeCommentService {
         overall.put("positivePctClassified", pct(pos, classifiedTotal));
         overall.put("neutralPctClassified", pct(neu, classifiedTotal));
         overall.put("negativePctClassified", pct(neg, classifiedTotal));
-
-        ObjectNode examples = root.putObject("examples");
-        var pArr = examples.putArray("positive");
-        for (ObjectNode ex : posExamples) pArr.add(ex);
-        var nArr = examples.putArray("neutral");
-        for (ObjectNode ex : neuExamples) nArr.add(ex);
-        var gArr = examples.putArray("negative");
-        for (ObjectNode ex : negExamples) gArr.add(ex);
-        var uArr = examples.putArray("unknown");
-        for (ObjectNode ex : unkExamples) uArr.add(ex);
 
         var arr = root.putArray("byHour");
         byHour.keySet()
@@ -1049,6 +1214,29 @@ public class YoutubeCommentService {
         }
     }
 
+    private List<YoutubeCommentSentimentItemRow> buildSentimentItems(List<PreprocessedComment> comments) {
+        List<YoutubeCommentSentimentItemRow> items = new ArrayList<>(comments.size());
+        // Defensive: input files may contain duplicated comment_id. The items table has (history_id, comment_id) unique.
+        Set<String> seenCommentIds = new HashSet<>(Math.max(16, comments.size()));
+        int rowNo = 0;
+        for (PreprocessedComment c : comments) {
+            rowNo++;
+            String cleanText = c.cleanText == null ? "" : c.cleanText;
+            SentimentAnalyzer.Result r = sentimentAnalyzer.analyze(cleanText);
+            boolean unknown = r.matched() <= 0;
+            String lexLabel = unknown ? "UNKNOWN" : r.label().name();
+            String commentId = c.commentId == null || c.commentId.isBlank() ? ("row-" + rowNo) : c.commentId.trim();
+            if (commentId.length() > 128) {
+                commentId = commentId.substring(0, 128);
+            }
+            if (!seenCommentIds.add(commentId)) {
+                continue;
+            }
+            items.add(new YoutubeCommentSentimentItemRow(commentId, c.publishedAt, cleanText, lexLabel, r.score(), r.matched()));
+        }
+        return items;
+    }
+
     private ZonedDateTime parseToHourBucketOrNull(String publishedAt) {
         if (publishedAt == null || publishedAt.isBlank()) {
             return null;
@@ -1073,6 +1261,28 @@ public class YoutubeCommentService {
         } catch (Exception ignored) {
             return null;
         }
+    }
+
+    private static String rootCauseMessage(Throwable t) {
+        if (t == null) {
+            return "unknown";
+        }
+        Throwable cur = t;
+        Throwable next = cur.getCause();
+        int guard = 0;
+        while (next != null && next != cur && guard++ < 20) {
+            cur = next;
+            next = cur.getCause();
+        }
+        String msg = cur.getMessage();
+        if (msg == null || msg.isBlank()) {
+            msg = cur.getClass().getSimpleName();
+        }
+        msg = msg.replace("\r", " ").replace("\n", " ").trim();
+        if (msg.length() > 240) {
+            msg = msg.substring(0, 240);
+        }
+        return msg;
     }
 
     private static double pct(int n, int total) {

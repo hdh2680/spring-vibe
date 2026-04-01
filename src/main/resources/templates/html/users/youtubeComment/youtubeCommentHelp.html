@@ -1,0 +1,27 @@
+<section xmlns:th="http://www.thymeleaf.org" th:fragment="content">
+  <div class="toolbar">
+    <div>
+      <h3>유튜브 댓글 분석 도움말</h3>
+    </div>
+  </div>
+
+  <div class="panel panel-inner" style="margin-top: 12px;">
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+      <div class="muted">수집 -> 전처리 -> 분석 -> 보정(LLM)</div>
+      <a class="action" th:href="@{/docs/youtubeComment/help.md}" target="_blank" rel="noopener">MD 원문</a>
+    </div>
+
+    <div style="margin-top: 10px;">
+      <img src="/docs/youtubeComment/help_flow.svg" alt="유튜브 댓글 분석 흐름" style="width:100%; height:auto; display:block; border-radius:16px; border:1px solid rgba(17,24,39,0.10); background: rgba(255,255,255,0.92);" />
+    </div>
+
+    <div th:if="${errorMessage != null}" style="margin-top: 12px;" class="alert alert-danger">
+      <div><strong th:text="${errorCode}">ERR</strong></div>
+      <div th:text="${errorMessage}">message</div>
+    </div>
+
+    <hr style="margin: 14px 0; opacity:.5;" />
+
+    <div class="markdown" th:utext="${bodyHtml}"></div>
+  </div>
+</section>

@@ -1,0 +1,96 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="springVibe.dev.users.youtubeComment.mapper.YoutubeCommentLexiconSuggestionMapper">
+
+    <insert id="insertBatch">
+        INSERT INTO youtube_comment_sentiment_lexicon_suggestions (
+            history_id,
+            user_id,
+            sentiment_item_id,
+            action,
+            term,
+            score,
+            reason,
+            status,
+            created_at,
+            updated_at
+        )
+        VALUES
+        <foreach collection="items" item="it" separator=",">
+            (
+                #{historyId},
+                #{userId},
+                #{sentimentItemId},
+                #{it.action},
+                #{it.term},
+                #{it.score},
+                #{it.reason},
+                'PENDING',
+                NOW(),
+                NOW()
+            )
+        </foreach>
+    </insert>
+
+    <select id="selectPendingByHistoryId" resultType="springVibe.dev.users.youtubeComment.dto.YoutubeCommentLexiconSuggestionRow">
+        SELECT
+            id AS id,
+            sentiment_item_id AS sentimentItemId,
+            action AS action,
+            term AS term,
+            score AS score,
+            reason AS reason,
+            status AS status
+        FROM youtube_comment_sentiment_lexicon_suggestions
+        WHERE history_id = #{historyId}
+          AND (#{userId} IS NULL OR user_id = #{userId})
+          AND status = 'PENDING'
+        ORDER BY id DESC
+        LIMIT #{limit}
+    </select>
+
+    <select id="selectByIds" resultType="springVibe.dev.users.youtubeComment.dto.YoutubeCommentLexiconSuggestionRow">
+        SELECT
+            id AS id,
+            sentiment_item_id AS sentimentItemId,
+            action AS action,
+            term AS term,
+            score AS score,
+            reason AS reason,
+            status AS status
+        FROM youtube_comment_sentiment_lexicon_suggestions
+        WHERE history_id = #{historyId}
+          AND (#{userId} IS NULL OR user_id = #{userId})
+          AND id IN
+        <foreach collection="ids" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+        ORDER BY id DESC
+    </select>
+
+    <update id="markAppliedByIds">
+        UPDATE youtube_comment_sentiment_lexicon_suggestions
+        SET status = 'APPLIED',
+            updated_at = NOW()
+        WHERE history_id = #{historyId}
+          AND (#{userId} IS NULL OR user_id = #{userId})
+          AND status = 'PENDING'
+          AND id IN
+        <foreach collection="ids" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </update>
+
+    <update id="markRejectedByIds">
+        UPDATE youtube_comment_sentiment_lexicon_suggestions
+        SET status = 'REJECTED',
+            updated_at = NOW()
+        WHERE history_id = #{historyId}
+          AND (#{userId} IS NULL OR user_id = #{userId})
+          AND status = 'PENDING'
+          AND id IN
+        <foreach collection="ids" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </update>
+
+</mapper>

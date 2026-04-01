@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="springVibe.dev.users.youtubeComment.mapper.YoutubeCommentAnalysisSentimentItemMapper">
+
+    <delete id="deleteByHistoryId">
+        DELETE FROM youtube_comment_analysis_sentiment_items
+        WHERE history_id = #{historyId}
+          AND (#{userId} IS NULL OR user_id = #{userId})
+    </delete>
+
+    <insert id="insertBatch">
+        INSERT INTO youtube_comment_analysis_sentiment_items (
+            history_id,
+            user_id,
+            comment_id,
+            published_at,
+            text_clean,
+            lex_label,
+            lex_score,
+            matched,
+            llm_label,
+            final_label,
+            corrected,
+            corrected_reason,
+            created_at,
+            updated_at
+        )
+        VALUES
+        <foreach collection="items" item="it" separator=",">
+            (
+                #{historyId},
+                #{userId},
+                #{it.commentId},
+                #{it.publishedAt},
+                #{it.textClean},
+                #{it.lexLabel},
+                #{it.lexScore},
+                #{it.matched},
+                NULL,
+                NULL,
+                0,
+                NULL,
+                NOW(),
+                NOW()
+            )
+        </foreach>
+    </insert>
+
+    <select id="countByHistoryId" resultType="long">
+        SELECT COUNT(*)
+        FROM youtube_comment_analysis_sentiment_items
+        WHERE history_id = #{historyId}
+          AND (#{userId} IS NULL OR user_id = #{userId})
+          <if test="label != null and label != ''">
+            AND lex_label = #{label}
+          </if>
+          <if test="q != null and q != ''">
+            AND (
+              comment_id LIKE CONCAT('%', #{q}, '%')
+              OR text_clean LIKE CONCAT('%', #{q}, '%')
+            )
+          </if>
+    </select>
+
+    <select id="selectPageByHistoryId"
+            resultType="springVibe.dev.users.youtubeComment.dto.YoutubeCommentSentimentItemRow">
+        SELECT
+            id AS id,
+            comment_id AS commentId,
+            published_at AS publishedAt,
+            text_clean AS textClean,
+            lex_label AS lexLabel,
+            lex_score AS lexScore,
+            matched AS matched,
+            llm_label AS llmLabel,
+            final_label AS finalLabel,
+            CAST(corrected AS UNSIGNED) AS corrected,
+            corrected_reason AS correctedReason
+        FROM youtube_comment_analysis_sentiment_items
+        WHERE history_id = #{historyId}
+          AND (#{userId} IS NULL OR user_id = #{userId})
+          <if test="label != null and label != ''">
+            AND lex_label = #{label}
+          </if>
+          <if test="q != null and q != ''">
+            AND (
+              comment_id LIKE CONCAT('%', #{q}, '%')
+              OR text_clean LIKE CONCAT('%', #{q}, '%')
+            )
+          </if>
+        ORDER BY id ASC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="selectByIds"
+            resultType="springVibe.dev.users.youtubeComment.dto.YoutubeCommentSentimentItemRow">
+        SELECT
+            id AS id,
+            comment_id AS commentId,
+            published_at AS publishedAt,
+            text_clean AS textClean,
+            lex_label AS lexLabel,
+            lex_score AS lexScore,
+            matched AS matched,
+            llm_label AS llmLabel,
+            final_label AS finalLabel,
+            CAST(corrected AS UNSIGNED) AS corrected,
+            corrected_reason AS correctedReason
+        FROM youtube_comment_analysis_sentiment_items
+        WHERE history_id = #{historyId}
+          AND (#{userId} IS NULL OR user_id = #{userId})
+          AND id IN
+        <foreach collection="ids" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+        ORDER BY id ASC
+    </select>
+
+    <update id="updateLlmResult">
+        UPDATE youtube_comment_analysis_sentiment_items
+        SET llm_label = #{llmLabel},
+            final_label = #{finalLabel},
+            corrected = #{corrected},
+            corrected_reason = #{correctedReason},
+            updated_at = NOW()
+        WHERE history_id = #{historyId}
+          AND (#{userId} IS NULL OR user_id = #{userId})
+          AND id = #{id}
+    </update>
+
+    <select id="selectSummaryByHistoryId"
+            resultType="springVibe.dev.users.youtubeComment.dto.YoutubeCommentSentimentItemRow">
+        SELECT
+            published_at AS publishedAt,
+            lex_label AS lexLabel,
+            llm_label AS llmLabel,
+            final_label AS finalLabel,
+            lex_score AS lexScore,
+            matched AS matched
+        FROM youtube_comment_analysis_sentiment_items
+        WHERE history_id = #{historyId}
+          AND (#{userId} IS NULL OR user_id = #{userId})
+        ORDER BY id ASC
+    </select>
+
+</mapper>

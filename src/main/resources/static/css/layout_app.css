@@ -17,6 +17,7 @@
         --ease: cubic-bezier(.2, .9, .2, 1);
         --wrap: 1120px;
         --header-h: 74px;
+        --nav1-w: 180px;
 
         /* Legacy aliases used by existing admin templates in this project. */
         --bg0: var(--bg);
@@ -130,11 +131,12 @@
         margin: 0;
         display: inline-flex;
         align-items: center;
-        gap: 30px;
+        gap: 0;
       }
 
       .sv-nav__item {
         position: relative;
+        width: var(--nav1-w);
       }
 
       /* Hover buffer: keeps the mega menu open while moving the cursor into the panel. */
@@ -146,8 +148,9 @@
       }
 
       .sv-nav__link {
-        display: inline-flex;
+        display: flex;
         align-items: center;
+        justify-content: center;
         gap: 8px;
         padding: 10px 12px;
         border-radius: 999px;
@@ -157,6 +160,10 @@
         font-weight: 850;
         letter-spacing: -0.01em;
         transition: background 140ms ease, border-color 140ms ease, transform 140ms var(--ease);
+        width: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
 
       /* Top menu: keep the text static (no "active-like" hover/active effects). */
@@ -215,6 +222,17 @@
         user-select: none;
       }
 
+      .sv-btn--icon {
+        gap: 8px;
+      }
+
+      .sv-btn__icon {
+        width: 16px;
+        height: 16px;
+        flex: 0 0 auto;
+        display: block;
+      }
+
       .sv-btn:hover {
         transform: translateY(-1px);
         background: rgba(255, 255, 255, 0.90);
@@ -251,10 +269,11 @@
       /* Mega menu */
       .sv-mega {
         position: absolute;
-        left: 50%;
+        left: 0;
         top: 100%;
-        transform: translate(-50%, -6px);
-        width: min(200px, calc(100vw - 32px));
+        /* Match the 1-depth menu item width (same as the parent <li>). */
+        transform: translate(0, -6px);
+        width: 100%;
         z-index: 80;
         pointer-events: none;
         opacity: 0;
@@ -265,7 +284,7 @@
       .sv-nav__item--has-mega:focus-within .sv-mega {
         pointer-events: auto;
         opacity: 1;
-        transform: translate(-50%, 0);
+        transform: translate(0, 0);
       }
 
       .sv-mega__backdrop {
@@ -295,10 +314,10 @@
       .sv-dd__head {
         padding: 8px 10px 4px;
         font-weight: 950;
-        font-size: 11px;
+        font-size: 10px;
         letter-spacing: 0.12em;
         text-transform: uppercase;
-        color: rgba(20, 24, 33, 0.55);
+        color: rgba(20, 24, 33, 0.50);
       }
 
       .sv-dd__a {
@@ -306,14 +325,17 @@
         padding: 10px 12px;
         border-radius: 12px;
         text-decoration: none;
-        color: rgba(20, 24, 33, 0.92);
-        font-weight: 840;
+        font-size: 12px;
+        color: rgba(20, 24, 33, 0.72);
+        font-weight: 760;
         transition: background 120ms ease, transform 120ms var(--ease);
       }
 
       .sv-dd__a--sub {
         padding-left: 22px;
-        font-weight: 780;
+        font-size: 12px;
+        color: rgba(20, 24, 33, 0.68);
+        font-weight: 720;
       }
 
       .sv-dd__a:hover {
@@ -392,7 +414,7 @@
         .sv-mega {
           left: 0;
           transform: translate(0, -6px);
-          width: min(200px, calc(100vw - 32px));
+          width: 100%;
         }
         .sv-nav__item--has-mega:hover .sv-mega,
         .sv-nav__item--has-mega:focus-within .sv-mega {
@@ -680,10 +702,7 @@
       }
 
       .search-panel {
-        background:
-          radial-gradient(520px 180px at 18% 0%, rgba(26, 166, 200, 0.12), transparent 60%),
-          radial-gradient(520px 200px at 84% 0%, rgba(91, 102, 255, 0.10), transparent 62%),
-          rgba(255, 255, 255, 0.92);
+        background: rgba(255, 255, 255, 0.92);
       }
 
       .searchbar {
@@ -846,4 +865,3 @@
         border-radius: 14px;
         border: 1px solid rgba(20, 24, 33, 0.10);
       }
-

@@ -40,5 +40,5 @@
   }
 
   const qs = new URLSearchParams(window.location.search);
-  if (qs.has("modal") || qs.has("error") || qs.has("logout")) openModal();
+  if (qs.has("modal") || qs.has("error")) openModal();
 })();
