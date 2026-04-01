@@ -15,5 +15,9 @@ public class UiController {
         model.addAttribute("activeMenu", activeMenu);
         return "layout/app";
     }
-}
 
+    @GetMapping("/intro")
+    public String intro(Model model) {
+        return render(model, "Intro", "html/intro", "/intro");
+    }
+}

@@ -1,113 +1,140 @@
-﻿<!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>로그인</title>
+    <link rel="stylesheet" th:href="@{/css/brand.css}" />
     <link rel="stylesheet" th:href="@{/css/login.css}" />
-</head>
+  </head>
   <body>
-    <main class="wrap">
-      <header class="brand" aria-label="서비스 정보">
-        <div class="logo" aria-hidden="true"></div>
-        <div>
-          <h1>Spring-vibe</h1>
-          <p>계정으로 로그인하세요</p>
-        </div>
-      </header>
-
-      <section class="card" aria-label="로그인 폼">
-        <div class="title">
-          <h2>로그인</h2>
-<!--          <span>데모 UI (처리 없음)</span>-->
+    <main class="stage" aria-label="Login cover">
+      <section class="slide">
+        <div class="bg" aria-hidden="true">
+          <div class="shape s1"></div>
+          <div class="shape s2"></div>
+          <div class="shape s3"></div>
+          <div class="shape s4"></div>
+          <div class="grid"></div>
+          <div class="grain"></div>
         </div>
 
-        <div class="error" id="errorBox" role="alert" aria-live="polite" th:if="${param.error}" style="display: block">
-          <strong>안내:</strong> 이 화면은 UI만 제공하며, 로그인 처리/검증은 연결되어 있지 않아요.
-        </div>
-        <div
-          class="error"
-          role="status"
-          aria-live="polite"
-          th:if="${param.logout}"
-          style="display: block; border-color: rgba(34, 197, 94, 0.35); background: rgba(34, 197, 94, 0.1)"
-        >
-          <strong>Logged out:</strong> You have been signed out.
-        </div>
+        <header class="top">
+          <a class="logo" href="/design/index.html" aria-label="Design gallery">
+            <span class="sv-mark" aria-hidden="true"></span>
+            <span class="logo-t">Spring Vibe</span>
+          </a>
+          <button class="login" type="button" id="openLogin">Log In</button>
+        </header>
 
-        <form id="loginForm" th:action="@{/login}" method="post" novalidate>
-          <label>
-            <div class="label-row">
-              <strong>아이디</strong>
-              <span class="hint">예: honggildong</span>
-            </div>
-            <div class="field">
-              <input
-                id="username"
-                name="username"
-                type="text"
-                inputmode="email"
-                autocomplete="username"
-                placeholder="아이디를 입력하세요"
-                required
-              />
-            </div>
-          </label>
+        <div class="content">
+          <p class="kicker">WEB DEVELOPER</p>
+          <h1>Spring 기반 Vibe Coding</h1>
+          <p class="lead">
+            아이디어를 빠르게 구현하고 검증한 뒤, 실무 수준으로 확장 가능한 구조를 만드는 것을 목표로 한 Spring 기반 Vibe Coding 프로젝트입니다.
+          </p>
 
-          <label>
-            <div class="label-row">
-              <strong>비밀번호</strong>
-<!--              <a class="link" href="#" onclick="return false;">비밀번호 찾기</a>-->
-            </div>
-            <div class="field">
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autocomplete="current-password"
-                placeholder="비밀번호를 입력하세요"
-                required
-              />
-              <button class="toggle" type="button" id="togglePw" aria-controls="password" aria-pressed="false">
-                보기
-              </button>
-            </div>
-          </label>
-
-          <div class="row">
-            <label class="check">
-              <input type="checkbox" name="remember" />
-              로그인 상태 유지
-            </label>
-<!--            <a class="link" href="#" onclick="return false;">회원가입</a>-->
+          <div class="badges" aria-label="기술 스택">
+            <span class="badge">Spring</span>
+            <span class="badge">Java</span>
+            <span class="badge">Docker</span>
+            <span class="badge">Thymeleaf</span>
+            <span class="badge">MySQL</span>
+            <span class="badge">ES</span>
+            <span class="badge">Ollama</span>
           </div>
 
-          <button class="btn" type="submit">로그인</button>
+          <div class="line" aria-hidden="true"></div>
 
-<!--          <div class="divider">또는</div>-->
-<!--          <div class="oauth" aria-label="간편 로그인(모양만)">-->
-<!--            <button class="ghost" type="button" onclick="return false;">Google로 계속</button>-->
-<!--            <button class="ghost" type="button" onclick="return false;">GitHub로 계속</button>-->
-<!--          </div>-->
+          <div class="id">
+            <div class="id-left">
+              <div class="name">한돈희</div>
+              <div class="desc">
+                <span>Backend (Spring/Java)</span>
+                <span class="sep" aria-hidden="true"></span>
+                <span>대전/세종</span>
+                <span class="sep" aria-hidden="true"></span>
+                <span>10년+</span>
+              </div>
+            </div>
+            <a class="btn primary detail" href="/intro">자세히보기</a>
+          </div>
 
-          <p class="foot">
-            계속 진행하면 <a href="#" onclick="return false;">이용약관</a> 및 <a href="#" onclick="return false;">개인정보 처리방침</a>에 동의하게 됩니다.
-          </p>
-        </form>
+          <div class="links" aria-label="Links">
+            <div class="linkrow">
+              <span class="k">Email</span>
+              <span class="v">hdh2680@gmail.com</span>
+            </div>
+            <div class="linkrow">
+              <span class="k">GitHub</span>
+              <span class="v">github.com/hdh2680</span>
+            </div>
+            <div class="linkrow">
+              <span class="k">Instagram</span>
+              <span class="v">@Donstgram92</span>
+            </div>
+          </div>
+        </div>
       </section>
     </main>
 
-    <script>
-      const togglePw = document.getElementById("togglePw");
-      const password = document.getElementById("password");
+    <div id="loginModal" class="modal" hidden>
+      <div id="loginBackdrop" class="backdrop" aria-hidden="true"></div>
+      <div class="dialog" role="dialog" aria-modal="true" aria-label="로그인">
+        <div class="dialog-head">
+          <div class="dialog-title">Log In</div>
+          <button id="closeLogin" class="x" type="button" aria-label="닫기">Close</button>
+        </div>
+        <div class="dialog-body">
+          <div class="msg error" role="alert" aria-live="polite" th:if="${param.error}">
+            로그인에 실패했습니다. 아이디/비밀번호를 확인하세요.
+          </div>
+          <div class="msg ok" role="status" aria-live="polite" th:if="${param.logout}">
+            로그아웃 되었습니다.
+          </div>
 
-      togglePw.addEventListener("click", () => {
-        const showing = password.type === "text";
-        password.type = showing ? "password" : "text";
-        togglePw.textContent = showing ? "Show" : "Hide";
-        togglePw.setAttribute("aria-pressed", String(!showing));
-      });
+          <form id="loginForm" th:action="@{/login}" method="post" novalidate>
+            <label>
+              <div class="label-row">
+                <strong>아이디</strong>
+              </div>
+              <div class="field">
+                <input
+                  id="username"
+                  name="username"
+                  type="text"
+                  autocomplete="username"
+                  placeholder="아이디를 입력하세요"
+                  required
+                />
+              </div>
+            </label>
 
-    </script>
+            <label>
+              <div class="label-row">
+                <strong>비밀번호</strong>
+              </div>
+              <div class="field">
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autocomplete="current-password"
+                  placeholder="비밀번호를 입력하세요"
+                  required
+                />
+                <button class="toggle" type="button" id="togglePw" aria-controls="password" aria-pressed="false">
+                  보기
+                </button>
+              </div>
+            </label>
+
+            <button class="submit" type="submit">로그인</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <script th:src="@{/js/login_modal.js}" defer></script>
   </body>
 </html>

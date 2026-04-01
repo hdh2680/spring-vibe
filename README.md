@@ -1,5 +1,7 @@
 # spring-vibe
 
+![login](src/main/resources/static/images/login.png)
+
 <div align="center">
   <h3>Spring 기반 Vibe Coding 프로젝트</h3>
   <p>아이디어를 빠르게 프로토타이핑하고, 실무형 기술 스택으로 확장 가능한 구조를 만드는 것을 목표로 합니다.</p>

@@ -26,6 +26,13 @@ public class MenuModelAdvice {
         return menuService.findLeftMenusByUsername(authentication.getName());
     }
 
+    @ModelAttribute("isAuthenticated")
+    public boolean isAuthenticated(Authentication authentication) {
+        return authentication != null
+            && authentication.isAuthenticated()
+            && !(authentication instanceof AnonymousAuthenticationToken);
+    }
+
     @ModelAttribute("currentPath")
     public String currentPath(HttpServletRequest request) {
         return request == null ? null : request.getRequestURI();

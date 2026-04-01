@@ -1,0 +1,38 @@
+/* Spring Vibe - temporary brand mark (CSS-only).
+ *
+ * Intent: a lightweight "logo" that works in prototypes without image assets.
+ * Scope: use the `.sv-mark` class to avoid collisions with other `.dot` utilities.
+ */
+:root{
+  --sv-mark-a: #1aa6c8;
+  --sv-mark-b: #5b66ff;
+  --sv-mark-c: #1fbf8a;
+  --sv-mark-d: #c79b3a;
+  --sv-mark-ring: rgba(26,166,200,0.12);
+  --sv-mark-border: rgba(20,24,33,0.12);
+}
+
+.sv-mark{
+  width: 12px;
+  height: 12px;
+  display: inline-block;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: conic-gradient(
+    from 210deg,
+    rgba(26,166,200,0.95),
+    rgba(91,102,255,0.92),
+    rgba(31,191,138,0.90),
+    rgba(199,155,58,0.88),
+    rgba(26,166,200,0.95)
+  );
+  box-shadow: 0 0 0 6px var(--sv-mark-ring);
+  border: 1px solid var(--sv-mark-border);
+}
+
+.sv-mark.sm{
+  width: 10px;
+  height: 10px;
+  box-shadow: 0 0 0 5px var(--sv-mark-ring);
+}
+

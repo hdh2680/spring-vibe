@@ -1,0 +1,180 @@
+/* Login modal extracted from login.css, but scoped so it doesn't affect other pages/forms. */
+
+.sv-login-modal[hidden] {
+  display: none;
+}
+
+.sv-login-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+
+.sv-login-modal .backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(20, 24, 33, 0.20);
+  backdrop-filter: blur(8px);
+}
+
+.sv-login-modal .dialog {
+  position: relative;
+  width: min(520px, calc(100% - 24px));
+  margin: 0;
+  border-radius: 20px;
+  border: 1px solid rgba(20, 24, 33, 0.14);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 0.78));
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.sv-login-modal .dialog-head {
+  padding: 14px 14px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid rgba(20, 24, 33, 0.10);
+}
+
+.sv-login-modal .dialog-title {
+  font-weight: 860;
+  letter-spacing: -0.02em;
+}
+
+.sv-login-modal .x {
+  border: 1px solid rgba(20, 24, 33, 0.14);
+  background: rgba(255, 255, 255, 0.78);
+  color: rgba(20, 24, 33, 0.86);
+  border-radius: 12px;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.sv-login-modal .x:hover {
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.sv-login-modal .dialog-body {
+  padding: 14px;
+}
+
+.sv-login-modal .msg {
+  border: 1px solid rgba(20, 24, 33, 0.12);
+  background: rgba(255, 255, 255, 0.70);
+  border-radius: 14px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: rgba(20, 24, 33, 0.78);
+  margin-bottom: 12px;
+}
+
+.sv-login-modal .msg.error {
+  border-color: rgba(220, 38, 38, 0.22);
+  background: rgba(220, 38, 38, 0.06);
+}
+
+.sv-login-modal .msg.ok {
+  border-color: rgba(31, 191, 138, 0.26);
+  background: rgba(31, 191, 138, 0.08);
+}
+
+.sv-login-modal form {
+  display: grid;
+  gap: 12px;
+}
+
+.sv-login-modal label {
+  display: grid;
+  gap: 8px;
+}
+
+.sv-login-modal .label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sv-login-modal .label-row strong {
+  font-size: 13px;
+  font-weight: 800;
+  color: rgba(20, 24, 33, 0.82);
+}
+
+.sv-login-modal .field {
+  position: relative;
+}
+
+.sv-login-modal input[type="text"],
+.sv-login-modal input[type="password"] {
+  width: 100%;
+  appearance: none;
+  border: 1px solid rgba(20, 24, 33, 0.14);
+  background: rgba(255, 255, 255, 0.92);
+  color: rgba(20, 24, 33, 0.92);
+  border-radius: 14px;
+  padding: 12px 12px;
+  outline: none;
+  font-size: 14px;
+  transition: border-color 120ms ease, box-shadow 120ms ease, background 120ms ease;
+}
+
+.sv-login-modal input::placeholder {
+  color: rgba(20, 24, 33, 0.40);
+}
+
+.sv-login-modal input:focus {
+  border-color: rgba(26, 166, 200, 0.40);
+  box-shadow: 0 0 0 5px rgba(26, 166, 200, 0.12);
+  background: #fff;
+}
+
+.sv-login-modal .toggle {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 1px solid rgba(20, 24, 33, 0.12);
+  background: rgba(20, 24, 33, 0.03);
+  color: rgba(20, 24, 33, 0.86);
+  border-radius: 12px;
+  padding: 8px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.sv-login-modal .submit {
+  width: 100%;
+  border: 0;
+  background: linear-gradient(135deg, rgba(26, 166, 200, 0.86), rgba(91, 102, 255, 0.84));
+  color: rgba(255, 255, 255, 0.94);
+  padding: 12px 14px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: -0.2px;
+  cursor: pointer;
+  box-shadow: 0 14px 30px rgba(26, 166, 200, 0.12);
+  transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease;
+}
+
+.sv-login-modal .submit:hover {
+  filter: brightness(1.02);
+  box-shadow: 0 18px 40px rgba(91, 102, 255, 0.16);
+}
+
+.sv-login-modal .submit:active {
+  transform: translateY(1px);
+}
+
+@media (max-width: 720px) {
+  .sv-login-modal .dialog {
+    margin-top: 8vh;
+  }
+}
+

@@ -2,7 +2,6 @@
   <div class="toolbar">
     <div>
       <h3 th:text="${isEdit} ? '사용자 수정' : '사용자 등록'">사용자 등록</h3>
-      <p class="muted">status 수정 + 권한 부여(user_roles)</p>
     </div>
     <div style="display:flex; gap:8px">
       <a class="btn-link" th:href="@{/admin/users/list}">목록</a>

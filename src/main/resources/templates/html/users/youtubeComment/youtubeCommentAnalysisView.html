@@ -1,14 +1,9 @@
 <section xmlns:th="http://www.thymeleaf.org" th:fragment="content">
   <style>
     .btn-analyze {
-      width: auto;
       background: linear-gradient(135deg, rgba(234, 88, 12, 0.96), rgba(220, 38, 38, 0.90));
       border: 1px solid rgba(234, 88, 12, 0.22);
       color: rgba(255, 255, 255, 0.96);
-      border-radius: 14px;
-      padding: 10px 14px;
-      font-weight: 900;
-      letter-spacing: -0.2px;
     }
     .btn-analyze:hover {
       filter: brightness(1.02);
@@ -65,14 +60,13 @@
     <div></div>
     <div>
       <form th:if="${history != null}" th:action="@{/users/youtubeComment/analysis/analyze(id=${history.id})}" method="post" style="display:inline">
-        <button type="submit" class="btn btn-analyze" style="cursor:pointer">분석 수행</button>
+        <button type="submit" class="btn btn-action btn-analyze">분석 수행</button>
       </form>
     </div>
   </div>
   <div class="toolbar">
     <div>
       <h3>유튜브 댓글 분석 결과</h3>
-      <p class="muted">분석 결과를 탭별로 확인합니다.</p>
     </div>
     <div>
       <a class="btn-link" th:href="@{/users/youtubeComment/analysis}">목록</a>

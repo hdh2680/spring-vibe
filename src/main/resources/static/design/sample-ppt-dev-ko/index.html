@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Spring 기반 Vibe Coding (PPT Cover)</title>
+    <meta name="description" content="PPT 첫 화면 느낌의 Spring 기반 Vibe Coding 커버 슬라이드" />
+    <link rel="stylesheet" href="/css/brand.css" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="stage" aria-label="Cover slide">
+      <section class="slide">
+        <div class="bg" aria-hidden="true">
+          <div class="shape s1"></div>
+          <div class="shape s2"></div>
+          <div class="shape s3"></div>
+          <div class="shape s4"></div>
+          <div class="grid"></div>
+          <div class="grain"></div>
+        </div>
+
+        <header class="top">
+          <a class="logo" href="../index.html" aria-label="Back to gallery">
+            <span class="sv-mark" aria-hidden="true"></span>
+            <span class="logo-t">Spring Vibe</span>
+          </a>
+          <button class="login" type="button" id="openLogin">Log In</button>
+        </header>
+
+        <div class="content">
+          <p class="kicker">WEB DEVELOPER</p>
+          <h1>
+            Spring 기반 Vibe Coding
+          </h1>
+          <p class="lead">
+            아이디어를 빠르게 구현하고 검증한 뒤, 실무 수준으로 확장 가능한 구조를 만드는 것을 목표로 한 Spring 기반 Vibe Coding 프로젝트입니다.
+          </p>
+
+          <div class="badges" aria-label="기술 스택">
+            <span class="badge">Spring</span>
+            <span class="badge">Java</span>
+            <span class="badge">Docker</span>
+            <span class="badge">Thymeleaf</span>
+            <span class="badge">MySQL</span>
+            <span class="badge">ES</span>
+            <span class="badge">Ollama</span>
+          </div>
+
+          <div class="line" aria-hidden="true"></div>
+
+          <div class="id">
+            <div class="id-left">
+              <div class="name">홍길동</div>
+              <div class="desc">
+                <span>Backend (Spring/Java)</span>
+                <span class="sep" aria-hidden="true"></span>
+                <span>Seoul</span>
+                <span class="sep" aria-hidden="true"></span>
+                <span>2026</span>
+              </div>
+            </div>
+            <a class="btn primary detail" href="../resume-custom-dev-ko/index.html">자세히보기</a>
+          </div>
+
+          <div class="links" aria-label="Links">
+            <div class="linkrow">
+              <span class="k">Email</span>
+              <span class="v">name@company.com</span>
+            </div>
+            <div class="linkrow">
+              <span class="k">GitHub</span>
+              <span class="v">github.com/username</span>
+            </div>
+            <div class="linkrow">
+              <span class="k">Blog</span>
+              <span class="v">blog.domain.dev</span>
+            </div>
+          </div>
+        </div>
+
+      </section>
+    </main>
+
+    <div id="loginModal" class="login-modal" hidden>
+      <div id="loginBackdrop" class="login-backdrop" aria-hidden="true"></div>
+      <div class="login-dialog" role="dialog" aria-modal="true" aria-label="로그인">
+        <div class="login-head">
+          <div class="login-title">Log In</div>
+          <button id="closeLogin" class="login-close" type="button">Close</button>
+        </div>
+        <iframe class="login-frame" title="Login" src="/login?modal=1"></iframe>
+      </div>
+    </div>
+
+    <script>
+      const modal = document.getElementById("loginModal");
+      const openBtn = document.getElementById("openLogin");
+      const closeBtn = document.getElementById("closeLogin");
+      const backdrop = document.getElementById("loginBackdrop");
+
+      function openModal() {
+        modal.hidden = false;
+        document.body.style.overflow = "hidden";
+      }
+      function closeModal() {
+        modal.hidden = true;
+        document.body.style.overflow = "";
+        openBtn && openBtn.focus();
+      }
+
+      openBtn.addEventListener("click", openModal);
+      closeBtn.addEventListener("click", closeModal);
+      backdrop.addEventListener("click", closeModal);
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && !modal.hidden) closeModal();
+      });
+    </script>
+  </body>
+</html>

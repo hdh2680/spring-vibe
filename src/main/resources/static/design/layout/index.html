@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Layout Example</title>
+    <link rel="stylesheet" href="../../css/brand.css" />
+    <link rel="stylesheet" href="./layout.css" />
+  </head>
+  <body>
+    <header class="sv-header" role="banner">
+      <div class="sv-header__inner">
+        <a class="sv-brand" href="../index.html" aria-label="Design gallery">
+          <span class="sv-mark" aria-hidden="true"></span>
+          <span class="sv-brand__t">Spring Vibe</span>
+        </a>
+
+        <nav class="sv-nav" aria-label="Primary">
+          <ul class="sv-nav__list" role="list">
+            <li class="sv-nav__item">
+              <a class="sv-nav__link" href="#">Home</a>
+            </li>
+
+            <li class="sv-nav__item sv-nav__item--has-mega">
+              <a class="sv-nav__link" href="#" aria-haspopup="true">Products</a>
+              <div class="sv-mega" role="region" aria-label="Products menu">
+                <div class="sv-mega__backdrop" aria-hidden="true"></div>
+                <div class="sv-mega__panel">
+                  <div class="sv-mega__inner">
+                    <div class="sv-mega__col">
+                      <div class="sv-mega__head">Platform</div>
+                      <a class="sv-mega__a" href="#">API Gateway</a>
+                      <a class="sv-mega__a" href="#">Auth</a>
+                      <a class="sv-mega__a" href="#">Search</a>
+                      <a class="sv-mega__a" href="#">Observability</a>
+                    </div>
+                    <div class="sv-mega__col">
+                      <div class="sv-mega__head">Tools</div>
+                      <a class="sv-mega__a" href="#">CLI</a>
+                      <a class="sv-mega__a" href="#">SDK</a>
+                      <a class="sv-mega__a" href="#">Templates</a>
+                      <a class="sv-mega__a" href="#">Integrations</a>
+                    </div>
+                    <div class="sv-mega__col">
+                      <div class="sv-mega__head">Resources</div>
+                      <a class="sv-mega__a" href="#">Docs</a>
+                      <a class="sv-mega__a" href="#">Examples</a>
+                      <a class="sv-mega__a" href="#">Changelog</a>
+                      <a class="sv-mega__a" href="#">Status</a>
+                    </div>
+                    <div class="sv-mega__promo">
+                      <div class="sv-mega__chip">New</div>
+                      <div class="sv-mega__title">Mega menu with depth</div>
+                      <p class="sv-mega__desc">
+                        Hover a top-level item to reveal a full-width second level under the header. It also opens on
+                        keyboard focus (Tab).
+                      </p>
+                      <a class="sv-btn sv-btn--primary" href="#">See pricing</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </li>
+
+            <li class="sv-nav__item sv-nav__item--has-mega">
+              <a class="sv-nav__link" href="#" aria-haspopup="true">Community</a>
+              <div class="sv-mega" role="region" aria-label="Community menu">
+                <div class="sv-mega__backdrop" aria-hidden="true"></div>
+                <div class="sv-mega__panel">
+                  <div class="sv-mega__inner">
+                    <div class="sv-mega__col">
+                      <div class="sv-mega__head">Learn</div>
+                      <a class="sv-mega__a" href="#">Guides</a>
+                      <a class="sv-mega__a" href="#">Workshops</a>
+                      <a class="sv-mega__a" href="#">FAQ</a>
+                    </div>
+                    <div class="sv-mega__col">
+                      <div class="sv-mega__head">Connect</div>
+                      <a class="sv-mega__a" href="#">Discord</a>
+                      <a class="sv-mega__a" href="#">GitHub</a>
+                      <a class="sv-mega__a" href="#">Meetups</a>
+                    </div>
+                    <div class="sv-mega__col">
+                      <div class="sv-mega__head">Company</div>
+                      <a class="sv-mega__a" href="#">About</a>
+                      <a class="sv-mega__a" href="#">Careers</a>
+                      <a class="sv-mega__a" href="#">Contact</a>
+                    </div>
+                    <div class="sv-mega__promo">
+                      <div class="sv-mega__chip">Tip</div>
+                      <div class="sv-mega__title">Hover and focus</div>
+                      <p class="sv-mega__desc">
+                        Uses `:focus-within` so the mega menu works for keyboard users too.
+                      </p>
+                      <a class="sv-btn sv-btn--ghost" href="#">Read the guide</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </li>
+
+            <li class="sv-nav__item">
+              <a class="sv-nav__link" href="#">Support</a>
+            </li>
+          </ul>
+        </nav>
+
+        <div class="sv-auth">
+          <a class="sv-btn sv-btn--ghost" href="#">Log in</a>
+          <button class="sv-btn sv-btn--pill" type="button">Log out</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="sv-main" id="content">
+      <section class="sv-hero" aria-label="Content area">
+        <div class="sv-hero__inner">
+          <p class="sv-kicker">LAYOUT</p>
+          <h1 class="sv-h1">Top (logo / menu / auth) + Content</h1>
+          <p class="sv-lead">
+            This page is an example layout built in the same bright/glassy tone as the login screen CSS: top header
+            (logo, center nav, auth actions) plus a content area and a full-width mega menu (2nd depth).
+          </p>
+
+          <div class="sv-cards" role="list">
+            <article class="sv-card" role="listitem">
+              <div class="sv-card__t">Sticky header</div>
+              <p class="sv-card__p">The header uses `position: sticky` to stay pinned to the top.</p>
+              <a class="sv-card__a" href="#">Details</a>
+            </article>
+            <article class="sv-card" role="listitem">
+              <div class="sv-card__t">Full-width mega</div>
+              <p class="sv-card__p">Hover a top nav item to open a full-width panel under the header.</p>
+              <a class="sv-card__a" href="#">Details</a>
+            </article>
+            <article class="sv-card" role="listitem">
+              <div class="sv-card__t">Depth ready</div>
+              <p class="sv-card__p">Second-depth links are laid out as columns for quick scanning.</p>
+              <a class="sv-card__a" href="#">Details</a>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="sv-section">
+        <div class="sv-wrap">
+          <div class="sv-section__head">
+            <h2 class="sv-h2">Content grid</h2>
+            <p class="sv-sub">A simple content area example.</p>
+          </div>
+          <div class="sv-grid" role="list">
+            <div class="sv-tile" role="listitem">
+              <div class="sv-tile__k">Card</div>
+              <div class="sv-tile__v">Line + radius + subtle shadow</div>
+            </div>
+            <div class="sv-tile" role="listitem">
+              <div class="sv-tile__k">Typography</div>
+              <div class="sv-tile__v">Pretendard stack + tight tracking</div>
+            </div>
+            <div class="sv-tile" role="listitem">
+              <div class="sv-tile__k">Spacing</div>
+              <div class="sv-tile__v">Built on 12/16/24 spacing steps</div>
+            </div>
+            <div class="sv-tile" role="listitem">
+              <div class="sv-tile__k">Buttons</div>
+              <div class="sv-tile__v">Ghost / Primary / Pill</div>
+            </div>
+            <div class="sv-tile" role="listitem">
+              <div class="sv-tile__k">Menu</div>
+              <div class="sv-tile__v">Hover or focus-within opens</div>
+            </div>
+            <div class="sv-tile" role="listitem">
+              <div class="sv-tile__k">Mobile</div>
+              <div class="sv-tile__v">On small screens the center nav is hidden (example behavior)</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="sv-section" aria-label="Search, table, pagination">
+        <div class="sv-wrap">
+          <div class="sv-section__head">
+            <h2 class="sv-h2">Search + Table + Pagination</h2>
+            <p class="sv-sub">Example UI set commonly used in admin/list screens.</p>
+          </div>
+
+          <form class="sv-search" role="search" action="#" method="get">
+            <div class="sv-search__row">
+              <label class="sv-field">
+                <span class="sv-field__l">Keyword</span>
+                <input class="sv-input" type="search" name="q" placeholder="Search by title, id, email..." />
+              </label>
+              <label class="sv-field">
+                <span class="sv-field__l">Status</span>
+                <select class="sv-select" name="status">
+                  <option value="">All</option>
+                  <option value="active">Active</option>
+                  <option value="paused">Paused</option>
+                  <option value="archived">Archived</option>
+                </select>
+              </label>
+              <label class="sv-field">
+                <span class="sv-field__l">Sort</span>
+                <select class="sv-select" name="sort">
+                  <option value="recent">Most recent</option>
+                  <option value="name">Name</option>
+                  <option value="status">Status</option>
+                </select>
+              </label>
+              <div class="sv-search__actions">
+                <button class="sv-btn sv-btn--primary" type="submit">Search</button>
+                <a class="sv-btn sv-btn--ghost" href="#">Reset</a>
+              </div>
+            </div>
+          </form>
+
+          <div class="sv-tablecard">
+            <div class="sv-tablecard__top">
+              <div class="sv-tablecard__title">
+                Results
+                <span class="sv-meta">128 items</span>
+              </div>
+              <div class="sv-tablecard__right">
+                <a class="sv-btn sv-btn--ghost" href="#">Export</a>
+                <a class="sv-btn sv-btn--pill" href="#">New</a>
+              </div>
+            </div>
+
+            <div class="sv-tablewrap" role="region" aria-label="Results table">
+              <table class="sv-table">
+                <thead>
+                  <tr>
+                    <th scope="col" class="col-id">ID</th>
+                    <th scope="col">Name</th>
+                    <th scope="col">Email</th>
+                    <th scope="col" class="col-status">Status</th>
+                    <th scope="col" class="col-date">Updated</th>
+                    <th scope="col" class="col-actions">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="mono">U-1042</td>
+                    <td>
+                      <div class="sv-td__main">Kim D.</div>
+                      <div class="sv-td__sub">Team: Platform</div>
+                    </td>
+                    <td class="muted">kimd@example.com</td>
+                    <td><span class="sv-pill sv-pill--ok">Active</span></td>
+                    <td class="muted">2026-03-31</td>
+                    <td class="sv-actions">
+                      <a class="sv-link" href="#">View</a>
+                      <a class="sv-link" href="#">Edit</a>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="mono">U-1038</td>
+                    <td>
+                      <div class="sv-td__main">Lee J.</div>
+                      <div class="sv-td__sub">Team: Search</div>
+                    </td>
+                    <td class="muted">leej@example.com</td>
+                    <td><span class="sv-pill sv-pill--warn">Paused</span></td>
+                    <td class="muted">2026-03-28</td>
+                    <td class="sv-actions">
+                      <a class="sv-link" href="#">View</a>
+                      <a class="sv-link" href="#">Edit</a>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="mono">U-1021</td>
+                    <td>
+                      <div class="sv-td__main">Park S.</div>
+                      <div class="sv-td__sub">Team: Admin</div>
+                    </td>
+                    <td class="muted">parks@example.com</td>
+                    <td><span class="sv-pill sv-pill--muted">Archived</span></td>
+                    <td class="muted">2026-03-12</td>
+                    <td class="sv-actions">
+                      <a class="sv-link" href="#">View</a>
+                      <a class="sv-link" href="#">Edit</a>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="mono">U-1009</td>
+                    <td>
+                      <div class="sv-td__main">Choi H.</div>
+                      <div class="sv-td__sub">Team: Community</div>
+                    </td>
+                    <td class="muted">choih@example.com</td>
+                    <td><span class="sv-pill sv-pill--ok">Active</span></td>
+                    <td class="muted">2026-02-25</td>
+                    <td class="sv-actions">
+                      <a class="sv-link" href="#">View</a>
+                      <a class="sv-link" href="#">Edit</a>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="mono">U-1001</td>
+                    <td>
+                      <div class="sv-td__main">Han Y.</div>
+                      <div class="sv-td__sub">Team: Billing</div>
+                    </td>
+                    <td class="muted">hany@example.com</td>
+                    <td><span class="sv-pill sv-pill--warn">Paused</span></td>
+                    <td class="muted">2026-01-04</td>
+                    <td class="sv-actions">
+                      <a class="sv-link" href="#">View</a>
+                      <a class="sv-link" href="#">Edit</a>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="sv-tablecard__bottom">
+              <div class="sv-meta">Showing 1 to 5 of 128</div>
+              <nav class="sv-pager" aria-label="Pagination">
+                <a class="sv-page sv-page--ctl" href="#" aria-label="Previous page">Prev</a>
+                <a class="sv-page is-active" href="#" aria-current="page">1</a>
+                <a class="sv-page" href="#">2</a>
+                <a class="sv-page" href="#">3</a>
+                <span class="sv-ellipsis" aria-hidden="true">...</span>
+                <a class="sv-page" href="#">12</a>
+                <a class="sv-page sv-page--ctl" href="#" aria-label="Next page">Next</a>
+              </nav>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

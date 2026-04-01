@@ -2,7 +2,6 @@
   <div class="toolbar">
     <div>
       <h3 th:text="${isEdit} ? '메뉴 수정' : '메뉴 등록'">메뉴 등록</h3>
-      <p class="muted">menus 테이블 기준 등록/수정</p>
     </div>
     <div style="display:flex; gap:8px">
       <a class="btn-link" th:href="@{/admin/menus/list}">목록</a>
