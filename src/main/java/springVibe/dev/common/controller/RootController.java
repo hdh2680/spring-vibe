@@ -15,7 +15,6 @@ public class RootController {
                 && authentication.isAuthenticated()
                 && !(authentication instanceof AnonymousAuthenticationToken);
 
-        return isAuthenticated ? "redirect:/intro" : "redirect:/login";
+        return isAuthenticated ? "redirect:/main" : "redirect:/login";
     }
 }
-

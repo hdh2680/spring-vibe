@@ -1,14 +1,11 @@
 package springVibe.system.config;
 
-import springVibe.dev.common.service.MenuService;
-import springVibe.system.security.MenuRedirectSuccessHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 
 /**
  * Spring Security 설정 - 인증/인가, 필터 규칙 정의.
@@ -18,7 +15,7 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, AuthenticationSuccessHandler loginSuccessHandler) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
@@ -32,7 +29,8 @@ public class SecurityConfig {
             .formLogin(form -> form
                 .loginPage("/login")
                 .loginProcessingUrl("/login")
-                .successHandler(loginSuccessHandler)
+                // Always go to /main after successful login (ignore "first menu" redirect and saved requests).
+                .defaultSuccessUrl("/main", true)
                 .failureUrl("/login?error")
                 .permitAll()
             )
@@ -41,11 +39,6 @@ public class SecurityConfig {
                 .logoutSuccessUrl("/login?logout")
             );
         return http.build();
-    }
-
-    @Bean
-    public AuthenticationSuccessHandler loginSuccessHandler(MenuService menuService) {
-        return new MenuRedirectSuccessHandler(menuService);
     }
 
     @Bean

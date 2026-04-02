@@ -4,7 +4,7 @@
   <h3>Spring 기반 Vibe Coding 프로젝트</h3>
 </div>
 
-![login](src/main/resources/static/images/login.png)
+![login](src/main/resources/static/images/main.png)
 
 ---
 

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
   <head>
     <meta charset="UTF-8" />
@@ -10,6 +10,7 @@
     <link rel="stylesheet" th:href="@{/css/layout_app.css}" />
     <link rel="stylesheet" th:href="@{/css/login_modal.css}" />
     <link rel="stylesheet" th:if="${contentTemplate == 'html/intro'}" th:href="@{/css/intro.css}" />
+    <link rel="stylesheet" th:if="${contentTemplate == 'html/main'}" th:href="@{/css/main.css}" />
     <link rel="stylesheet" th:href="@{/css/chat.css}" />
     <script th:src="@{/js/chat.js}" defer></script>
     <script th:src="@{/js/login_modal.js}" defer></script>
@@ -88,7 +89,7 @@
                   th:href="@{/intro}"
                   th:classappend="${((activeMenu == '/intro') or (currentPath == '/intro')) ? ' is-active' : ''}"
                 >
-                  소개
+                  Developer
                 </a>
               </li>
             </ul>
@@ -129,7 +130,7 @@
         </div>
       </header>
 
-      <main class="main" aria-label="Content">
+      <main class="sv-main" th:classappend="${contentTemplate == 'html/main'} ? ' sv-main--plain' : ''" aria-label="Content">
         <section class="content">
           <th:block th:replace="${contentTemplate} :: content"></th:block>
         </section>

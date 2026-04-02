@@ -1,103 +1,280 @@
-﻿<!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Spring-vibe</title>
-    <link rel="stylesheet" th:href="@{/css/main.css}" />
-  </head>
-  <body>
-    <div class="layout">
-      <aside class="sidebar" aria-label="Sidebar">
-        <div class="side-top">
-          <div class="brand">
-            <div class="mark" aria-hidden="true"></div>
-            <div>
-              <h1>Spring-vibe</h1>
-<!--              <p>Admin console (sample UI)</p>-->
-            </div>
-          </div>
-          <div class="user">
-            <div class="name" th:text="${#authentication?.name}">user</div>
-            <div class="meta">Signed in</div>
-          </div>
+<section xmlns:th="http://www.thymeleaf.org" th:fragment="content">
+  <div class="main-splash" aria-label="Spring 기반 Vibe Coding">
+    <div class="main-splash__row">
+      <div class="main-splash__bot" aria-label="AI bot icon">
+        <!-- Same robot icon used by AI Chat button in layout/app.html -->
+        <svg class="main-bot-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M10 4h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <path d="M12 4v2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <rect x="5" y="7" width="14" height="12" rx="4" fill="none" stroke="currentColor" stroke-width="2"/>
+          <path d="M9 19v2M15 19v2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <path d="M8 12h.01M16 12h.01" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+          <path d="M9.5 15.5h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+
+      <div class="main-splash__left">
+        <div class="main-splash__kicker">Elastic Search · Ollama LLM AI · Data Analysis</div>
+        <div class="main-splash__title">Spring 기반 Vibe Coding</div>
+        <div class="main-splash__desc">
+          유튜브 API로 데이터 수집·전처리·분석을 수행하고, 결과를 Ollama LLM으로 재확인(검토)합니다.
+          또한 Elasticsearch 기반 개발 블로그 검색(LLM 번역 검색어 포함)을 제공하며, 아이디어를 미니 프로젝트처럼 계속 확장할 예정입니다.
         </div>
-
-        <nav class="nav" aria-label="Menu">
-          <a class="active" href="#" onclick="return false;">
-            <span class="dot" aria-hidden="true"></span>
-            Dashboard
-          </a>
-          <a href="#" onclick="return false;">
-            <span class="dot" aria-hidden="true"></span>
-            Tables
-          </a>
-          <a href="#" onclick="return false;">
-            <span class="dot" aria-hidden="true"></span>
-            Data Quality
-          </a>
-          <a href="#" onclick="return false;">
-            <span class="dot" aria-hidden="true"></span>
-            Reports
-          </a>
-          <a href="#" onclick="return false;">
-            <span class="dot" aria-hidden="true"></span>
-            Users & Roles
-          </a>
-        </nav>
-
-        <div class="side-bottom">
-          <form th:action="@{/logout}" method="post">
-            <button class="btn" type="submit">Logout</button>
-          </form>
-        </div>
-      </aside>
-
-      <main class="main" aria-label="Content">
-        <header class="topbar">
-          <div>
-            <h2>Dashboard</h2>
-            <p>Example layout: left menu (2) + content (8)</p>
-          </div>
-          <div class="chip" title="Auth status">
-            <span class="dot" style="background: var(--accent2); border-color: rgba(56, 189, 248, 0.55)"></span>
-            Session: <b>ACTIVE</b>
-          </div>
-        </header>
-
-        <section class="content">
-          <div class="grid">
-            <article class="card" aria-label="Quick stats">
-              <h3>Quick Stats</h3>
-              <p>Place key numbers here (users, tables, alerts). Keep it scannable.</p>
-              <div class="chip">
-                <span class="dot" style="background: var(--accent)"></span>
-                Logins: <b>tracking enabled</b>
-              </div>
-            </article>
-
-            <article class="card" aria-label="System health">
-              <h3>System</h3>
-              <p>Connect Actuator or health endpoints later. This is a visual placeholder.</p>
-              <ul class="list">
-                <li><span class="k">DB</span><span class="v">MySQL (configured)</span></li>
-                <li><span class="k">Docs</span><span class="v">/docs + /docs/aiwork</span></li>
-              </ul>
-            </article>
-
-            <article class="card wide" aria-label="Next steps">
-              <h3>Next Steps</h3>
-              <p>Replace the dummy links with real routes as features land.</p>
-              <ul class="list">
-                <li><span class="k">Tables</span><span class="v">Browse schema, preview rows</span></li>
-                <li><span class="k">Data Quality</span><span class="v">Null/duplicate/outlier checks</span></li>
-                <li><span class="k">Reports</span><span class="v">Generate CSV/Excel/PDF</span></li>
-              </ul>
-            </article>
-          </div>
-        </section>
-      </main>
+      </div>
     </div>
-  </body>
-</html>
 
+    <ul class="main-badges" role="list" aria-label="Tech stack badges">
+      <li>
+        <img class="main-badge" alt="Java 17" loading="lazy" decoding="async" referrerpolicy="no-referrer"
+             src="https://img.shields.io/badge/Java-17-ED8B00?style=for-the-badge&amp;logo=openjdk&amp;logoColor=white"/>
+      </li>
+      <li>
+        <img class="main-badge" alt="Spring Boot 3.x" loading="lazy" decoding="async" referrerpolicy="no-referrer"
+             src="https://img.shields.io/badge/Spring%20Boot-3.x-6DB33F?style=for-the-badge&amp;logo=springboot&amp;logoColor=white"/>
+      </li>
+      <li>
+        <img class="main-badge" alt="Spring Security" loading="lazy" decoding="async" referrerpolicy="no-referrer"
+             src="https://img.shields.io/badge/Spring%20Security-Auth-6DB33F?style=for-the-badge&amp;logo=spring&amp;logoColor=white"/>
+      </li>
+      <li>
+        <img class="main-badge" alt="Thymeleaf" loading="lazy" decoding="async" referrerpolicy="no-referrer"
+             src="https://img.shields.io/badge/Thymeleaf-Template-005F0F?style=for-the-badge&amp;logo=thymeleaf&amp;logoColor=white"/>
+      </li>
+      <li>
+        <img class="main-badge" alt="Spring Data JPA" loading="lazy" decoding="async" referrerpolicy="no-referrer"
+             src="https://img.shields.io/badge/Spring%20Data-JPA-6DB33F?style=for-the-badge&amp;logo=spring&amp;logoColor=white"/>
+      </li>
+      <li>
+        <img class="main-badge" alt="MyBatis" loading="lazy" decoding="async" referrerpolicy="no-referrer"
+             src="https://img.shields.io/badge/MyBatis-SQL-000000?style=for-the-badge&amp;logoColor=white"/>
+      </li>
+      <li>
+        <img class="main-badge" alt="MySQL 8" loading="lazy" decoding="async" referrerpolicy="no-referrer"
+             src="https://img.shields.io/badge/MySQL-8-4479A1?style=for-the-badge&amp;logo=mysql&amp;logoColor=white"/>
+      </li>
+      <li>
+        <img class="main-badge" alt="Elasticsearch" loading="lazy" decoding="async" referrerpolicy="no-referrer"
+             src="https://img.shields.io/badge/Elasticsearch-Search-005571?style=for-the-badge&amp;logo=elasticsearch&amp;logoColor=white"/>
+      </li>
+      <li>
+        <img class="main-badge" alt="Spring Boot Actuator" loading="lazy" decoding="async" referrerpolicy="no-referrer"
+             src="https://img.shields.io/badge/Spring-Actuator-6DB33F?style=for-the-badge&amp;logo=spring&amp;logoColor=white"/>
+      </li>
+      <li>
+        <img class="main-badge" alt="Ollama LLM" loading="lazy" decoding="async" referrerpolicy="no-referrer"
+             src="https://img.shields.io/badge/Ollama-LLM-111111?style=for-the-badge&amp;logoColor=white"/>
+      </li>
+      <li>
+        <img class="main-badge" alt="Maven" loading="lazy" decoding="async" referrerpolicy="no-referrer"
+             src="https://img.shields.io/badge/Maven-Build-C71A36?style=for-the-badge&amp;logo=apachemaven&amp;logoColor=white"/>
+      </li>
+    </ul>
+
+    <div class="main-splash__divider" aria-hidden="true"></div>
+
+    <section class="main-yta" aria-label="유튜브 댓글분석">
+      <header class="main-yta__head">
+        <div class="main-yta__k">유튜브 댓글분석</div>
+        <div class="main-yta__sub">수집 → 전처리 → 분석 → 감정분석 LLM 확인</div>
+      </header>
+
+      <div class="main-flow" role="list" aria-label="댓글분석 파이프라인">
+        <div class="main-flow__card" role="listitem" aria-label="수집: 유튜브 API">
+          <div class="main-flow__top">
+            <span class="main-flow__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                <path d="M12 3v10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M8 9l4 4 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <rect x="4" y="17" width="16" height="4" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+              </svg>
+            </span>
+            <span class="main-flow__label">수집</span>
+          </div>
+          <div class="main-flow__big">YouTube Data API</div>
+          <div class="main-flow__meta">URL 입력 → 댓글 수집 → JSONL 저장</div>
+        </div>
+
+        <div class="main-flow__card" role="listitem" aria-label="전처리">
+          <div class="main-flow__top">
+            <span class="main-flow__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                <path d="M4 6h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M7 12h10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M10 18h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </span>
+            <span class="main-flow__label">전처리</span>
+          </div>
+          <div class="main-flow__big">Normalize</div>
+          <div class="main-flow__meta">정규화, 노이즈 제거, 중복/반복 축약</div>
+        </div>
+
+        <div class="main-flow__card" role="listitem" aria-label="분석">
+          <div class="main-flow__top">
+            <span class="main-flow__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                <path d="M4 19V5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M4 19h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M8 16v-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M12 16v-8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M16 16v-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </span>
+            <span class="main-flow__label">분석</span>
+          </div>
+          <div class="main-flow__big">Techniques</div>
+          <ol class="main-flow__list">
+            <li><b>키워드 분석</b>: Top 키워드, 토픽 그룹</li>
+            <li><b>네트워크 분석</b>: 동시출현(Word Network)</li>
+            <li><b>감정 분석</b>: 사전 기반 분류 + 추이</li>
+          </ol>
+        </div>
+
+        <div class="main-flow__card main-flow__card--accent" role="listitem" aria-label="감정분석 LLM 확인">
+          <div class="main-flow__top">
+            <span class="main-flow__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                <path d="M9 12l2 2 4-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M20 12a8 8 0 1 1-4.2-7.1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </span>
+            <span class="main-flow__label">LLM 확인</span>
+          </div>
+          <div class="main-flow__big">Sentiment Review</div>
+          <div class="main-flow__meta">
+            감정분석 결과를 Ollama LLM으로 재확인(검토)
+            <span class="main-flow__meta-sub">검토 결과를 커스텀 사전(Custom Lexicon) 업데이트로 반영</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="main-splash__divider" aria-hidden="true"></div>
+
+    <section class="main-yta" aria-label="개발블로그검색 (Velog)">
+      <header class="main-yta__head">
+        <div class="main-yta__k">개발블로그검색 (Velog)</div>
+        <div class="main-yta__sub">수집(별도 실행) → ES 색인 → 검색/조회</div>
+      </header>
+
+      <div class="main-flow" role="list" aria-label="Velog 검색 파이프라인">
+        <div class="main-flow__card" role="listitem" aria-label="수집: one-shot ingest">
+          <div class="main-flow__top">
+            <span class="main-flow__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                <path d="M7 3h10v18H7z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                <path d="M9 7h6M9 11h6M9 15h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </span>
+            <span class="main-flow__label">수집</span>
+          </div>
+          <div class="main-flow__big">Velog Ingest</div>
+          <div class="main-flow__meta">
+            별도 실행: <code>springVibe.etc.velog.VelogIngestApplication</code>
+            <span class="main-flow__meta-sub">수집 결과를 DB(<code>velog_post</code>)에 적재</span>
+          </div>
+        </div>
+
+        <div class="main-flow__card" role="listitem" aria-label="ES 색인">
+          <div class="main-flow__top">
+            <span class="main-flow__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                <path d="M4 7h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M6 12h12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M8 17h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </span>
+            <span class="main-flow__label">색인</span>
+          </div>
+          <div class="main-flow__big">ES Reindex</div>
+          <div class="main-flow__meta">
+            DB 글을 Elasticsearch로 색인
+            <span class="main-flow__meta-sub"><code>POST /users/devSearch/reindex</code> 또는(ES enabled) <code>POST /users/devSearch/es/reindex-all</code></span>
+          </div>
+        </div>
+
+        <div class="main-flow__card main-flow__card--accent" role="listitem" aria-label="검색/조회">
+          <div class="main-flow__top">
+            <span class="main-flow__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                <circle cx="11" cy="11" r="6" fill="none" stroke="currentColor" stroke-width="2"/>
+                <path d="M20 20l-4.2-4.2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </span>
+            <span class="main-flow__label">조회</span>
+          </div>
+          <div class="main-flow__big">Search UI</div>
+          <div class="main-flow__meta">
+            페이지: <code>/users/devSearch/list</code>
+            <span class="main-flow__meta-sub">ES 사용 시: ES로 id/정렬 선택 → DB hydrate, ES 비활성/장애 시: DB LIKE fallback</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="main-splash__divider" aria-hidden="true"></div>
+
+    <section class="main-yta" aria-label="Amazon Product">
+      <header class="main-yta__head">
+        <div class="main-yta__k">Amazon Product</div>
+        <div class="main-yta__sub">데이터 적재(약 140만건) → ES(영문) 색인 → 한글 검색(LLM 번역) 조회</div>
+      </header>
+
+      <div class="main-flow" role="list" aria-label="Amazon Product 검색 파이프라인">
+        <div class="main-flow__card" role="listitem" aria-label="데이터 적재">
+          <div class="main-flow__top">
+            <span class="main-flow__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                <path d="M4 6h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M4 12h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M4 18h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </span>
+            <span class="main-flow__label">적재</span>
+          </div>
+          <div class="main-flow__big">Data Load</div>
+          <div class="main-flow__meta">
+            제품/카테고리 데이터 적재 (약 140만건)
+            <span class="main-flow__meta-sub">DB: <code>amazon_product</code>, <code>amazon_category</code></span>
+          </div>
+        </div>
+
+        <div class="main-flow__card" role="listitem" aria-label="ES 영문 색인">
+          <div class="main-flow__top">
+            <span class="main-flow__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                <path d="M4 7h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M6 12h12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M8 17h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </span>
+            <span class="main-flow__label">색인</span>
+          </div>
+          <div class="main-flow__big">ES Index (EN)</div>
+          <div class="main-flow__meta">
+            영문 제품명(<code>title</code>)을 Elasticsearch로 색인
+            <span class="main-flow__meta-sub"><code>POST /users/amazonProduct/reindex</code> 또는 <code>POST /users/amazonProduct/es/reindex-all</code></span>
+          </div>
+        </div>
+
+        <div class="main-flow__card main-flow__card--accent" role="listitem" aria-label="한글 검색 LLM 번역 조회">
+          <div class="main-flow__top">
+            <span class="main-flow__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                <circle cx="11" cy="11" r="6" fill="none" stroke="currentColor" stroke-width="2"/>
+                <path d="M20 20l-4.2-4.2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </span>
+            <span class="main-flow__label">검색</span>
+          </div>
+          <div class="main-flow__big">Korean Query</div>
+          <div class="main-flow__meta">
+            한글 검색어 입력 시 Ollama LLM으로 영문 키워드 번역 후 ES 조회
+            <span class="main-flow__meta-sub">동의어 사전 기반 쿼리 확장(추가 적용)으로 검색 품질 개선</span>
+            <span class="main-flow__meta-sub">페이지: <code>/users/amazonProduct/list</code></span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</section>

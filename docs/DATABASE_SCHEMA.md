@@ -1,4 +1,4 @@
-﻿# DATABASE_SCHEMA
+# DATABASE_SCHEMA
 
 - DBMS: MySQL
 - Database: springVibe
