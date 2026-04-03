@@ -21,7 +21,7 @@ public class YoutubeCommentHelpController {
     @GetMapping("/users/youtubeComment/help")
     public String help(Model model) {
         try {
-            String md = readClasspathUtf8("static/docs/youtubeComment/help.md");
+            String md = readClasspathUtf8("static/docs/help/youtubeComment/help.md");
             model.addAttribute("bodyHtml", markdownRenderService.renderToSafeHtml(md));
         } catch (BaseException e) {
             model.addAttribute("errorCode", e.getCode());
@@ -52,4 +52,3 @@ public class YoutubeCommentHelpController {
         }
     }
 }
-

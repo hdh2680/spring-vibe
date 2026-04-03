@@ -84,6 +84,18 @@ public class AmazonProductPagesController {
         if (model.getAttribute("items") == null) model.addAttribute("items", java.util.List.of());
         if (model.getAttribute("categories") == null) model.addAttribute("categories", java.util.List.of());
 
+        // Avoid complex SpEL/regex in templates (can fail depending on expression utils).
+        String qValue = (String) model.getAttribute("q");
+        String queryUsedValue = (String) model.getAttribute("queryUsed");
+        boolean showQueryUsedHint =
+            qValue != null
+                && !qValue.isBlank()
+                && containsHangul(qValue)
+                && queryUsedValue != null
+                && !queryUsedValue.isBlank()
+                && !queryUsedValue.equals(qValue);
+        model.addAttribute("showQueryUsedHint", showQueryUsedHint);
+
         model.addAttribute("total", total);
         model.addAttribute("tookMs", tookMs);
         model.addAttribute("esEnabled", esEnabled);
@@ -164,5 +176,16 @@ public class AmazonProductPagesController {
         }
         long pages = (total + size - 1L) / (long) size;
         return pages > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) pages;
+    }
+
+    private static boolean containsHangul(String s) {
+        if (s == null || s.isEmpty()) return false;
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (c >= 0xAC00 && c <= 0xD7A3) {
+                return true;
+            }
+        }
+        return false;
     }
 }

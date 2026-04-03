@@ -5,7 +5,12 @@
     </div>
     <div>
       <form th:if="${esEnabled}" th:action="@{/users/devSearch/reindex}" method="post" style="display:inline;">
+        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
         <button class="btn btn-inline" type="submit">ES 재색인</button>
+      </form>
+      <form th:if="${esEnabled}" th:action="@{/users/devSearch/clear-es}" method="post" style="display:inline;">
+        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+        <button class="btn btn-inline" type="submit" onclick="return confirm('ES를 초기화할까요? (색인 문서가 모두 삭제됩니다)');">ES 초기화</button>
       </form>
     </div>
   </div>

@@ -152,6 +152,22 @@ public class DevSearchPagesController {
         return list("", 0, 20, model);
     }
 
+    @PostMapping("/clear-es")
+    public String clearEs(Model model) {
+        try {
+            devSearchService.clearAllDocuments();
+            model.addAttribute("successMessage", "ES 초기화가 완료되었습니다.");
+        } catch (BaseException e) {
+            model.addAttribute("errorCode", e.getCode());
+            model.addAttribute("errorMessage", e.getMessage());
+        } catch (Exception e) {
+            model.addAttribute("errorCode", "ERR001");
+            model.addAttribute("errorMessage", e.getMessage());
+        }
+
+        return list("", 0, 20, model);
+    }
+
     private static String render(Model model, String pageTitle, String contentTemplate) {
         model.addAttribute("pageTitle", pageTitle);
         model.addAttribute("contentTemplate", contentTemplate);

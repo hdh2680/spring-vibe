@@ -425,18 +425,64 @@ public class AmazonProductService {
 
         List<OllamaChatService.Message> msgs = List.of(
             OllamaChatService.Message.system(
-                "You are a translation engine.\n" +
-                "Translate the given Korean search query into concise English keywords.\n" +
-                "Rules:\n" +
-                "- Output ONLY English words.\n" +
-                "- Do not include explanations.\n" +
-                "- Keep brand/model names as-is."
+                "You are an Amazon search keyword generator.\n" +
+                "\n" +
+                "If the input is Korean:\n" +
+                "- Translate it into natural English product terms.\n" +
+                "\n" +
+                "If the input is English:\n" +
+                "- Normalize spelling.\n" +
+                "\n" +
+                "Generate Amazon search keywords.\n" +
+                "\n" +
+                "STRICT OUTPUT FORMAT:\n" +
+                "- Output ONLY one line.\n" +
+                "- Format EXACTLY like this:\n" +
+                "  keyword1, keyword2, keyword3, keyword4\n" +
+                "- Each keyword MUST be separated by \", \" (comma + space).\n" +
+                "- NEVER omit the space after commas.\n" +
+                "- NEVER use hyphens (-).\n" +
+                "- NEVER merge words with symbols.\n" +
+                "\n" +
+                "TEXT RULES:\n" +
+                "- Use lowercase only.\n" +
+                "- Use natural space-separated phrases.\n" +
+                "- Use correct English grammar (e.g., \"women's shoes\", not \"women s shoes\").\n" +
+                "- Use plural product forms (e.g., shoes, not shoe).\n" +
+                "\n" +
+                "WORD ORDER:\n" +
+                "- Brand MUST come first.\n" +
+                "- Correct format: brand + modifier + product\n" +
+                "  (e.g., \"nike running shoes\", \"nike women's shoes\")\n" +
+                "\n" +
+                "BRAND RULES:\n" +
+                "- Keep brand/model exactly as-is.\n" +
+                "- Include brand in EVERY keyword.\n" +
+                "- Do NOT introduce other brands.\n" +
+                "\n" +
+                "CATEGORY RULES:\n" +
+                "- Stay within the same product category only.\n" +
+                "- Do NOT expand beyond the original product type.\n" +
+                "\n" +
+                "KEYWORD QUALITY:\n" +
+                "- Use common Amazon search terms.\n" +
+                "- Include high-intent modifiers (running, training, walking).\n" +
+                "- Allow men's, women's, kids.\n" +
+                "- Do NOT use weak modifiers (durable, best, cheap).\n" +
+                "\n" +
+                "LANGUAGE:\n" +
+                "- English ONLY.\n" +
+                "- No mixed languages.\n" +
+                "\n" +
+                "FINAL CHECK:\n" +
+                "- If output contains hyphens, missing spaces after commas, or broken grammar -> regenerate."
             ),
             OllamaChatService.Message.user(q)
         );
 
         String out = ollama.chat(msgs, new OllamaChatService.Options(0.0, 0.9, 32));
         out = sanitizeSingleLine(out);
+        out = postProcessOllamaKeywordLine(out);
         if (out.isBlank()) return q;
         if (containsHangulOrCjk(out)) return q;
         return out;
@@ -463,5 +509,25 @@ public class AmazonProductService {
             if (!t.isEmpty()) return t;
         }
         return "";
+    }
+
+    private static String postProcessOllamaKeywordLine(String output) {
+        if (output == null) return "";
+        String out = output;
+
+        // 1. 하이픈 -> 공백
+        out = out.replace("-", " ");
+
+        // 2. women s -> women's (same for men)
+        out = out.replaceAll("\\bwomen s\\b", "women's");
+        out = out.replaceAll("\\bmen s\\b", "men's");
+
+        // 3. 콤마 뒤 공백 보정
+        out = out.replaceAll(",\\s*", ", ");
+
+        // 4. 중복 공백 제거
+        out = out.replaceAll("\\s+", " ").trim();
+
+        return out;
     }
 }

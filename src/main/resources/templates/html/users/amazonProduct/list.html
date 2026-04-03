@@ -64,11 +64,12 @@
             <button class="btn-action btn-action--search" type="submit">검색</button>
             <a class="btn-action btn-action--reset" th:href="@{/users/amazonProduct/list}">초기화</a>
           </div>
+
+          <div class="amazon-searchbar-hint muted" th:if="${showQueryUsedHint}">
+            번역/동의어: <span th:text="${queryUsed}">queryUsed</span>
+          </div>
         </form>
 
-        <p class="muted" th:if="${q != null and !q.isBlank() and queryUsed != null and queryUsed != q}">
-          사용된 검색어(ES): <b th:text="${queryUsed}">queryUsed</b>
-        </p>
       </div>
 
       <div class="pager" th:if="${totalPages != null and totalPages > 0}">

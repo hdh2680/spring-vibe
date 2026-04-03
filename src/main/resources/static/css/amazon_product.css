@@ -112,6 +112,13 @@
   align-items: end;
 }
 
+.amazon-searchbar-hint {
+  grid-column: 1 / 2;
+  grid-row: 2;
+  align-self: start;
+  margin-top: 6px;
+}
+
 .amazon-searchbar .field {
   margin: 0;
 }
