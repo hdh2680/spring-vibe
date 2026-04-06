@@ -20,7 +20,6 @@ import springVibe.dev.users.amazonProduct.repository.AmazonCategoryRepository;
 import springVibe.dev.users.amazonProduct.repository.AmazonProductRepository;
 import springVibe.dev.users.amazonProduct.repository.AmazonProductRepository.AmazonProductCard;
 import springVibe.dev.users.amazonProduct.search.AmazonProductDocument;
-import springVibe.dev.users.chat.service.OllamaChatService;
 import springVibe.system.exception.BaseException;
 
 import java.util.*;
@@ -33,20 +32,20 @@ public class AmazonProductService {
     private final AmazonCategoryRepository categoryRepository;
     private final AmazonProductElasticsearchProperties esProps;
     private final ObjectProvider<ElasticsearchOperations> operationsProvider;
-    private final ObjectProvider<OllamaChatService> ollamaProvider;
+    private final AmazonProductLlmKeywordCacheService llmKeywordCacheService;
 
     public AmazonProductService(
         AmazonProductRepository productRepository,
         AmazonCategoryRepository categoryRepository,
         AmazonProductElasticsearchProperties esProps,
         ObjectProvider<ElasticsearchOperations> operationsProvider,
-        ObjectProvider<OllamaChatService> ollamaProvider
+        AmazonProductLlmKeywordCacheService llmKeywordCacheService
     ) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
         this.esProps = esProps;
         this.operationsProvider = operationsProvider;
-        this.ollamaProvider = ollamaProvider;
+        this.llmKeywordCacheService = llmKeywordCacheService;
     }
 
     public enum SortKey {
@@ -123,7 +122,15 @@ public class AmazonProductService {
 
             ensureIndex(operations);
 
-            String queryUsed = maybeTranslateQueryToEnglish(query);
+            String queryUsed;
+            try {
+                queryUsed = maybeTranslateQueryToEnglish(query);
+            } catch (Exception llmEx) {
+                // Keep search usable even if LLM/Redis has issues.
+                log.warn("AmazonProduct LLM translate failed; fallback to original query. qLen={} categoryId={} sort={}",
+                    query == null ? 0 : query.length(), categoryId, safeSort, llmEx);
+                queryUsed = query;
+            }
             List<CategoryOption> categoryOptions = listCategoryOptions();
 
             int fetchLimit = computeEsFetchLimit(safePage, safeSize);
@@ -157,6 +164,8 @@ public class AmazonProductService {
             return new ListResult(total, tookMs, true, esEnabled, query, queryUsed, categoryId, safeSort, categoryOptions, pageItems);
         } catch (Exception e) {
             // Keep the page usable even when ES is down.
+            log.warn("AmazonProduct list(ES) failed; fallback to DB. qLen={} categoryId={} sort={} page={} size={}",
+                query == null ? 0 : query.length(), categoryId, safeSort, safePage, safeSize, e);
             return listFromDb(query, categoryId, safeSort, safePage, safeSize);
         }
     }
@@ -193,11 +202,39 @@ public class AmazonProductService {
         int limit
     ) {
         int safeLimit = Math.min(Math.max(limit, 1), 20_000);
+        List<String> parsed = splitCommaKeywords(queryUsed, 8);
+        final List<String> keywords =
+            !parsed.isEmpty()
+                ? parsed
+                : (queryUsed != null && !queryUsed.isBlank() ? List.of(queryUsed.trim()) : List.of());
         var q = NativeQuery.builder()
-            .withQuery(qb -> qb.match(m -> m.field("title").query(queryUsed)))
+            .withQuery(qb -> qb.bool(b -> {
+                for (String kw : keywords) {
+                    if (kw == null || kw.isBlank()) continue;
+                    b.should(sq -> sq.match(m -> m.field("title").query(kw)));
+                }
+                b.minimumShouldMatch("1");
+                return b;
+            }))
             .withPageable(PageRequest.of(0, safeLimit))
             .build();
         return operations.search(q, AmazonProductDocument.class);
+    }
+
+    private static List<String> splitCommaKeywords(String line, int max) {
+        if (line == null) return List.of();
+        String t = line.trim();
+        if (t.isEmpty()) return List.of();
+        String[] parts = t.split(",");
+        List<String> out = new ArrayList<>();
+        for (String p : parts) {
+            if (p == null) continue;
+            String x = p.trim();
+            if (x.isEmpty()) continue;
+            out.add(x);
+            if (out.size() >= Math.max(1, max)) break;
+        }
+        return out;
     }
 
     private static int computeEsFetchLimit(int page, int size) {
@@ -418,74 +455,11 @@ public class AmazonProductService {
         // If query already looks like English-ish, don't translate.
         if (!containsHangul(q)) return q;
 
-        OllamaChatService ollama = ollamaProvider.getIfAvailable();
-        if (ollama == null || !ollama.isHealthy()) {
-            return q;
-        }
-
-        List<OllamaChatService.Message> msgs = List.of(
-            OllamaChatService.Message.system(
-                "You are an Amazon search keyword generator.\n" +
-                "\n" +
-                "If the input is Korean:\n" +
-                "- Translate it into natural English product terms.\n" +
-                "\n" +
-                "If the input is English:\n" +
-                "- Normalize spelling.\n" +
-                "\n" +
-                "Generate Amazon search keywords.\n" +
-                "\n" +
-                "STRICT OUTPUT FORMAT:\n" +
-                "- Output ONLY one line.\n" +
-                "- Format EXACTLY like this:\n" +
-                "  keyword1, keyword2, keyword3, keyword4\n" +
-                "- Each keyword MUST be separated by \", \" (comma + space).\n" +
-                "- NEVER omit the space after commas.\n" +
-                "- NEVER use hyphens (-).\n" +
-                "- NEVER merge words with symbols.\n" +
-                "\n" +
-                "TEXT RULES:\n" +
-                "- Use lowercase only.\n" +
-                "- Use natural space-separated phrases.\n" +
-                "- Use correct English grammar (e.g., \"women's shoes\", not \"women s shoes\").\n" +
-                "- Use plural product forms (e.g., shoes, not shoe).\n" +
-                "\n" +
-                "WORD ORDER:\n" +
-                "- Brand MUST come first.\n" +
-                "- Correct format: brand + modifier + product\n" +
-                "  (e.g., \"nike running shoes\", \"nike women's shoes\")\n" +
-                "\n" +
-                "BRAND RULES:\n" +
-                "- Keep brand/model exactly as-is.\n" +
-                "- Include brand in EVERY keyword.\n" +
-                "- Do NOT introduce other brands.\n" +
-                "\n" +
-                "CATEGORY RULES:\n" +
-                "- Stay within the same product category only.\n" +
-                "- Do NOT expand beyond the original product type.\n" +
-                "\n" +
-                "KEYWORD QUALITY:\n" +
-                "- Use common Amazon search terms.\n" +
-                "- Include high-intent modifiers (running, training, walking).\n" +
-                "- Allow men's, women's, kids.\n" +
-                "- Do NOT use weak modifiers (durable, best, cheap).\n" +
-                "\n" +
-                "LANGUAGE:\n" +
-                "- English ONLY.\n" +
-                "- No mixed languages.\n" +
-                "\n" +
-                "FINAL CHECK:\n" +
-                "- If output contains hyphens, missing spaces after commas, or broken grammar -> regenerate."
-            ),
-            OllamaChatService.Message.user(q)
-        );
-
-        String out = ollama.chat(msgs, new OllamaChatService.Options(0.0, 0.9, 32));
-        out = sanitizeSingleLine(out);
-        out = postProcessOllamaKeywordLine(out);
-        if (out.isBlank()) return q;
-        if (containsHangulOrCjk(out)) return q;
-        return out;
+        // Call @Cacheable method through another bean, so caching interception works.
+        String translated = llmKeywordCacheService.translateHangulQueryToEnglishKeywordsCached(q);
+        if (translated == null || translated.isBlank()) return q;
+        if (containsHangulOrCjk(translated)) return q;
+        return translated;
     }
 
     private static boolean containsHangul(String s) {

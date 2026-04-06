@@ -136,6 +136,23 @@ curl http://localhost:9200
 Amazon Product 도메인의 상세 요구사항/흐름은 아래 문서를 참조한다.
 - `/docs/PRD-amazonProduct.md`
 
+#### Redis (Local Run)
+Amazon Product 검색에서 한글 검색어를 LLM(Ollama)로 번역/확장할 때, 동일 검색어의 LLM 결과를 Redis에 캐싱한다.
+
+Run:
+```powershell
+docker compose -f docker-compose.redis.yml up -d
+```
+
+Stop:
+```powershell
+docker compose -f docker-compose.redis.yml down
+```
+
+App config:
+- default: `localhost:6379`
+- env: `REDIS_HOST`, `REDIS_PORT`
+
 
 ## 결정 사항(Decision Log)
 - 화면 템플릿 경로 표준화: `templates/html/**` 하위로 통일 (구 `templates/admin/**` 사용 금지)

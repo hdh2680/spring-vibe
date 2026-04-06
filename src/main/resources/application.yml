@@ -5,6 +5,12 @@ spring:
   application:
     name: springVibe
 
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 200ms
+
   datasource:
     url: jdbc:mysql://localhost:3306/springVibe?useUnicode=true&characterEncoding=utf8&characterSetResults=utf8mb4&connectionCollation=utf8mb4_unicode_ci&serverTimezone=Asia/Seoul
     username: root

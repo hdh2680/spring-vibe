@@ -24,6 +24,7 @@ public class SecurityConfig {
                 .requestMatchers("/", "/login", "/error", "/favicon.ico", "/intro").permitAll()
                 .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
                 .requestMatchers("/static/**").permitAll()
+                .requestMatchers("/users/amazonProduct/cache/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form

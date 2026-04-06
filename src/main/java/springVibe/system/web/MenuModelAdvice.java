@@ -33,6 +33,17 @@ public class MenuModelAdvice {
             && !(authentication instanceof AnonymousAuthenticationToken);
     }
 
+    @ModelAttribute("isAdmin")
+    public boolean isAdmin(Authentication authentication) {
+        if (authentication == null
+            || !authentication.isAuthenticated()
+            || authentication instanceof AnonymousAuthenticationToken) {
+            return false;
+        }
+        return authentication.getAuthorities() != null
+            && authentication.getAuthorities().stream().anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()));
+    }
+
     @ModelAttribute("currentPath")
     public String currentPath(HttpServletRequest request) {
         return request == null ? null : request.getRequestURI();

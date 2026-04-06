@@ -6,6 +6,13 @@
       <h3>Amazon Products</h3>
     </div>
     <div>
+      <button
+        th:if="${isAdmin}"
+        id="apCacheOpen"
+        class="btn btn-inline"
+        type="button"
+        title="LLM 번역/키워드 캐시 관리"
+      >캐싱관리</button>
       <form th:if="${esEnabled}" th:action="@{/users/amazonProduct/reindex}" method="post" style="display:inline;">
         <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
         <button class="btn btn-inline" type="submit">ES 재색인</button>
@@ -139,4 +146,227 @@
         </article>
       </div>
   </div>
+<!-- Cache admin modal (ROLE_ADMIN only) -->
+<div th:if="${isAdmin}" id="apCacheBackdrop" class="ap-cache-backdrop" hidden>
+  <div class="ap-cache-modal" role="dialog" aria-modal="true" aria-label="Amazon Product 캐시 관리">
+    <div class="ap-cache-head">
+      <div>
+        <div class="ap-cache-title">캐시 관리</div>
+        <div class="muted" style="font-size: 12px; margin-top: 2px;">Amazon Product LLM 키워드 캐시</div>
+      </div>
+      <div class="ap-cache-actions">
+        <button id="apCacheClearAll" class="btn btn-inline" type="button">전체 비우기</button>
+        <button id="apCacheClose" class="btn btn-inline" type="button">닫기</button>
+      </div>
+    </div>
+
+    <div class="ap-cache-body">
+      <div class="ap-cache-toolbar">
+        <label class="field" style="margin: 0; min-width: 240px;">
+          <div class="label">필터(contains)</div>
+          <input id="apCacheContains" class="input" type="text" placeholder="예: 야구모자 / v1:" autocomplete="off" />
+        </label>
+        <label class="field" style="margin: 0;">
+          <div class="label">페이지 크기</div>
+          <select id="apCacheSize" class="select">
+            <option value="10">10</option>
+            <option value="25" selected>25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+        </label>
+        <div class="amazon-searchbar-actions" style="padding: 0; justify-content: flex-start;">
+          <button id="apCacheRefresh" class="btn-action btn-action--search" type="button">새로고침</button>
+          <button id="apCacheReset" class="btn-action btn-action--reset" type="button">초기화</button>
+        </div>
+        <div id="apCacheMeta" class="muted" style="font-size: 12px; margin-left: auto;">-</div>
+      </div>
+
+      <div class="ap-cache-tablewrap" aria-label="cache table">
+        <table class="ap-cache-table">
+          <thead>
+            <tr>
+              <th style="width: 220px;">검색어</th>
+              <th style="width: 70px;">TTL</th>
+              <th>값(미리보기)</th>
+              <th style="width: 90px;">액션</th>
+            </tr>
+          </thead>
+          <tbody id="apCacheBody">
+            <tr><td colspan="4" class="muted">로딩 전</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="ap-cache-foot">
+      <div class="muted" style="font-size: 12px;">
+        캐시는 성능 최적화용입니다. 필요 시 개별 삭제/전체 비우기를 사용할 수 있습니다.
+      </div>
+      <div class="ap-cache-pager">
+        <button id="apCachePrev" class="btn-action btn-action--reset" type="button">이전</button>
+        <div class="muted"><span id="apCachePage">1</span> / <span id="apCacheTotalPages">1</span></div>
+        <button id="apCacheNext" class="btn-action btn-action--reset" type="button">다음</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script th:if="${isAdmin}">
+  (() => {
+    const openBtn = document.getElementById('apCacheOpen');
+    const backdrop = document.getElementById('apCacheBackdrop');
+    const closeBtn = document.getElementById('apCacheClose');
+    const clearAllBtn = document.getElementById('apCacheClearAll');
+    const refreshBtn = document.getElementById('apCacheRefresh');
+    const resetBtn = document.getElementById('apCacheReset');
+    const containsEl = document.getElementById('apCacheContains');
+    const sizeEl = document.getElementById('apCacheSize');
+    const metaEl = document.getElementById('apCacheMeta');
+    const bodyEl = document.getElementById('apCacheBody');
+    const prevBtn = document.getElementById('apCachePrev');
+    const nextBtn = document.getElementById('apCacheNext');
+    const pageEl = document.getElementById('apCachePage');
+    const totalPagesEl = document.getElementById('apCacheTotalPages');
+
+    const listUrl = '/users/amazonProduct/cache/llm-keywords';
+    const evictUrl = '/users/amazonProduct/cache/llm-keywords/evict';
+    const clearUrl = '/users/amazonProduct/cache/llm-keywords/clear';
+
+    if (!openBtn || !backdrop || !closeBtn || !refreshBtn || !bodyEl || !window.fetch) return;
+
+    let state = { page: 0, size: 25, contains: '' };
+
+    function setOpen(open) {
+      backdrop.hidden = !open;
+      document.body.style.overflow = open ? 'hidden' : '';
+      if (open) load(0);
+    }
+
+    openBtn.addEventListener('click', () => setOpen(true));
+    closeBtn.addEventListener('click', () => setOpen(false));
+    backdrop.addEventListener('click', (e) => { if (e.target === backdrop) setOpen(false); });
+    document.addEventListener('keydown', (e) => { if (!backdrop.hidden && e && e.key === 'Escape') setOpen(false); });
+
+    function esc(s) {
+      return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    async function postForm(url, params) {
+      const body = new URLSearchParams(params || {});
+      const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' }, body });
+      const json = await res.json().catch(() => null);
+      return { res, json };
+    }
+
+    async function load(page) {
+      state.size = Number(sizeEl && sizeEl.value ? sizeEl.value : state.size);
+      state.contains = String(containsEl && containsEl.value ? containsEl.value : '').trim();
+      state.page = Math.max(0, Number(page ?? state.page) || 0);
+
+      bodyEl.innerHTML = '<tr><td colspan="4" class="muted">로딩...</td></tr>';
+      if (metaEl) metaEl.textContent = 'loading...';
+
+      const sp = new URLSearchParams();
+      sp.set('page', String(state.page));
+      sp.set('size', String(state.size));
+      if (state.contains) sp.set('contains', state.contains);
+
+      const res = await fetch(`${listUrl}?${sp.toString()}`, { headers: { 'Accept': 'application/json' } });
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !json) {
+        bodyEl.innerHTML = `<tr><td colspan="4" class="muted">조회 실패 (${res.status})</td></tr>`;
+        if (metaEl) metaEl.textContent = 'error';
+        return;
+      }
+
+      const total = Number(json.total ?? 0);
+      const size = Number(json.size ?? state.size);
+      const pageNum = Number(json.page ?? state.page);
+      const totalPages = total <= 0 ? 1 : Math.max(1, Math.ceil(total / Math.max(1, size)));
+
+      state.page = pageNum;
+      if (pageEl) pageEl.textContent = String(pageNum + 1);
+      if (totalPagesEl) totalPagesEl.textContent = String(totalPages);
+      if (metaEl) metaEl.textContent = `total: ${total}`;
+
+      if (prevBtn) prevBtn.disabled = pageNum <= 0;
+      if (nextBtn) nextBtn.disabled = pageNum + 1 >= totalPages;
+
+      const items = Array.isArray(json.items) ? json.items : [];
+      if (items.length === 0) {
+        bodyEl.innerHTML = '<tr><td colspan="4" class="muted">캐시가 없습니다.</td></tr>';
+        return;
+      }
+
+      bodyEl.innerHTML = items.map(it => {
+        const cacheKey = String(it.cacheKey ?? '');
+        const query = String(it.query ?? '');
+        const ttl = String(it.ttlHuman ?? (it.ttlSeconds != null ? it.ttlSeconds + 's' : ''));
+        const v = String(it.valuePreview ?? it.value ?? '');
+        return `
+          <tr>
+            <td>
+              <div style="font-weight:800;">${esc(query || '(unknown)')}</div>
+              <div class="ap-cache-k">${esc(cacheKey)}</div>
+            </td>
+            <td class="ap-cache-k">${esc(ttl)}</td>
+            <td class="ap-cache-v">${esc(v)}</td>
+            <td>
+              <button class="btn btn-inline" type="button" data-evict="${esc(cacheKey)}">삭제</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    refreshBtn.addEventListener('click', () => load(state.page));
+    if (resetBtn) {
+      resetBtn.addEventListener('click', () => {
+        if (containsEl) containsEl.value = '';
+        if (sizeEl) sizeEl.value = '25';
+        state = { page: 0, size: 25, contains: '' };
+        load(0);
+      });
+    }
+    if (prevBtn) prevBtn.addEventListener('click', () => load(state.page - 1));
+    if (nextBtn) nextBtn.addEventListener('click', () => load(state.page + 1));
+
+    bodyEl.addEventListener('click', async (e) => {
+      const btn = e && e.target ? e.target.closest('button[data-evict]') : null;
+      if (!btn) return;
+      const key = btn.getAttribute('data-evict');
+      if (!key) return;
+      const ok = confirm(`캐시를 삭제할까요?\n\n${key}`);
+      if (!ok) return;
+      btn.disabled = true;
+      try {
+        const { res } = await postForm(evictUrl, { cacheKey: key });
+        if (!res.ok) alert(`삭제 실패 (${res.status})`);
+        await load(state.page);
+      } catch (err) {
+        alert(err && err.message ? err.message : '삭제 중 오류가 발생했습니다.');
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    if (clearAllBtn) {
+      clearAllBtn.addEventListener('click', async () => {
+        const ok = confirm('캐시 전체를 비울까요?');
+        if (!ok) return;
+        clearAllBtn.disabled = true;
+        try {
+          const { res } = await postForm(clearUrl, {});
+          if (!res.ok) alert(`전체 비우기 실패 (${res.status})`);
+          await load(0);
+        } catch (err) {
+          alert(err && err.message ? err.message : '요청 중 오류가 발생했습니다.');
+        } finally {
+          clearAllBtn.disabled = false;
+        }
+      });
+    }
+  })();
+</script>
 </section>
