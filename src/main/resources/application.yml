@@ -72,6 +72,10 @@ logging:
 app:
   storage:
     attachments-dir: ${APP_STORAGE_ATTACHMENTS_DIR:C:/workspace/data/attachments}
+  # Frontend dev server origin (used to route `/app/**` menu links to Vite during local development)
+  # Example: APP_FRONTEND_DEV_ORIGIN=http://localhost:5173
+  frontend:
+    dev-origin: ${APP_FRONTEND_DEV_ORIGIN:}
 
 # External integrations
 # NOTE: Do not commit real secrets. Provide via env var (recommended): YOUTUBE_API_KEY

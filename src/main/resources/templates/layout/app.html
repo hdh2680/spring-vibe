@@ -34,7 +34,7 @@
               >
                 <a
                   class="sv-nav__link"
-                  th:href="${(m.path != null) ? m.path : '#'}"
+                  th:href="${(m.path != null) ? ((frontendDevOrigin != null and !#strings.isEmpty(frontendDevOrigin) and #strings.startsWith(m.path, '/app')) ? frontendDevOrigin + m.path : m.path) : '#'}"
                   th:attr="onclick=${(m.path == null) ? 'return false;' : null}, aria-haspopup=${(!#lists.isEmpty(m.children)) ? 'true' : null}"
                   th:classappend="${(m.path != null and currentPath != null and (currentPath.startsWith(m.path) or (#strings.endsWith(m.path, '/list') and currentPath.startsWith(m.path.substring(0, m.path.length() - 5))))) ? ' is-active' : ''}"
                 >
@@ -53,7 +53,7 @@
                         <th:block th:if="${#lists.isEmpty(c.children)}">
                           <a
                             class="sv-dd__a"
-                            th:href="${(c.path != null) ? c.path : '#'}"
+                            th:href="${(c.path != null) ? ((frontendDevOrigin != null and !#strings.isEmpty(frontendDevOrigin) and #strings.startsWith(c.path, '/app')) ? frontendDevOrigin + c.path : c.path) : '#'}"
                             th:attr="onclick=${(c.path == null) ? 'return false;' : null}"
                             th:classappend="${(c.path != null and currentPath != null and (currentPath.startsWith(c.path) or (#strings.endsWith(c.path, '/list') and currentPath.startsWith(c.path.substring(0, c.path.length() - 5))))) ? ' is-active' : ''}"
                             role="listitem"
@@ -68,7 +68,7 @@
                             <a
                               class="sv-dd__a sv-dd__a--sub"
                               th:each="g : ${c.children}"
-                              th:href="${(g.path != null) ? g.path : '#'}"
+                              th:href="${(g.path != null) ? ((frontendDevOrigin != null and !#strings.isEmpty(frontendDevOrigin) and #strings.startsWith(g.path, '/app')) ? frontendDevOrigin + g.path : g.path) : '#'}"
                               th:attr="onclick=${(g.path == null) ? 'return false;' : null}"
                               th:classappend="${(g.path != null and currentPath != null and (currentPath.startsWith(g.path) or (#strings.endsWith(g.path, '/list') and currentPath.startsWith(g.path.substring(0, g.path.length() - 5))))) ? ' is-active' : ''}"
                             >
@@ -82,16 +82,6 @@
                 </div>
               </li>
 
-              <!-- Public fallback (guest): keep a minimal nav so the header doesn't look broken. -->
-              <li class="sv-nav__item" th:if="${#lists.isEmpty(leftMenus)}">
-                <a
-                  class="sv-nav__link"
-                  th:href="@{/intro}"
-                  th:classappend="${((activeMenu == '/intro') or (currentPath == '/intro')) ? ' is-active' : ''}"
-                >
-                  Developer
-                </a>
-              </li>
             </ul>
           </nav>
 

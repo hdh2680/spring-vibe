@@ -204,3 +204,18 @@ class ErrorResponse {
 <p th:text="'Hello, ' + ${name} + '!'"></p>
 </body>
 </html>
+
+---
+
+## 6. Frontend 병행 운영 (26.04.07)
+
+기존 Thymeleaf UI는 유지하고, 앞으로 추가되는 메뉴는 React + TypeScript로 `/app/**`에 병행 운영한다.
+
+- Frontend 소스: 리포지토리 루트의 `frontend/` (Vite 기반 React+TS)
+- 라우팅: 운영에서 `/app/**`는 SPA로 동작 (딥링크/새로고침 404 방지를 위해 `/app/index.html` forward 필요)
+- 실행 구조:
+  - 개발: Vite dev server(`:5173`)에서 화면 개발, Spring(`:8080`)은 `/api/**` 제공 (Vite 프록시 권장)
+  - 운영: React 빌드 산출물(`dist`)을 Spring 정적 리소스(`static/app/`)로 포함해 `:8080/app/`에서 서빙
+- 레이아웃/CSS:
+  - 화면 레이아웃은 React 컴포넌트로 별도 구성(Thymeleaf `layout/app`을 복제하지 않음)
+  - CSS는 기존 `src/main/resources/static/css/**`를 React에서도 로드해 공유하는 방식을 우선 적용

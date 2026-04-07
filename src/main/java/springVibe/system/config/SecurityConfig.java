@@ -22,6 +22,7 @@ public class SecurityConfig {
                 .requestMatchers("/actuator/**", "/swagger-ui/**", "/v3/api-docs/**", "/api-docs/**").permitAll()
                 .requestMatchers("/api/**").permitAll()
                 .requestMatchers("/", "/login", "/error", "/favicon.ico", "/intro").permitAll()
+                .requestMatchers("/app/**").permitAll()
                 .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
                 .requestMatchers("/static/**").permitAll()
                 .requestMatchers("/users/amazonProduct/cache/**").hasRole("ADMIN")

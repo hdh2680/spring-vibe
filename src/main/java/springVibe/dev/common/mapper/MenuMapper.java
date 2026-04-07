@@ -10,6 +10,8 @@ import java.util.List;
 public interface MenuMapper {
     List<Menu> findAccessibleMenusByUsername(@Param("username") String username);
 
+    List<Menu> findAllEnabledMenus();
+
     List<Menu> findEnabledMenusByIds(@Param("ids") List<Long> ids);
 }
 

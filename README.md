@@ -19,8 +19,9 @@
 - **Backend**: Java 17, Spring Boot 3.x
 - **ORM**: Spring Data JPA (Entity 관리), MyBatis (복잡한 쿼리/통계)
 - **Database**: MySQL 8.0+
-- **Frontend**: Thymeleaf, JavaScript, CSS3
+- **Frontend**: Thymeleaf (legacy UI), React + TypeScript (new menus under `/app/**`), Vite
 - **DevOps/Monitoring**: Spring Boot Actuator, Swagger UI (OpenAPI 3)
+- (26.04.07) UI 병행 전환: `frontend/`(React+TS, Vite)로 신규 메뉴를 `/app/**`에 개발 (가이드: `docs/etc/FRONTEND_REACT_TS_VITE.md`)
 - **빌드 도구**: Maven Wrapper (`mvnw`) 지원
 
 ---

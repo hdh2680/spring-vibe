@@ -22,6 +22,21 @@
         ORDER BY COALESCE(m.parent_id, m.id), m.sort_order, m.id
     </select>
 
+    <select id="findAllEnabledMenus" resultType="springVibe.dev.common.domain.Menu">
+        SELECT
+            m.id,
+            m.parent_id,
+            m.menu_key,
+            m.menu_name,
+            m.path,
+            m.icon,
+            m.sort_order,
+            m.is_enabled
+        FROM menus m
+        WHERE m.is_enabled = 1
+        ORDER BY COALESCE(m.parent_id, m.id), m.sort_order, m.id
+    </select>
+
     <select id="findEnabledMenusByIds" resultType="springVibe.dev.common.domain.Menu">
         SELECT
             m.id,
