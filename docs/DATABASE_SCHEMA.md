@@ -9,6 +9,7 @@
 
 - `login_logs`
 - `menus`
+- `boards`
 - `role_menus`
 - `roles`
 - `user_roles`
@@ -58,6 +59,26 @@ CREATE TABLE `menus` (
   KEY `ix_menus_parent_sort` (`parent_id`,`sort_order`),
   CONSTRAINT `fk_menus_parent` FOREIGN KEY (`parent_id`) REFERENCES `menus` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+```
+
+## `boards`
+
+```sql
+CREATE TABLE `boards` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '게시판 ID',
+  `board_key` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '게시판 키(URL/메뉴용, 유니크)',
+  `name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '게시판 이름',
+  `description` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '게시판 설명',
+  `is_enabled` tinyint(1) NOT NULL DEFAULT '1' COMMENT '사용 여부',
+  `is_public_read` tinyint(1) NOT NULL DEFAULT '1' COMMENT '비회원 읽기 허용 여부',
+  `is_public_write` tinyint(1) NOT NULL DEFAULT '0' COMMENT '비회원 쓰기 허용 여부',
+  `sort_order` int NOT NULL DEFAULT '0' COMMENT '정렬 순서',
+  `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '생성일시',
+  `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '수정일시',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_boards_board_key` (`board_key`),
+  KEY `ix_boards_enabled_sort` (`is_enabled`,`sort_order`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='게시판 관리'
 ```
 
 ## `role_menus`

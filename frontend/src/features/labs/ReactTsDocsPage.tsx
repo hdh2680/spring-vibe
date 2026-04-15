@@ -126,6 +126,7 @@ export default function ReactTsDocsPage() {
             </p>
           ) : null}
 
+          {/* NOTE: doc.html must be sanitized server-side to prevent XSS. */}
           <div className="markdown" dangerouslySetInnerHTML={{ __html: doc?.html ?? "" }} />
         </div>
       </section>

@@ -1,13 +1,10 @@
-package springVibe.dev.common.api;
+package springVibe.dev.reactLab.service;
 
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import springVibe.dev.users.devSearch.service.MarkdownRenderService;
 import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import springVibe.dev.users.devSearch.service.MarkdownRenderService;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -18,41 +15,42 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Expose selected docs/etc markdown files for the React /app reader page.
+ * Reads markdown docs from docs/etc and renders to safe HTML for the React docs viewer page.
  *
- * Security note: file access is whitelist-only (no path traversal).
+ * Security note: access is whitelist-only (no path traversal).
  */
-@RestController
-@RequestMapping("/api/docs/etc")
-public class DocsEtcApiController {
+@Service
+public class DocsEtcService {
     private final MarkdownRenderService markdownRenderService;
 
-    public DocsEtcApiController(MarkdownRenderService markdownRenderService) {
+    public DocsEtcService(MarkdownRenderService markdownRenderService) {
         this.markdownRenderService = markdownRenderService;
     }
 
     public record DocItem(String id, String title) {}
 
-    public record DocResponse(String id, String title, String markdown, String html) {}
+    public record Doc(String id, String title, String markdown, String html) {}
 
     private static final Map<String, DocDef> DOCS = new LinkedHashMap<>() {{
         put("react-vite-guide", new DocDef("Frontend (React + TypeScript, Vite) 병행 운영 가이드", "FRONTEND_REACT_TS_VITE.md"));
         put("app-runtime-flow", new DocDef("Frontend `/app` 구현 관점 실행 흐름", "FRONTEND_APP_SCREEN_FLOW.md"));
         put("app-files", new DocDef("Frontend(`/app`) 폴더 구조와 파일 역할", "FRONTEND_APP_FILES.md"));
         put("app-dev-origin", new DocDef("로컬 개발: Spring 메뉴에서 `/app/**`를 Vite(5173)로 열기", "FRONTEND_DEV_ORIGIN.md"));
+        put("react-ts-docs-reader", new DocDef("React TS 문서 뷰어(ReactTsDocsPage.tsx) 소스 설명", "FRONTEND_REACT_TS_DOCS_READER.md"));
+        put("react-hooks-top5", new DocDef("React Hooks Top 5 (useState/useEffect/useRef/useContext/useReducer) + 예제", "FRONTEND_REACT_HOOKS_TOP5.md"));
+        put("es6-for-react", new DocDef("React를 위한 ES6: 자주 막히는 문법만 정리", "FRONTEND_ES6_FOR_REACT.md"));
+        put("react-fundamentals", new DocDef("React 핵심 정리: 렌더링, state/props, hooks, 폼", "FRONTEND_REACT_FUNDAMENTALS.md"));
     }};
 
     private record DocDef(String title, String fileName) {}
 
-    @GetMapping
     public List<DocItem> list() {
         return DOCS.entrySet().stream()
             .map(e -> new DocItem(e.getKey(), e.getValue().title))
             .toList();
     }
 
-    @GetMapping("/{id}")
-    public DocResponse get(@PathVariable String id) {
+    public Doc get(String id) {
         DocDef def = DOCS.get(id);
         if (def == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "문서를 찾을 수 없습니다: " + id);
@@ -60,7 +58,7 @@ public class DocsEtcApiController {
 
         String md = readDocsEtcUtf8(def.fileName);
         String html = markdownRenderService.renderToSafeHtml(md);
-        return new DocResponse(id, def.title, md, html);
+        return new Doc(id, def.title, md, html);
     }
 
     private static String readDocsEtcUtf8(String fileName) {

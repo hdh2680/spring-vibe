@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Boards (Design) | spring-vibe</title>
+    <!-- Match the real backend templates tone (layout/app.html + layout_app.css components). -->
+    <link rel="stylesheet" href="/css/brand.css" />
+    <link rel="stylesheet" href="/css/layout_app.css" />
+    <link rel="stylesheet" href="/css/boards.css" />
+  </head>
+
+  <body>
+    <div class="layout">
+      <header class="sv-header" role="banner">
+        <div class="sv-header__inner">
+          <a class="sv-brand" href="/design/index.html" aria-label="Design gallery">
+            <span class="sv-mark" aria-hidden="true"></span>
+            <span class="sv-brand__t">Spring-vibe</span>
+          </a>
+
+          <nav class="sv-nav" aria-label="Menu">
+            <ul class="sv-nav__list" role="list">
+              <li class="sv-nav__item">
+                <a class="sv-nav__link is-active" href="#">Boards</a>
+              </li>
+              <li class="sv-nav__item">
+                <a class="sv-nav__link" href="#">Posts (later)</a>
+              </li>
+            </ul>
+          </nav>
+
+          <div class="sv-auth" aria-label="Auth actions">
+            <a class="sv-btn sv-btn--ghost" href="#">Back</a>
+            <button id="bdNew" class="sv-btn sv-btn--pill" type="button">+ 게시판</button>
+          </div>
+        </div>
+      </header>
+
+      <main class="sv-main" aria-label="Content">
+        <section class="content">
+          <section class="design-wrap" aria-label="Boards admin design">
+            <div class="toolbar">
+              <div>
+                <div class="bd-title-row">
+                  <h3 style="margin: 0;">게시판 관리</h3>
+                  <span class="bd-chip" title="React로 붙일 때도 그대로 가져다 쓰기 좋은 구조입니다.">
+                    <span class="dot" aria-hidden="true"></span>
+                    static design
+                  </span>
+                </div>
+                <p class="muted" style="margin-top: 6px;">
+                  목표: 목록, 검색, 등록/수정 모달 UI 스켈레톤. (백엔드 템플릿 스타일 기준)
+                </p>
+              </div>
+
+              <div style="display: inline-flex; gap: 10px; align-items: center;">
+                <button class="btn-action btn-action--search" type="button" id="bdNewToolbar">신규</button>
+                <button class="btn-link" type="button" id="bdExport">Export</button>
+                <button class="btn-link" type="button" id="bdBulk">Bulk edit</button>
+              </div>
+            </div>
+
+            <section aria-label="Search, table, pagination" style="margin-top: 12px">
+              <div class="panel panel-inner search-panel">
+                <form class="searchbar" role="search">
+                  <label class="field">
+                    <div class="label">검색어</div>
+                    <input class="input" type="search" name="q" placeholder="게시판 이름, 키로 검색.." />
+                  </label>
+
+                  <label class="field">
+                    <div class="label">사용여부</div>
+                    <select class="select" name="enabled">
+                      <option value="all">전체</option>
+                      <option value="1">사용</option>
+                      <option value="0">중지</option>
+                    </select>
+                  </label>
+
+                  <div class="searchbar-actions">
+                    <button class="btn-action btn-action--search" type="button">검색</button>
+                    <button class="btn-action btn-action--reset" type="button">초기화</button>
+                  </div>
+                </form>
+              </div>
+
+              <div class="pager" style="margin-top: 12px;">
+                <div class="muted">
+                  페이지: <b>3</b> / <b>7</b>
+                  <span style="opacity:.5">|</span>
+                  페이지당: <b>20</b>
+                </div>
+                <div class="pager-actions">
+                  <a class="btn-link" href="#">이전</a>
+                  <a class="btn-link" href="#">다음</a>
+                </div>
+              </div>
+
+              <div class="panel table-wrap" style="margin-top: 12px;">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th style="width: 80px">ID</th>
+                      <th style="width: 190px">키</th>
+                      <th style="width: 220px">이름</th>
+                      <th>설명</th>
+                      <th style="width: 120px">상태</th>
+                      <th style="width: 140px">정렬</th>
+                      <th style="width: 180px">수정일시</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>1</td>
+                      <td class="muted">notice</td>
+                      <td style="word-break: break-word;">
+                        <a class="action" href="#" data-edit="1">공지사항</a>
+                      </td>
+                      <td class="muted">운영 공지, 점검 안내</td>
+                      <td><span class="tag"><span class="tag-count">ON</span> enabled</span></td>
+                      <td class="muted">0</td>
+                      <td class="muted">2026-04-08 10:12:03</td>
+                    </tr>
+                    <tr>
+                      <td>2</td>
+                      <td class="muted">free</td>
+                      <td style="word-break: break-word;">
+                        <a class="action" href="#" data-edit="2">자유게시판</a>
+                      </td>
+                      <td class="muted">자유롭게 글을 작성하는 공간</td>
+                      <td><span class="tag"><span class="tag-count">ON</span> enabled</span></td>
+                      <td class="muted">10</td>
+                      <td class="muted">2026-04-08 09:01:33</td>
+                    </tr>
+                    <tr>
+                      <td>3</td>
+                      <td class="muted">qna</td>
+                      <td style="word-break: break-word;">
+                        <a class="action" href="#" data-edit="3">Q&amp;A</a>
+                      </td>
+                      <td class="muted">질문/답변 게시판</td>
+                      <td><span class="tag"><span class="tag-count">OFF</span> disabled</span></td>
+                      <td class="muted">20</td>
+                      <td class="muted">2026-04-07 22:40:12</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <!-- Create/Edit modal (design-only) -->
+    <div id="bdModalBackdrop" class="bd-modal-backdrop" hidden>
+      <div class="bd-modal" role="dialog" aria-modal="true" aria-label="Board upsert">
+        <div class="bd-modal-hd">
+          <h3 id="bdModalTitle">게시판 등록</h3>
+          <div style="display: inline-flex; gap: 10px; align-items: center;">
+            <button id="bdClose" class="btn-link" type="button" aria-label="닫기">닫기</button>
+          </div>
+        </div>
+
+        <div class="bd-modal-bd">
+          <div class="bd-grid">
+            <label class="field">
+              <div class="label">boardKey</div>
+              <input id="bdKey" class="input" type="text" placeholder="ex) notice" />
+              <div class="help">URL/메뉴에서 쓰는 유니크 키</div>
+            </label>
+
+            <label class="field">
+              <div class="label">이름</div>
+              <input id="bdName" class="input" type="text" placeholder="ex) 공지사항" />
+              <div class="help">사용자에게 보여줄 이름</div>
+            </label>
+
+            <label class="field span-2">
+              <div class="label">설명</div>
+              <input id="bdDesc" class="input" type="text" placeholder="짧은 설명" />
+            </label>
+
+            <label class="field">
+              <div class="label">사용 여부</div>
+              <select id="bdEnabled" class="select">
+                <option value="1">사용</option>
+                <option value="0">중지</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <div class="label">정렬 순서</div>
+              <input id="bdSort" class="input" type="number" value="0" />
+            </label>
+
+            <label class="field">
+              <div class="label">비회원 읽기</div>
+              <select id="bdPublicRead" class="select">
+                <option value="1">허용</option>
+                <option value="0">비허용</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <div class="label">비회원 쓰기</div>
+              <select id="bdPublicWrite" class="select">
+                <option value="0">비허용</option>
+                <option value="1">허용</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <div class="bd-modal-ft">
+          <div style="display: inline-flex; gap: 10px; align-items: center; justify-content: flex-end; width: 100%;">
+            <button class="btn-action btn-action--search" type="button">저장</button>
+            <button class="btn-action btn-action--danger" type="button">삭제</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (() => {
+        const $ = (id) => document.getElementById(id);
+        const backdrop = $("bdModalBackdrop");
+        const openBtns = [$("bdNew"), $("bdNewToolbar")].filter(Boolean);
+        const closeBtn = $("bdClose");
+
+        const title = $("bdModalTitle");
+        const keyEl = $("bdKey");
+        const nameEl = $("bdName");
+        const descEl = $("bdDesc");
+
+        function open(mode, seed) {
+          title.textContent = mode === "edit" ? "게시판 수정" : "게시판 등록";
+          keyEl.value = (seed && seed.key) || "";
+          nameEl.value = (seed && seed.name) || "";
+          descEl.value = (seed && seed.desc) || "";
+          backdrop.hidden = false;
+          document.body.style.overflow = "hidden";
+          setTimeout(() => keyEl.focus(), 0);
+        }
+
+        function close() {
+          backdrop.hidden = true;
+          document.body.style.overflow = "";
+        }
+
+        openBtns.forEach((btn) => btn.addEventListener("click", () => open("new")));
+        closeBtn.addEventListener("click", () => close());
+        backdrop.addEventListener("click", (e) => {
+          if (e.target === backdrop) close();
+        });
+
+        document.addEventListener("click", (e) => {
+          const t = e.target;
+          if (!(t instanceof Element)) return;
+          const a = t.closest && t.closest("a.action[data-edit]");
+          if (!a) return;
+          e.preventDefault();
+          const id = a.getAttribute("data-edit");
+          open("edit", {
+            key: id === "1" ? "notice" : id === "2" ? "free" : "qna",
+            name: a.textContent || "",
+            desc: id === "1" ? "운영 공지, 점검 안내" : id === "2" ? "자유롭게 글을 작성하는 공간" : "질문/답변 게시판"
+          });
+        });
+
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape" && !backdrop.hidden) close();
+        });
+      })();
+    </script>
+  </body>
+</html>

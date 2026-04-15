@@ -2,6 +2,12 @@
 
 이 문서는 “화면이 어떻게 뜨는가” 수준이 아니라, **빌드부터 서빙, Spring forward, React 마운트/라우팅/AppLayout/SvHeader 동작까지** 실제 실행 흐름을 정리합니다.
 
+## 추가 자료: 실행 흐름 다이어그램(이미지)
+
+아래 이미지는 `/app/**` 화면이 뜨는 큰 흐름(브라우저 요청, Spring 정적/forward, React 마운트, 라우팅, 공통 레이아웃, API 호출)을 한 장으로 요약한 것입니다.
+
+![React /app screen flow diagram](/images/docs/react_app_screen_flow.svg)
+
 ---
 
 ## 1. 빌드(Vite) 흐름

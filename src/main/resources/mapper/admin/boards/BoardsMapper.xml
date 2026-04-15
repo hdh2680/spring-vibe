@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="springVibe.dev.admin.boards.mapper.BoardsMapper">
+
+    <sql id="BoardsWhere">
+        <where>
+            <if test="enabled != null">
+                is_enabled = #{enabled}
+            </if>
+            <if test="q != null and q != ''">
+                <if test="enabled != null">AND</if>
+                (
+                    board_key LIKE CONCAT('%', #{q}, '%')
+                    OR name LIKE CONCAT('%', #{q}, '%')
+                    OR description LIKE CONCAT('%', #{q}, '%')
+                )
+            </if>
+        </where>
+    </sql>
+
+    <select id="findAll" resultType="springVibe.dev.admin.boards.domain.Board">
+        SELECT
+            id,
+            board_key,
+            name,
+            description,
+            is_enabled,
+            is_public_read,
+            is_public_write,
+            sort_order,
+            created_at,
+            updated_at
+        FROM boards
+        ORDER BY is_enabled DESC, sort_order ASC, id ASC
+    </select>
+
+    <select id="count" resultType="long">
+        SELECT COUNT(*)
+        FROM boards
+        <include refid="BoardsWhere" />
+    </select>
+
+    <select id="findPage" resultType="springVibe.dev.admin.boards.domain.Board">
+        SELECT
+            id,
+            board_key,
+            name,
+            description,
+            is_enabled,
+            is_public_read,
+            is_public_write,
+            sort_order,
+            created_at,
+            updated_at
+        FROM boards
+        <include refid="BoardsWhere" />
+        ORDER BY is_enabled DESC, sort_order ASC, id ASC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="findAllEnabledPublic" resultType="springVibe.dev.admin.boards.domain.Board">
+        SELECT
+            id,
+            board_key,
+            name,
+            description,
+            is_enabled,
+            is_public_read,
+            is_public_write,
+            sort_order,
+            created_at,
+            updated_at
+        FROM boards
+        WHERE is_enabled = 1
+          AND is_public_read = 1
+        ORDER BY sort_order ASC, id ASC
+    </select>
+
+    <select id="findById" resultType="springVibe.dev.admin.boards.domain.Board">
+        SELECT
+            id,
+            board_key,
+            name,
+            description,
+            is_enabled,
+            is_public_read,
+            is_public_write,
+            sort_order,
+            created_at,
+            updated_at
+        FROM boards
+        WHERE id = #{id}
+    </select>
+
+    <select id="findByBoardKey" resultType="springVibe.dev.admin.boards.domain.Board">
+        SELECT
+            id,
+            board_key,
+            name,
+            description,
+            is_enabled,
+            is_public_read,
+            is_public_write,
+            sort_order,
+            created_at,
+            updated_at
+        FROM boards
+        WHERE board_key = #{boardKey}
+    </select>
+
+    <insert id="insert" parameterType="springVibe.dev.admin.boards.domain.Board" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO boards (
+            board_key,
+            name,
+            description,
+            is_enabled,
+            is_public_read,
+            is_public_write,
+            sort_order,
+            created_at,
+            updated_at
+        ) VALUES (
+            #{boardKey},
+            #{name},
+            #{description},
+            #{isEnabled},
+            #{isPublicRead},
+            #{isPublicWrite},
+            #{sortOrder},
+            NOW(6),
+            NOW(6)
+        )
+    </insert>
+
+    <update id="update" parameterType="springVibe.dev.admin.boards.domain.Board">
+        UPDATE boards
+        SET
+            board_key = #{boardKey},
+            name = #{name},
+            description = #{description},
+            is_enabled = #{isEnabled},
+            is_public_read = #{isPublicRead},
+            is_public_write = #{isPublicWrite},
+            sort_order = #{sortOrder},
+            updated_at = NOW(6)
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM boards WHERE id = #{id}
+    </delete>
+
+</mapper>

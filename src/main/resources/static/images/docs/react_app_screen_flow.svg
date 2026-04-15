@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="640" viewBox="0 0 1200 640" role="img" aria-label="React /app screen flow">
+  <defs>
+    <style>
+      .bg { fill: #ffffff; }
+      .title { font: 700 20px ui-sans-serif, system-ui, -apple-system, "Segoe UI", Arial; fill: #111827; }
+      .note { font: 500 13px ui-sans-serif, system-ui, -apple-system, "Segoe UI", Arial; fill: #4b5563; }
+      .box { fill: #f8fafc; stroke: #cbd5e1; stroke-width: 1.2; rx: 14; }
+      .box2 { fill: #f0f9ff; stroke: #7dd3fc; stroke-width: 1.2; rx: 14; }
+      .box3 { fill: #fdf2f8; stroke: #f9a8d4; stroke-width: 1.2; rx: 14; }
+      .h { font: 800 14px ui-sans-serif, system-ui, -apple-system, "Segoe UI", Arial; fill: #0f172a; }
+      .t { font: 600 12px ui-sans-serif, system-ui, -apple-system, "Segoe UI", Arial; fill: #334155; }
+      .mono { font: 600 12px ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; fill: #0f172a; }
+      .arrow { stroke: #334155; stroke-width: 1.6; fill: none; marker-end: url(#m); }
+      .dashed { stroke-dasharray: 6 6; }
+    </style>
+    <marker id="m" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#334155"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="1200" height="640"/>
+
+  <text class="title" x="40" y="48">/app Screen Flow (Spring + Vite + React)</text>
+  <text class="note" x="40" y="72">Goal: show how a browser request becomes a rendered React page, and where APIs are called.</text>
+
+  <!-- Column headers -->
+  <text class="h" x="70" y="120">Browser</text>
+  <text class="h" x="430" y="120">Spring Boot</text>
+  <text class="h" x="810" y="120">React App</text>
+
+  <!-- Browser -->
+  <rect class="box" x="40" y="140" width="300" height="120" rx="14"/>
+  <text class="h" x="60" y="172">Request</text>
+  <text class="t" x="60" y="198">Navigate to:</text>
+  <text class="mono" x="60" y="220">GET /app/...</text>
+
+  <!-- Spring: static/forward -->
+  <rect class="box2" x="380" y="140" width="360" height="160" rx="14"/>
+  <text class="h" x="400" y="172">Serve /app</text>
+  <text class="t" x="400" y="198">1) Static file if exists:</text>
+  <text class="mono" x="420" y="220">/static/app/index.html</text>
+  <text class="t" x="400" y="246">2) Deep link forward:</text>
+  <text class="mono" x="420" y="268">forward:/app/index.html</text>
+
+  <!-- Browser receives index -->
+  <rect class="box" x="40" y="300" width="300" height="150" rx="14"/>
+  <text class="h" x="60" y="332">index.html parses</text>
+  <text class="t" x="60" y="358">Loads CSS/JS:</text>
+  <text class="mono" x="60" y="380">/css/layout_app.css</text>
+  <text class="mono" x="60" y="400">/js/chat.js</text>
+  <text class="mono" x="60" y="420">/src/main.tsx (dev)</text>
+  <text class="t" x="60" y="440">or</text>
+  <text class="mono" x="90" y="440">/app/assets/* (prod)</text>
+
+  <!-- React boot -->
+  <rect class="box3" x="780" y="140" width="380" height="150" rx="14"/>
+  <text class="h" x="800" y="172">Boot</text>
+  <text class="t" x="800" y="198">Entry:</text>
+  <text class="mono" x="850" y="198">frontend/src/main.tsx</text>
+  <text class="t" x="800" y="222">Mounts React into:</text>
+  <text class="mono" x="940" y="222">&lt;div id="root"&gt;</text>
+  <text class="t" x="800" y="246">Router:</text>
+  <text class="mono" x="850" y="246">BrowserRouter basename="/app"</text>
+
+  <!-- Routes & layout -->
+  <rect class="box3" x="780" y="320" width="380" height="170" rx="14"/>
+  <text class="h" x="800" y="352">Routes + Layout</text>
+  <text class="t" x="800" y="378">App builds routes from</text>
+  <text class="mono" x="800" y="400">routes.tsx</text>
+  <text class="t" x="800" y="424">Common shell:</text>
+  <text class="mono" x="910" y="424">AppLayout</text>
+  <text class="t" x="800" y="448">Header:</text>
+  <text class="mono" x="860" y="448">SvHeader</text>
+  <text class="t" x="800" y="472">Chat DOM host:</text>
+  <text class="mono" x="920" y="472">ChatModalHost</text>
+
+  <!-- APIs -->
+  <rect class="box2" x="380" y="340" width="360" height="150" rx="14"/>
+  <text class="h" x="400" y="372">APIs</text>
+  <text class="t" x="400" y="398">Header fetches:</text>
+  <text class="mono" x="420" y="420">GET /api/auth/me</text>
+  <text class="mono" x="420" y="440">GET /api/menus/left</text>
+  <text class="t" x="400" y="466">Docs viewer fetches:</text>
+  <text class="mono" x="420" y="488">GET /api/docs/etc</text>
+  <text class="mono" x="420" y="508">GET /api/docs/etc/{id}</text>
+
+  <!-- Arrows -->
+  <path class="arrow" d="M 190 260 L 190 300" />
+  <path class="arrow" d="M 340 200 L 380 200" />
+  <path class="arrow" d="M 560 300 L 560 340" />
+  <path class="arrow" d="M 340 370 L 380 390" />
+  <path class="arrow" d="M 740 200 L 780 200" />
+  <path class="arrow" d="M 740 420 L 780 420" />
+
+  <!-- Chat.js integration note -->
+  <path class="arrow dashed" d="M 220 400 L 780 480" />
+  <text class="note" x="420" y="560">/js/chat.js: binds to #chatOpen + #chatModal DOM (rendered by SvHeader + ChatModalHost)</text>
+</svg>
+

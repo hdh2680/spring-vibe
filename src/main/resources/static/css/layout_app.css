@@ -17,7 +17,8 @@
         --ease: cubic-bezier(.2, .9, .2, 1);
         --wrap: 1120px;
         --header-h: 74px;
-        --nav1-w: 180px;
+        /* 1-depth menu item width. Keep it compact so the right-side auth buttons don't wrap. */
+        --nav1-w: 160px;
 
         /* Legacy aliases used by existing admin templates in this project. */
         --bg0: var(--bg);
@@ -100,7 +101,7 @@
         display: grid;
         grid-template-columns: auto 1fr auto;
         align-items: center;
-        gap: 14px;
+        gap: 10px;
         padding: 0 16px;
       }
 
@@ -108,7 +109,7 @@
         display: inline-flex;
         align-items: center;
         gap: 10px;
-        min-width: 180px;
+        min-width: 160px;
         text-decoration: none;
         color: inherit;
       }
@@ -152,7 +153,7 @@
         align-items: center;
         justify-content: center;
         gap: 8px;
-        padding: 10px 12px;
+        padding: 9px 10px;
         border-radius: 999px;
         border: 1px solid transparent;
         text-decoration: none;
@@ -220,6 +221,7 @@
         letter-spacing: -0.01em;
         transition: transform 140ms var(--ease), background 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
         user-select: none;
+        white-space: nowrap;
       }
 
       .sv-btn--icon {
